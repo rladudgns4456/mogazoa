@@ -1,5 +1,141 @@
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
+/* color custom */
+:root {
+  --white: #fff;
+  --black: #000;
+
+  --primary-100: #fffcf2;
+  --primary-200: #ffe59e;
+  --primary-300: #ffcb7b;
+  --primary-400: #ffb84d;
+  --primary-500: #ff9a00;
+  --primary-600: #fd7e35;
+  --primary-700: #e56611;
+  --primary-800: #bf550e;
+  --primary-900: #873c0a;
+
+  --gray-100: #f9fafb;
+  --gray-200: #eff0f3;
+  --gray-300: #dbdce1;
+  --gray-400: #c4c6cc;
+  --gray-500: #a8abb3;
+  --gray-600: #8c8f98;
+  --gray-700: #6e727c;
+  --gray-800: #4b4f58;
+  --gray-900: #2f323a;
+
+  --error: #ff0000;
+}
+
+.ff-spoqa {
+  font-family: "Spoqa Han Sans Neo", "sans-serif";
+}
+
+.ff-cafe {
+  font-family: "Cafe24SuperMagic";
+}
+
+body {
+  color: var(--gray-900);
+  font-family: "Spoqa Han Sans Neo", "sans-serif";
+}
+
+@layer components {
+  /* header4 20px*/
+  .header4-regular {
+    @apply text-20-regular font-cafe;
+  }
+  .header4-bold {
+    @apply text-20-bold font-cafe;
+  }
+
+  /* header3 24px*/
+  .header3-regular {
+    @apply text-24-regular font-cafe;
+  }
+  .header3-bold {
+    @apply text-24-bold font-cafe;
+  }
+
+  /* header2 28px*/
+  .header2-regular {
+    @apply text-28regular font-cafe;
+  }
+  .header2-bold {
+    @apply text-28-bold font-cafe;
+  }
+
+  /* header1 32px*/
+  .header1-regular {
+    @apply text-32-regular font-cafe;
+  }
+  .header1-bold {
+    @apply text-32-bold font-cafe;
+  }
+
+  /* login-title 40px*/
+  .big-title {
+    @apply text-40-bold font-cafe;
+  }
+
+  /* modal-title*/
+  .modal-title {
+    @apply text-24-bold;
+  }
+
+  @media all and (max-width: 600px) {
+    .header3-regular {
+      @apply text-18-regular;
+    }
+
+    .header3-bold {
+      @apply text-18-bold;
+    }
+
+    .big-title {
+      @apply text-28-bold;
+    }
+
+    .modal-title {
+      @apply text-18-bold;
+    }
+  }
+
+  /* 8px */
+  .round-ss {
+    border-radius: 0.5rem;
+    -webkit-border-radius: 0.5rem;
+    -moz-border-radius: 0.5rem;
+    -ms-border-radius: 0.5rem;
+    -o-border-radius: 0.5rem;
+  }
+
+  /* 12px */
+  .round-sm {
+    border-radius: 0.75rem;
+    -webkit-border-radius: 0.75rem;
+    -moz-border-radius: 0.75rem;
+    -ms-border-radius: 0.75rem;
+    -o-border-radius: 0.75rem;
+  }
+  /* 16px */
+  .round-md {
+    border-radius:1rem;
+    -webkit-border-radius:1rem;
+    -moz-border-radius:1rem;
+    -ms-border-radius:1rem;
+    -o-border-radius:1rem;
+}
+
+  /* 20px */
+  .round-lg {
+    border-radius: 1.25rem;
+    -webkit-border-radius: 1.25rem;
+    -moz-border-radius: 1.25rem;
+    -ms-border-radius: 1.25rem;
+    -o-border-radius: 1.25rem;
+  }
+}
