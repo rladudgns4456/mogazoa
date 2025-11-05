@@ -23,6 +23,7 @@
     "tailwindcss-preset-px-to-rem": "^1.2.1"
   },
   "devDependencies": {
+    "@svgr/webpack": "^8.1.0",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
