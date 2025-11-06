@@ -8,7 +8,9 @@
     "start": "next start",
     "lint": "eslint .",
     "format": "prettier --write .",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "storybook": "storybook dev -p 6006",
+    "build-storybook": "storybook build"
   },
   "dependencies": {
     "@tanstack/react-query": "^5.90.6",
@@ -23,6 +25,11 @@
     "tailwindcss-preset-px-to-rem": "^1.2.1"
   },
   "devDependencies": {
+    "@chromatic-com/storybook": "^4.1.2",
+    "@storybook/addon-a11y": "^10.0.5",
+    "@storybook/addon-docs": "^10.0.5",
+    "@storybook/addon-vitest": "^10.0.5",
+    "@tailwindcss/postcss": "^4",
     "@svgr/webpack": "^8.1.0",
     "@types/node": "^20",
     "@types/react": "^19",
@@ -31,11 +38,19 @@
     "eslint-config-next": "16.0.1",
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-simple-import-sort": "^12.1.1",
+    "eslint-plugin-storybook": "^10.0.5",
     "prettier": "^3.6.2",
     "prettier-plugin-tailwindcss": "^0.7.1",
-    "typescript": "^5"
+    "storybook": "^10.0.5",
+    "tailwindcss": "^4",
+    "typescript": "^5",
+    "@storybook/nextjs-vite": "^10.0.5",
+    "vitest": "^4.0.7",
+    "playwright": "^1.56.1",
+    "@vitest/browser-playwright": "^4.0.7",
+    "@vitest/coverage-v8": "^4.0.7"
   },
   "engines": {
-    "node": ">=20 <21"
+    "node": ">=22"
   }
 }
