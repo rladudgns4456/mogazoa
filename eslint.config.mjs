@@ -1,26 +1,63 @@
-// eslint.config.mjs
-import next from 'eslint-config-next';
-import simpleImportSort from 'eslint-plugin-simple-import-sort';
+import nextPlugin from "@next/eslint-plugin-next";
+import tseslint from "@typescript-eslint/eslint-plugin";
+import tsParser from "@typescript-eslint/parser";
+import prettier from "eslint-plugin-prettier";
+import eslintConfigPrettier from "eslint-config-prettier";
 
 export default [
-  // Next.js 권장 규칙
-  ...next,
-
-  // 무시할 경로
+  // 🔹 무시할 디렉토리
   {
-    ignores: ['.next/**', 'node_modules/**', 'dist/**', 'coverage/**']
+    ignores: ["node_modules", "dist", ".next", "tailwind.config.js"],
   },
-
-  // 공통 규칙
+  // 🔹 JS / TS / JSX / TSX 파일에 대한 규칙
   {
-    files: ['**/*.{js,jsx,ts,tsx}'],
+    files: ["**/*.{js,jsx,ts,tsx}"],
     plugins: {
-      'simple-import-sort': simpleImportSort
+      "@typescript-eslint": tseslint,
+      prettier,
+      "@next/next": nextPlugin,
+    },
+    languageOptions: {
+      parser: tsParser, // ✅ TypeScript 파서 지정
+      parserOptions: {
+        ecmaVersion: "latest",
+        sourceType: "module",
+        ecmaFeatures: {
+          jsx: true, // ✅ JSX 문법 인식
+        },
+        project: "./tsconfig.json", // ✅ 타입 기반 규칙 활성화용 (선택)
+      },
     },
     rules: {
-      // import 순서/그룹 자동 정렬
-      'simple-import-sort/imports': 'warn',
-      'simple-import-sort/exports': 'warn'
-    }
-  }
+      /* ✅ Next.js 권장 설정 */
+      ...nextPlugin.configs["core-web-vitals"].rules,
+
+      /* ✅ TypeScript 기본 권장 규칙 */
+      ...tseslint.configs.recommended.rules,
+
+      /* ✅ Prettier와 충돌 방지 */
+      ...eslintConfigPrettier.rules,
+
+      /* ✅ 커스텀 규칙 */
+      "@typescript-eslint/no-explicit-any": "warn",
+      "@typescript-eslint/triple-slash-reference": "off",
+      "@typescript-eslint/no-unused-vars": [
+        "warn",
+        {
+          vars: "all",
+          args: "after-used",
+          ignoreRestSiblings: true,
+        },
+      ],
+
+      "react-hooks/exhaustive-deps": "off",
+
+      "prettier/prettier": [
+        "error",
+        {
+          endOfLine: "auto",
+        },
+      ],
+    },
+  },
 ];
