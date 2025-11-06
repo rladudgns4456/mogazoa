@@ -20,13 +20,14 @@
     "baseUrl": ".",
     "paths": {
       "@/*": [
-        "*"
+        "src/*"
       ]
     },
     "ignoreDeprecations": "6.0",
-    "incremental": true
+    "incremental": true,
   },
   "include": [
+    "src/types/svgr.d.ts",
     "next-env.d.ts",
     "**/*.ts",
     "**/*.tsx",
