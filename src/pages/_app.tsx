@@ -1,13 +1,17 @@
-import type { AppProps } from "next/app";
+import HeaderLayout from "@/layout/headerLayout";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
-import { getQueryClient } from "@/src/lib/reactQuery";
+import type { AppProps } from "next/app";
+import { getQueryClient } from "../lib/reactQuery";
 
-export default function MyApp({ Component, pageProps }: AppProps) {
-  const queryClient = getQueryClient();
+const queryClient = getQueryClient();
+
+export default function App({ Component, pageProps }: AppProps) {
   return (
     <QueryClientProvider client={queryClient}>
-      <Component {...pageProps} />
+      <HeaderLayout>
+        <Component {...pageProps} />
+      </HeaderLayout>
       <ReactQueryDevtools initialIsOpen={false} />
     </QueryClientProvider>
   );
