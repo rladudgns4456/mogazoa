@@ -86,7 +86,7 @@ body {
     @apply text-24-bold;
   }
 
-  @media all and (max-width: 600px) {
+  @media all and (max-width: 640px) {
     .header3-regular {
       @apply text-18-regular;
     }
@@ -138,4 +138,22 @@ body {
     -ms-border-radius: 1.25rem;
     -o-border-radius: 1.25rem;
   }
+  .layout-bg {
+    background-color: var(--gray-100);
+  }
+  .layout-white {
+    background-color: var(--white);
+  }
 }
+
+@layer utilities {
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+    scrollbar-width: 0 none;
+  }
+
+  .black-op30 {
+    background-color: rgba(0, 0, 0, 0.3);
+  }
+}
+
