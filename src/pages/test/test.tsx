@@ -1,7 +1,7 @@
 import React from "react";
 import RankingItem from "@/components/ranking/RankingItem";
 import RankingList from "@/components/ranking/RankingList";
-import { CategoryList } from "@/components/category";
+import { CategoryList } from "@/components/Category";
 import { ThumbsPanel } from "@/components/thumbs";
 
 const categories = [
