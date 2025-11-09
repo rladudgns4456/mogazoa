@@ -1,3 +1,6 @@
+/*Spoqa Han Sans Neo*/
+
+@import url(//spoqa.github.io/spoqa-han-sans/css/SpoqaHanSansNeo.css);
 /*Cafe24SuperMagic*/
 
 @font-face {
@@ -13,7 +16,3 @@
     font-weight: 700;
     font-display: swap;
 }
-
-
-/*Spoqa Han Sans Neo*/
-@import url(//spoqa.github.io/spoqa-han-sans/css/SpoqaHanSansNeo.css);
