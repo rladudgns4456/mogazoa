@@ -10,16 +10,14 @@ export default function Banner({
   href = "/",
 }: BannerProps) {
   return (
-    <section
-      role="region"
-      aria-label="배너"
-      className="w-full bg-primary-600 bg-[url('/assets/bg_Banner.png')] bg-cover bg-center text-white"
+    <Link
+      href={href}
+      aria-label="상품 비교 페이지로 이동 배너"
+      className="block w-full bg-primary-600 bg-[url('/assets/bg_Banner.png')] bg-cover bg-center text-white transition-opacity hover:opacity-90"
     >
-      <Link href={href} aria-label="상품 비교 페이지로 이동" className="block w-full">
-        <div className="flex h-[63px] items-center justify-center">
-          <p className="ff-cafe md:header3-bold header4-bold text-center">{message}</p>
-        </div>
-      </Link>
-    </section>
+      <div className="flex h-[63px] items-center justify-center px-4">
+        <p className="ff-cafe md:header3-bold header4-bold text-center">{message}</p>
+      </div>
+    </Link>
   );
 }
