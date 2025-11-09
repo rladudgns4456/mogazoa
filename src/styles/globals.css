@@ -1,3 +1,4 @@
+@import "./fonts.css";
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -46,18 +47,18 @@ body {
 @layer components {
   /* header4 20px*/
   .header4-regular {
-    @apply text-20-regular font-cafe;
+    @apply font-cafe text-20-regular;
   }
   .header4-bold {
-    @apply text-20-bold font-cafe;
+    @apply font-cafe text-20-bold;
   }
 
   /* header3 24px*/
   .header3-regular {
-    @apply text-24-regular font-cafe;
+    @apply font-cafe text-24-regular;
   }
   .header3-bold {
-    @apply text-24-bold font-cafe;
+    @apply font-cafe text-24-bold;
   }
 
   /* header2 28px*/
@@ -65,20 +66,20 @@ body {
     @apply text-28regular font-cafe;
   }
   .header2-bold {
-    @apply text-28-bold font-cafe;
+    @apply font-cafe text-28-bold;
   }
 
   /* header1 32px*/
   .header1-regular {
-    @apply text-32-regular font-cafe;
+    @apply font-cafe text-32-regular;
   }
   .header1-bold {
-    @apply text-32-bold font-cafe;
+    @apply font-cafe text-32-bold;
   }
 
   /* login-title 40px*/
   .big-title {
-    @apply text-40-bold font-cafe;
+    @apply font-cafe text-40-bold;
   }
 
   /* modal-title*/
