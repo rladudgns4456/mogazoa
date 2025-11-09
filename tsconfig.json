@@ -18,7 +18,8 @@
       "@/*": ["src/*"]
     },
     "ignoreDeprecations": "6.0",
-    "incremental": true
+    "incremental": true,
+    "types": ["vite-plugin-svgr/client", "vite/client"]
   },
   "include": ["src/types/svgr.d.ts", "next-env.d.ts", "**/*.ts", "**/*.tsx", "**/*.d.ts", ".next/types/**/*.ts"],
   "exclude": ["node_modules"]
