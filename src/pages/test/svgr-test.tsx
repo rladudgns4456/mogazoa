@@ -1,6 +1,6 @@
 import React from "react";
-import IcMovie from "@/assets/ic_movie.svg";
-import IcFood from "@/assets/ic_noodle.svg";
+import IcMovie from "@../../public/icons/category/ic_movie.svg";
+import IcFood from "@../../public/icons/category/ic_noodle.svg";
 
 export default function SvgrTestPage() {
   return (

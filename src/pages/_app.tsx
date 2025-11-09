@@ -2,7 +2,7 @@ import HeaderLayout from "@/layout/headerLayout";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import type { AppProps } from "next/app";
-import { getQueryClient } from "@/lib/reactQuery";
+import { getQueryClient } from "../lib/reactQuery";
 import "@/styles/globals.css";
 
 const queryClient = getQueryClient();
