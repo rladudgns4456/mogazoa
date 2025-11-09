@@ -9,5 +9,6 @@
     "endOfLine": "auto",
     "bracketSpacing": true,
     "jsxSingleQuote": false,
-    "proseWrap": "preserve"
+    "proseWrap": "preserve",
+    "plugins": ["prettier-plugin-tailwindcss"]
 }
