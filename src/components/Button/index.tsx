@@ -1,11 +1,12 @@
 import { MouseEventHandler, ButtonHTMLAttributes, DetailedHTMLProps } from "react";
 import { cn } from "@/utils/cn";
+import Ic_close from "@/assets/svgr/ic_close.svg?react";
 
 type htmlProps = DetailedHTMLProps<ButtonHTMLAttributes<HTMLButtonElement>, HTMLButtonElement>;
 
 const disabledStyle =
   "disabled:bg-gray-200 disabled:text-gray-500 disabled:border-color-200 disabled:pointer-events-none";
-const basic = `flex items-center justify-center gap-x-5 w-full h-50 md:h-55 xl:h-60 max-w-355 md:max-w-460 lg:max-w-640 rounded-60 text-16-medium md:text-18-medium ${disabledStyle}`;
+const basic = `flex items-center justify-center px-10 gap-x-5 h-50 md:h-55 xl:h-60 w-355 md:w-460 lg:w-640 rounded-60 text-16-medium md:text-18-medium ${disabledStyle}`;
 
 const variantStyles = {
   primary: cn(
@@ -22,22 +23,23 @@ const iconStyles = {
   more: cn("bg-primary-500 text-white rounded-100 w-60 h-60 p-6"),
   delete: cn("bg-gray-400 text-white rounded-50 w-36 h-36 p-6 md:w-32 md:h-32"),
   close: cn("bg-white w-24 h-24 md:w-32 md:h-32 text-gray-400"),
-  sns: cn("bg-white border border-gray-300 rounded-60 md:w-56 md:h-56 p-6"),
+  sns: cn("bg-white border border-gray-300 rounded-60 w-48 h-48 md:w-56 md:h-56 p-6"),
   etc: cn("w-24 h-24 p-2"),
 };
 
 interface ButtonProps extends htmlProps {
-  variant: keyof typeof variantStyles;
   children?: React.ReactNode;
+  variant: keyof typeof variantStyles;
   iconType?: keyof typeof iconStyles;
   styleClass?: string;
   disabled?: boolean;
+  type: "button" | "submit";
   onClick?: MouseEventHandler<HTMLButtonElement>;
 }
 
 export default function Button({
-  children,
-  variant,
+  children = <Ic_close />,
+  variant = "primary",
   iconType,
   styleClass,
   disabled = false,
