@@ -11,7 +11,7 @@ const basicInput = `relative flex items-center justify-between border`;
 
 const variantStyles = {
   rounded: cn("rounded-[1000px] h-[52px] py-[16px] px-[20px] md:h-[64px] md:px-[24px] md:py-[20px]", basicInput),
-  nomal: cn("rounded-8 h-[42px] px-[12px] py-[12px] md:h-[60px] md:px-[20px] md:py-[20px]", basicInput),
+  normal: cn("rounded-8 h-[42px] px-[12px] py-[12px] md:h-[60px] md:px-[20px] md:py-[20px]", basicInput),
   search: cn(
     "border-none rounded-28 px-[15px] py-[12px] h-[48px] lg:h-[56px] md:h-[50px] md:py-[13px] md:px-[20px] bg-gray-100",
     basicInput,
