@@ -6,7 +6,7 @@ import Button from "@/components/Button";
 import Ic_close from "@/assets/svgr/ic_close.svg?react";
 
 const meta: Meta<typeof Button> = {
-  title: "Example/Button",
+  title: "components/Button",
   component: Button,
 
   // tags: ['autodocs'],
