@@ -1,3 +1,4 @@
 export { default as CategoryChip } from "./CategoryChip";
-export { default as CategoryGrid } from "./CategoryGrid";
-export type { CategoryItem } from "./CategoryGrid";
+export { default as CategoryList } from "./CategoryList";
+export type { CategoryItem, CategoryListProps } from "./CategoryList";
+export type { CategoryChipProps } from "./CategoryChip";

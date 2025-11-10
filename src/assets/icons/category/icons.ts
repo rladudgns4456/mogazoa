@@ -1,5 +1,3 @@
-// src/assets/icons/category/icons.ts
-
 // 필요한 아이콘 import
 import ic_book from "./ic_book.svg";
 import ic_box from "./ic_box.svg";
