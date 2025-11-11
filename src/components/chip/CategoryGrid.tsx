@@ -1,5 +1,5 @@
 import React from "react";
-import CategoryChip from "@/components/chip/ChtegoryChip";
+import CategoryChip from "@/components/chip/CategoryChip";
 
 export type CategoryItem = { id: string; label: string; icon: string };
 
