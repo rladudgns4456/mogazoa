@@ -2,10 +2,15 @@ import logoFull from "@/assets/logo_full.png";
 import Image from "next/image";
 import Link from "next/link";
 
-export default function Logo() {
+interface LogoProps {
+  width: number;
+  height: number;
+}
+
+export default function Logo({ width, height }: LogoProps) {
   return (
     <Link href={"/"}>
-      <Image width={160} height={40} src={logoFull} alt="모가조아" />
+      <Image width={width} height={height} src={logoFull} alt="모가조아" />
     </Link>
   );
 }
