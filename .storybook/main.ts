@@ -10,18 +10,16 @@ const config: StorybookConfig = {
     options: {},
   },
   staticDirs: ["../public"],
-  viteFinal: async config => {
-    config.plugins = config.plugins || [];
-    config.plugins.push(
+  async viteFinal(cfg) {
+    cfg.plugins = [
+      ...(cfg.plugins ?? []),
       svgr({
-        svgrOptions: {
-          // SVGR 옵션 설정 (예: 컴포넌트로 사용할 때 icon 속성 추가)
-          icon: true,
-        },
-        include: "**/*.svg", // SVG 파일만 포함하도록 설정
+        include: "**/*.svg",
+        svgrOptions: { icon: true },
       }),
-    );
-    return config;
+    ];
+    return cfg;
   },
 };
+
 export default config;
