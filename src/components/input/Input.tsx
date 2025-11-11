@@ -10,10 +10,10 @@ import { Activity, useState } from "react";
 const basicInput = `relative flex items-center justify-between border`;
 
 const variantStyles = {
-  rounded: cn("rounded-[1000px] h-[52px] py-[16px] px-[20px] md:h-[64px] md:px-[24px] md:py-[20px]", basicInput),
-  normal: cn("rounded-8 h-[42px] px-[12px] py-[12px] md:h-[60px] md:px-[20px] md:py-[20px]", basicInput),
+  rounded: cn("rounded-1000 h-52 py-16 px-20 md:h-64 md:px-24 md:py-20", basicInput),
+  normal: cn("rounded-8 h-42 px-12 py-12 md:h-60 md:px-20 md:py-20", basicInput),
   search: cn(
-    "border-none rounded-28 px-[15px] py-[12px] h-[48px] lg:h-[56px] md:h-[50px] md:py-[13px] md:px-[20px] bg-gray-100",
+    "border-none rounded-28 px-15 py-12 h-48 lg:h-56 md:h-50 md:py-13 md:px-20 bg-gray-100",
     basicInput,
   ),
 };
@@ -90,7 +90,7 @@ export default function Input({
     <div>
       <div className={cn(variantStyles[variant], getBorderColor())}>
         <Activity mode={leftIcon ? "visible" : "hidden"}>
-          <span className="h-[24px] w-[24px]">{leftChangeIcon}</span>
+          <span className="h-24 w-24">{leftChangeIcon}</span>
         </Activity>
         <label
           className={`pointer-events-none absolute left-50 z-10 bg-white px-2 text-16-medium transition-all duration-200 ${getFontColor()} ${
