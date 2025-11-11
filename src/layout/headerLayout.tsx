@@ -9,9 +9,9 @@ export default function HeaderLayout({ children }: { children: ReactNode }) {
   return (
     <>
       <header className="flex items-center justify-between border-b border-gray-200 px-20 py-20 md:px-30 md:py-15 lg:px-120 lg:py-22">
-        <Logo />
-        <div className="flex items-center gap-60">
-          <div className="w-400">
+        <Logo width={160} height={40} />
+        <div className="flex items-center md:gap-30 lg:gap-60">
+          <div className="md:w-300 lg:w-400">
             <Input
               variant="search"
               value={searchValue}
