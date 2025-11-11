@@ -10,12 +10,9 @@ import { Activity, useState } from "react";
 const basicInput = `relative flex items-center justify-between border`;
 
 const variantStyles = {
-  rounded: cn("rounded-1000 h-52 py-16 px-20 md:h-64 md:px-24 md:py-20", basicInput),
+  rounded: cn("rounded-100 h-52 py-16 px-20 md:h-64 md:px-24 md:py-20", basicInput),
   normal: cn("rounded-8 h-42 px-12 py-12 md:h-60 md:px-20 md:py-20", basicInput),
-  search: cn(
-    "border-none rounded-28 px-15 py-12 h-48 lg:h-56 md:h-50 md:py-13 md:px-20 bg-gray-100",
-    basicInput,
-  ),
+  search: cn("border-none rounded-28 px-15 py-12 h-48 lg:h-56 md:h-50 md:py-13 md:px-20 bg-gray-200", basicInput),
 };
 
 interface InputProps {
@@ -117,8 +114,10 @@ export default function Input({
       <Activity mode={error ? "visible" : "hidden"}>
         <p className="pt-10 text-14-regular text-error">{errorText}</p>
       </Activity>
-      <Activity mode={!error ? "visible" : "hidden"}>
-        <p className="pt-10 text-14-regular text-gray-500">{subText}</p>
+      <Activity mode={subText ? "visible" : "hidden"}>
+        <Activity mode={!error ? "visible" : "hidden"}>
+          <p className="pt-10 text-14-regular text-gray-500">{subText}</p>
+        </Activity>
       </Activity>
     </div>
   );
