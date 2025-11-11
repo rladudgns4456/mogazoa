@@ -1,5 +1,6 @@
 import type { StorybookConfig } from "@storybook/nextjs-vite";
 import svgr from "vite-plugin-svgr";
+import { resolve } from "path";
 
 const config: StorybookConfig = {
   stories: ["../src/**/*.mdx", "../src/**/*.stories.@(js|jsx|mjs|ts|tsx)"],
@@ -7,9 +8,9 @@ const config: StorybookConfig = {
   framework: {
     name: "@storybook/nextjs-vite",
     options: {},
-  },  
-  staticDirs: ["../public"], 
-   viteFinal: async (config) => {
+  },
+  staticDirs: ["../public"],
+  viteFinal: async config => {
     config.plugins = config.plugins || [];
     config.plugins.push(
       svgr({
@@ -18,7 +19,7 @@ const config: StorybookConfig = {
           icon: true,
         },
         include: "**/*.svg", // SVG 파일만 포함하도록 설정
-      })
+      }),
     );
     return config;
   },
