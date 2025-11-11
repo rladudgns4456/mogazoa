@@ -1,6 +1,6 @@
-import IcClose from "@/assets/svgr/ic_close.svg";
 import { cn } from "@/utils/cn";
 import { useEffect, useRef, useState } from "react";
+import IconClose from "./IconClose";
 
 interface ProductSearchInputProps {
   placeholder?: string;
@@ -91,7 +91,7 @@ export default function ProductSearchInput({
         />
         {isSelected && (
           <button onClick={handleResetClick} type="button">
-            <IcClose className="h-20 w-20 text-gray-400" />
+            <IconClose />
           </button>
         )}
       </div>
