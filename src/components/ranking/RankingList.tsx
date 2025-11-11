@@ -1,7 +1,6 @@
 import React from "react";
 import RankingItem from "./RankingItem";
 import { cn } from "@/utils/cn";
-import clsx from "clsx";
 
 type Props = {
   ranks: Array<1 | 2 | 3 | 4>;
