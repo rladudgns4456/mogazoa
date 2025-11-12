@@ -1,9 +1,9 @@
-import IcEmail from "@/assets/ic_email.svg";
-import IcPassword from "@/assets/ic_password.svg";
-import IcProfile from "@/assets/ic_profile.svg";
-import IcSearch from "@/assets/ic_search.svg";
-import IcVisibleOff from "@/assets/ic_visible=off.svg";
-import IcVisibleOn from "@/assets/ic_visible=on.svg";
+import IcEmail from "@/assets/icons/ic_email.svg";
+import IcPassword from "@/assets/icons/ic_password.svg";
+import IcProfile from "@/assets/icons/ic_profile.svg";
+import IcSearch from "@/assets//icons/ic_search.svg";
+import IcVisibleOff from "@/assets/icons/ic_visible=off.svg";
+import IcVisibleOn from "@/assets/icons/ic_visible=on.svg";
 import { cn } from "@/utils/cn";
 import { Activity, useState } from "react";
 

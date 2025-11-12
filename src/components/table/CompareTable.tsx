@@ -1,112 +1,116 @@
-import React from "react";
-import clsx from "clsx";
+"use client";
+import * as React from "react";
+import { cn } from "@/utils/cn";
 
-export type CompareRow = {
-  a: React.ReactNode;
-  b: React.ReactNode;
-  /** 노란 알약처럼 강조할 쪽 */
-  highlight?: "a" | "b";
-};
+/** 셀 값 + 우측 배지(선택) */
+type Cell =
+  | React.ReactNode
+  | {
+      value: React.ReactNode;
+      /** 우측에 붙는 배지 텍스트(예: 300개) */
+      badge?: React.ReactNode;
+      /** 배지 색상 */
+      badgeTone?: "yellow" | "purple" | "gray";
+      /** 배지 앞에 붙을 작은 아이콘(선택) */
+      badgeIcon?: React.ReactNode;
+    };
 
 export type CompareTableProps = {
-  /** 상단 두 숫자(예: 평점) */
-  top: { a: React.ReactNode; b: React.ReactNode };
-  /** 중단/하단 행들 */
-  rows: CompareRow[];
-  /** 우측 사이드 정보 */
-  side: {
-    pill1?: React.ReactNode; // 예: 4.9
-    pill2?: React.ReactNode; // 예: 300개
-    pill3?: React.ReactNode; // 필요시
-    trophyIcon?: React.ReactNode; // 기본 🏆
-    trophyText?: React.ReactNode; // 예: 100개
-  };
-  /** 피그마 가이드용 점선 테두리 */
-  debugBorder?: boolean;
+  /** 왼쪽 큰 이미지/플레이스홀더 */
+  leftVisual?: React.ReactNode;
+  /** 왼쪽/오른쪽 상단의 굵은 숫자 (예: 0.0) */
+  top: { a: Cell; b: Cell };
+
+  /** 아래 행들(예: 0개 / 0개 …) — 같은 길이로 맞추는 것을 권장 */
+  rows: Array<{ a: Cell; b: Cell }>;
+
+  /** 컨테이너 className 커스터마이즈 */
   className?: string;
 };
 
-const Pill: React.FC<{ children: React.ReactNode; tone?: "primary" | "gray" }> = ({ children, tone = "primary" }) => (
-  <span
-    className={clsx(
-      "inline-flex min-w-10 items-center justify-center rounded-full px-3 py-1",
-      "text-14-medium",
-      tone === "primary" && "bg-primary-200",
-      tone === "gray" && "bg-gray-100",
-    )}
-  >
-    {children}
-  </span>
-);
+function Pill({
+  children,
+  tone = "yellow",
+  className,
+}: {
+  children: React.ReactNode;
+  tone?: "yellow" | "purple" | "gray";
+  className?: string;
+}) {
+  const toneClass =
+    tone === "yellow"
+      ? "bg-amber-100 text-amber-700"
+      : tone === "purple"
+        ? "bg-violet-600 text-white"
+        : "bg-gray-100 text-gray-600";
 
-const Divider = () => <div className="h-px w-full bg-gray-100" />;
-
-/** table/compare (좌측 이미지 영역 제외) */
-const CompareTable: React.FC<CompareTableProps> = ({ top, rows, side, debugBorder, className }) => {
   return (
-    <section
-      className={clsx(
-        "w-full rounded-2xl bg-white p-6 md:p-8",
-        debugBorder && "border-2 border-dashed border-primary-300",
-        className,
-      )}
+    <span
+      className={cn("inline-flex items-center rounded-full px-2 py-0.5 text-[11px] leading-none", toneClass, className)}
     >
-      {/* 중앙 2열 + 우측 사이드 */}
-      <div className="grid grid-cols-3 gap-6 md:gap-10">
-        {/* 중앙 2열 */}
-        <div className="col-span-2">
-          {/* 상단 숫자 */}
-          <div className="grid grid-cols-2 text-center">
-            <div className="text-20-bold md:text-24-bold">{top.a}</div>
-            <div className="text-20-bold md:text-24-bold">{top.b}</div>
-          </div>
+      {children}
+    </span>
+  );
+}
 
-          {/* 행들 */}
-          <div className="mt-6 space-y-5">
-            {rows.map((r, idx) => (
-              <div key={idx} className="space-y-3">
-                {idx !== 0 && <Divider />}
-                <div className="grid grid-cols-2 items-center text-center">
-                  <div className="flex items-center justify-center text-16-medium">
-                    {r.highlight === "a" ? <Pill>{r.a}</Pill> : r.a}
-                  </div>
-                  <div className="flex items-center justify-center text-16-medium">
-                    {r.highlight === "b" ? <Pill>{r.b}</Pill> : r.b}
-                  </div>
-                </div>
-              </div>
-            ))}
+function renderCell(cell: Cell) {
+  if (cell !== null && typeof cell === "object" && !React.isValidElement(cell)) {
+    const { value, badge, badgeTone = "yellow", badgeIcon } = cell as Exclude<Cell, React.ReactNode>;
+    return (
+      <div className="flex items-center justify-between gap-2">
+        <div>{value}</div>
+        {badge != null && (
+          <Pill tone={badgeTone}>
+            <span className="inline-flex items-center gap-1">
+              {badgeIcon ? <i className="inline-block">{badgeIcon}</i> : null}
+              {badge}
+            </span>
+          </Pill>
+        )}
+      </div>
+    );
+  }
+  return <div>{cell as React.ReactNode}</div>;
+}
+
+/** 비교 테이블 메인 컴포넌트 */
+export default function CompareTable({ leftVisual, top, rows, className }: CompareTableProps) {
+  return (
+    <section className={cn("rounded-2xl border border-dashed border-violet-300 p-4 md:p-6", className)}>
+      <div className="grid grid-cols-[140px_1fr_1fr] gap-4 md:gap-6">
+        {/* 좌측 비주얼 */}
+        <div className="flex items-center justify-center">
+          <div className="flex aspect-square w-[140px] max-w-full items-center justify-center rounded-xl bg-gray-50 text-gray-400 ring-1 ring-gray-200">
+            {leftVisual ?? "비교할 상품을 입력해 주세요"}
           </div>
         </div>
 
-        {/* 우측 사이드 */}
-        <aside className="flex flex-col justify-between">
-          <div className="space-y-4">
-            {side.pill1 && (
-              <div className="flex justify-end">
-                <Pill>{side.pill1}</Pill>
-              </div>
-            )}
-            {side.pill2 && (
-              <div className="flex justify-end">
-                <Pill>{side.pill2}</Pill>
-              </div>
-            )}
-            {side.pill3 && (
-              <div className="flex justify-end">
-                <Pill>{side.pill3}</Pill>
-              </div>
-            )}
-          </div>
+        {/* 좌/우 컬럼 */}
+        <div className="space-y-3">
+          {/* 상단 굵은 숫자 */}
+          <div className="text-center text-xl font-semibold text-gray-900">{renderCell(top.a)}</div>
 
-          <div className="mt-8 flex items-center justify-end gap-3">
-            <span className="text-20-bold">{side.trophyIcon ?? "🏆"}</span>
-            <span className="text-14-medium md:text-16-medium">{side.trophyText ?? "0개"}</span>
-          </div>
-        </aside>
+          {/* 하단 행 */}
+          <ul className="divide-y divide-gray-100">
+            {rows.map((r, idx) => (
+              <li key={`a-${idx}`} className="py-2 text-sm text-gray-900">
+                {renderCell(r.a)}
+              </li>
+            ))}
+          </ul>
+        </div>
+
+        <div className="space-y-3">
+          <div className="text-center text-xl font-semibold text-gray-900">{renderCell(top.b)}</div>
+          <ul className="divide-y divide-gray-100">
+            {rows.map((r, idx) => (
+              <li key={`b-${idx}`} className="py-2 text-sm text-gray-900">
+                {renderCell(r.b)}
+              </li>
+            ))}
+          </ul>
+        </div>
       </div>
     </section>
   );
-};
-
-export default CompareTable;
+}

@@ -1,8 +1,11 @@
+"use client";
 import React from "react";
 import RankingItem from "@/components/ranking/RankingItem";
 import RankingList from "@/components/ranking/RankingList";
 import { CategoryList } from "@/components/category";
 import { ThumbsPanel } from "@/components/thumbs";
+import CompareTable from "@/components/table/CompareTable";
+import { Wifi } from "lucide-react";
 
 const categories = [
   { id: "computer", label: "전자기기", icon: "ic_computer" },
@@ -19,7 +22,7 @@ const categories = [
 
 export default function TestPage() {
   return (
-    <div className="grid grid-cols-3 gap-8 p-8">
+    <div className="grid grid-cols-2 gap-8 p-8">
       {/* Ranking */}
       <div>
         <h2 className="mb-2 font-bold">RankingItem</h2>
@@ -47,6 +50,42 @@ export default function TestPage() {
           items={[
             { id: "1", label: "도움이 돼요", count: 0, variant: "light" },
             { id: "2", label: "도움이 돼요", count: 0, variant: "dark" },
+          ]}
+        />
+      </div>
+
+      {/* Compare Table */}
+      <div>
+        <h2 className="mb-2 font-bold">CompareTable</h2>
+        <CompareTable
+          leftVisual={
+            <div className="flex h-[120px] w-[120px] items-center justify-center rounded-xl bg-gray-50 text-xs text-gray-400">
+              이미지
+            </div>
+          }
+          top={{
+            a: { value: <span>0.0</span> },
+            b: { value: <span>0.0</span>, badge: "4.9", badgeTone: "yellow" },
+          }}
+          rows={[
+            {
+              a: { value: "0개" },
+              b: { value: "0개", badge: "300개", badgeTone: "yellow" },
+            },
+            {
+              a: { value: "0개" },
+              b: {
+                value: (
+                  <span className="inline-flex items-center gap-1">
+                    0개 <Wifi className="size-3 opacity-70" />
+                  </span>
+                ),
+              },
+            },
+            {
+              a: { value: "0개", badge: "0개", badgeTone: "yellow" },
+              b: { value: "0개", badge: "100개", badgeTone: "yellow" },
+            },
           ]}
         />
       </div>
