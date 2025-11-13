@@ -56,6 +56,7 @@ export default function HeaderLayout({ children }: { children: ReactNode }) {
   const LogoHeightSize = isMobile ? 40 : 32;
 
   const hoverCategory = `hover:bg-primary-200 hover:text-primary-600 rounded-8`;
+  const sideBarBasic = `cursor-pointer px-20 py-13 text-gray-600`;
 
   return (
     <>
@@ -108,16 +109,16 @@ export default function HeaderLayout({ children }: { children: ReactNode }) {
             <div className="fixed h-full w-180 bg-white py-10" ref={asideRef}>
               <p className="pb-20 pl-20 pt-45 text-14-regular">카테고리</p>
               <ul className="flex flex-col gap-4">
-                <li className={cn("cursor-pointer px-20 py-13", hoverCategory)}>음악</li>
-                <li className={cn("cursor-pointer px-20 py-13", hoverCategory)}>영화/드라마</li>
-                <li className={cn("cursor-pointer px-20 py-13", hoverCategory)}>강의/책</li>
-                <li className={cn("cursor-pointer px-20 py-13", hoverCategory)}>호텔</li>
-                <li className={cn("cursor-pointer px-20 py-13", hoverCategory)}>가구/인테리어</li>
-                <li className={cn("cursor-pointer px-20 py-13", hoverCategory)}>식당</li>
-                <li className={cn("cursor-pointer px-20 py-13", hoverCategory)}>전자기기</li>
-                <li className={cn("cursor-pointer px-20 py-13", hoverCategory)}>화장품</li>
-                <li className={cn("cursor-pointer px-20 py-13", hoverCategory)}>의류/악세서리</li>
-                <li className={cn("cursor-pointer px-20 py-13", hoverCategory)}>앱</li>
+                <li className={cn(sideBarBasic, hoverCategory)}>음악</li>
+                <li className={cn(sideBarBasic, hoverCategory)}>영화/드라마</li>
+                <li className={cn(sideBarBasic, hoverCategory)}>강의/책</li>
+                <li className={cn(sideBarBasic, hoverCategory)}>호텔</li>
+                <li className={cn(sideBarBasic, hoverCategory)}>가구/인테리어</li>
+                <li className={cn(sideBarBasic, hoverCategory)}>식당</li>
+                <li className={cn(sideBarBasic, hoverCategory)}>전자기기</li>
+                <li className={cn(sideBarBasic, hoverCategory)}>화장품</li>
+                <li className={cn(sideBarBasic, hoverCategory)}>의류/악세서리</li>
+                <li className={cn(sideBarBasic, hoverCategory)}>앱</li>
               </ul>
             </div>
           </aside>
