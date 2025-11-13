@@ -1,4 +1,5 @@
 import cn from "clsx";
+import { formatNumber } from "@/utils/formatNumber";
 
 export interface StatisticsProps {
   rating: number;
@@ -12,14 +13,6 @@ export interface StatisticsProps {
 }
 
 const Statistics = ({ rating, reviewCount, favoriteCount, categoryMetric }: StatisticsProps) => {
-  // 숫자 포맷팅 (1000 이상은 K로 표시)
-  const formatNumber = (num: number): string => {
-    if (num >= 1000) {
-      return `${Math.floor(num / 1000)}K+`;
-    }
-    return num.toLocaleString();
-  };
-
   // 차이값 계산
   const getDiff = (value: number, average?: number): number | null => {
     if (average === undefined) return null;
