@@ -46,45 +46,46 @@ export default function TestPage() {
       {/* Thumbs */}
       <div>
         <h2 className="mb-2 font-bold">ThumbsPanel</h2>
-        <ThumbsPanel
-          items={[
-            { id: "1", label: "도움이 돼요", count: 0, variant: "light" },
-            { id: "2", label: "도움이 돼요", count: 0, variant: "dark" },
-          ]}
-        />
+        <ThumbsPanel items={[{ id: "1", label: "도움이 돼요", count: 0, variant: "light" }]} />
       </div>
 
       {/* Compare Table */}
       <div>
         <h2 className="mb-2 font-bold">CompareTable</h2>
         <CompareTable
-          leftVisual={
-            <div className="flex h-[120px] w-[120px] items-center justify-center rounded-xl bg-gray-50 text-xs text-gray-400">
-              이미지
-            </div>
-          }
-          top={{
-            a: { value: <span>0.0</span> },
-            b: { value: <span>0.0</span>, badge: "4.9", badgeTone: "yellow" },
+          size="L"
+          typography={{
+            // 별점 스타일
+            top: "font-spoqa text-20 font-bold tabular-nums",
+            // 라벨은 작게 유지
+            label: "font-spoqa text-12 font-medium text-gray-600",
+            // 행 값 = 별점과 동일
+            value: "font-spoqa text-20 font-bold tabular-nums",
+            side: "font-spoqa text-12 font-medium tabular-nums",
           }}
+          top={{ a: <span>0.0</span>, b: <span>0.0</span> }}
           rows={[
             {
-              a: { value: "0개" },
-              b: { value: "0개", badge: "300개", badgeTone: "yellow" },
+              a: 111,
+              b: 500,
+              betterBy: "higher",
+              format: v => `${v}개`, // b 하이라이트
             },
             {
-              a: { value: "0개" },
-              b: {
-                value: (
-                  <span className="inline-flex items-center gap-1">
-                    0개 <Wifi className="size-3 opacity-70" />
-                  </span>
-                ),
-              },
+              a: 0,
+              b: (
+                <span className="inline-flex items-center gap-1">
+                  0개 <Wifi className="size-3 opacity-70" />
+                </span>
+              ),
+              betterBy: "higher",
+              isBetter: () => "tie", // 노드 비교 → 동점 처리
             },
             {
-              a: { value: "0개", badge: "0개", badgeTone: "yellow" },
-              b: { value: "0개", badge: "100개", badgeTone: "yellow" },
+              a: 0,
+              b: 0,
+              betterBy: "higher",
+              format: v => `${v}개`,
             },
           ]}
         />

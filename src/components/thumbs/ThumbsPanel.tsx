@@ -8,9 +8,7 @@ export type ThumbsItem = {
   id: string;
   label: string;
   count: number;
-  /** 라이트/다크 고정 스타일 */
   variant?: "light" | "dark";
-  /** 내부 토글 상태(색엔 영향 X) */
   checked?: boolean;
 };
 
@@ -21,10 +19,7 @@ export type ThumbsPanelProps = {
 };
 
 export default function ThumbsPanel({
-  items = [
-    { id: "1", label: "도움이 돼요", count: 0, variant: "light" }, // 흰 배경
-    { id: "2", label: "도움이 돼요", count: 0, variant: "dark" }, // 검정 배경
-  ],
+  items = [{ id: "1", label: "도움이 돼요", count: 0, variant: "light" }],
   title = "thumbs",
   className,
 }: ThumbsPanelProps) {
@@ -36,7 +31,12 @@ export default function ThumbsPanel({
         if (item.id !== id) return item;
         const nextChecked = !item.checked;
         const nextCount = nextChecked ? item.count + 1 : Math.max(0, item.count - 1);
-        return { ...item, checked: nextChecked, count: nextCount };
+        return {
+          ...item,
+          checked: nextChecked,
+          count: nextCount,
+          variant: nextChecked ? "dark" : "light", // ✅ 클릭 시 색상 변경
+        };
       }),
     );
   };
