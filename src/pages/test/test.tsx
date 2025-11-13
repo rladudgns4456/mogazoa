@@ -55,23 +55,26 @@ export default function TestPage() {
         <CompareTable
           size="L"
           typography={{
-            // 별점 스타일
+            // 별점(상단) 스타일
             top: "font-spoqa text-20 font-bold tabular-nums",
-            // 라벨은 작게 유지
+            // 왼쪽 라벨(이번 예시에선 비워두지만 규격 유지)
             label: "font-spoqa text-12 font-medium text-gray-600",
             // 행 값 = 별점과 동일
             value: "font-spoqa text-20 font-bold tabular-nums",
+            // 우측 보조 pill
             side: "font-spoqa text-12 font-medium tabular-nums",
           }}
           top={{ a: <span>0.0</span>, b: <span>0.0</span> }}
           rows={[
             {
+              // 1행: B가 더 큼 → B 하이라이트 + 트로피
               a: 111,
               b: 500,
               betterBy: "higher",
-              format: v => `${v}개`, // b 하이라이트
+              format: v => `${v}개`,
             },
             {
+              // 2행: 동점 처리(노란색/트로피 없음)
               a: 0,
               b: (
                 <span className="inline-flex items-center gap-1">
@@ -79,15 +82,18 @@ export default function TestPage() {
                 </span>
               ),
               betterBy: "higher",
-              isBetter: () => "tie", // 노드 비교 → 동점 처리
+              isBetter: () => "tie",
             },
             {
+              // 3행: 동점
               a: 0,
               b: 0,
               betterBy: "higher",
               format: v => `${v}개`,
             },
           ]}
+          // 필요하면 우측 보조 pill도 표시 가능
+          // side={["4.9", "300개", "100개"]}
         />
       </div>
     </div>
