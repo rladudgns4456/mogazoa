@@ -90,7 +90,7 @@ export default function Input({
           <span className="h-24 w-24">{leftChangeIcon}</span>
         </Activity>
         <label
-          className={`pointer-events-none absolute left-50 z-10 bg-white px-2 text-16-medium transition-all duration-200 ${getFontColor()} ${
+          className={`pointer-events-none absolute left-50 z-10 bg-white px-2 text-14-medium transition-all duration-200 md:text-16-medium ${getFontColor()} ${
             isFloating ? "opacity-1 -top-12" : "-top-12 opacity-0"
           }`}
         >
@@ -112,11 +112,11 @@ export default function Input({
         </Activity>
       </div>
       <Activity mode={error ? "visible" : "hidden"}>
-        <p className="pt-10 text-14-regular text-error">{errorText}</p>
+        <p className="pt-10 text-12-regular text-error md:text-14-regular">{errorText}</p>
       </Activity>
       <Activity mode={subText ? "visible" : "hidden"}>
         <Activity mode={!error ? "visible" : "hidden"}>
-          <p className="pt-10 text-14-regular text-gray-500">{subText}</p>
+          <p className="pt-10 text-12-regular text-gray-500 md:text-14-regular">{subText}</p>
         </Activity>
       </Activity>
     </div>
