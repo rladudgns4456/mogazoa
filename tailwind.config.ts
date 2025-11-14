@@ -29,6 +29,9 @@ export default {
         DEFAULT: "1",
       },
       fontSize: {
+        /*11px*/
+        "11-regular": ["0.6875rem", { fontWeight: "400" }],
+
         /*12px*/
         "12-light": ["0.75rem", { fontWeight: "300" }],
         "12-regular": ["0.75rem", { fontWeight: "400" }],
