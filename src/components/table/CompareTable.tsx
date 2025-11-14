@@ -1,112 +1,140 @@
+"use client";
+
 import React from "react";
 import clsx from "clsx";
+import IcWin from "@/assets/icons/ic_win.svg";
 
+// Row & Props
 export type CompareRow = {
-  a: React.ReactNode;
-  b: React.ReactNode;
-  /** 노란 알약처럼 강조할 쪽 */
-  highlight?: "a" | "b";
+  label?: React.ReactNode;
+  a: React.ReactNode | number;
+  b: React.ReactNode | number;
+  betterBy?: "higher" | "lower" | "none";
+  format?: (v: React.ReactNode | number) => React.ReactNode;
+  isBetter?: (a: React.ReactNode | number, b: React.ReactNode | number) => "a" | "b" | "tie" | null | undefined;
 };
 
 export type CompareTableProps = {
-  /** 상단 두 숫자(예: 평점) */
-  top: { a: React.ReactNode; b: React.ReactNode };
-  /** 중단/하단 행들 */
-  rows: CompareRow[];
-  /** 우측 사이드 정보 */
-  side: {
-    pill1?: React.ReactNode; // 예: 4.9
-    pill2?: React.ReactNode; // 예: 300개
-    pill3?: React.ReactNode; // 필요시
-    trophyIcon?: React.ReactNode; // 기본 🏆
-    trophyText?: React.ReactNode; // 예: 100개
-  };
-  /** 피그마 가이드용 점선 테두리 */
-  debugBorder?: boolean;
+  top?: { a: React.ReactNode; b: React.ReactNode };
+  rows?: CompareRow[];
+  side?: React.ReactNode[];
   className?: string;
+  size?: "L" | "M";
+  typography?: {
+    top?: string; // 상단 숫자(별점)
+    label?: string; // 왼쪽 라벨
+    value?: string; // 행 값(A/B)
+    side?: string; // 우측 보조 pill
+  };
 };
 
-const Pill: React.FC<{ children: React.ReactNode; tone?: "primary" | "gray" }> = ({ children, tone = "primary" }) => (
-  <span
-    className={clsx(
-      "inline-flex min-w-10 items-center justify-center rounded-full px-3 py-1",
-      "text-14-medium",
-      tone === "primary" && "bg-primary-200",
-      tone === "gray" && "bg-gray-100",
-    )}
-  >
-    {children}
-  </span>
-);
-
-const Divider = () => <div className="h-px w-full bg-gray-100" />;
-
-/** table/compare (좌측 이미지 영역 제외) */
-const CompareTable: React.FC<CompareTableProps> = ({ top, rows, side, debugBorder, className }) => {
+// Pill (폰트는 부모에서 상속)
+function Pill({ children, active }: { children: React.ReactNode; active?: boolean }) {
   return (
-    <section
+    <span
       className={clsx(
-        "w-full rounded-2xl bg-white p-6 md:p-8",
-        debugBorder && "border-2 border-dashed border-primary-300",
-        className,
+        "inline-flex min-h-24 min-w-28 items-center justify-center rounded-full px-3 py-1 leading-none",
+        active ? "bg-amber-200/90 text-gray-900" : "bg-gray-100 text-gray-700",
       )}
     >
-      {/* 중앙 2열 + 우측 사이드 */}
-      <div className="grid grid-cols-3 gap-6 md:gap-10">
-        {/* 중앙 2열 */}
-        <div className="col-span-2">
-          {/* 상단 숫자 */}
-          <div className="grid grid-cols-2 text-center">
-            <div className="text-20-bold md:text-24-bold">{top.a}</div>
-            <div className="text-20-bold md:text-24-bold">{top.b}</div>
-          </div>
+      {children}
+    </span>
+  );
+}
 
-          {/* 행들 */}
-          <div className="mt-6 space-y-5">
-            {rows.map((r, idx) => (
-              <div key={idx} className="space-y-3">
-                {idx !== 0 && <Divider />}
-                <div className="grid grid-cols-2 items-center text-center">
-                  <div className="flex items-center justify-center text-16-medium">
-                    {r.highlight === "a" ? <Pill>{r.a}</Pill> : r.a}
-                  </div>
-                  <div className="flex items-center justify-center text-16-medium">
-                    {r.highlight === "b" ? <Pill>{r.b}</Pill> : r.b}
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
+// 텍스트는 중앙, 트로피는 오른쪽 절대배치
+function ValueCell({
+  children,
+  active,
+  iconRight = 0,
+  className,
+}: {
+  children: React.ReactNode;
+  active?: boolean;
+  iconRight?: number;
+  className?: string;
+}) {
+  return (
+    <div className={clsx("relative flex items-center justify-center border-t border-gray-100", className)}>
+      {children}
+      {active && (
+        <IcWin className="absolute top-1/2 h-24 w-24 -translate-y-1/2" style={{ right: iconRight }} aria-hidden />
+      )}
+    </div>
+  );
+}
+
+const strictWin = (a: number, b: number, by: "higher" | "lower") => (by === "higher" ? a > b : a < b);
+
+export default function CompareTable({ top, rows = [], side, className, size = "L", typography }: CompareTableProps) {
+  // 타이포 (프로젝트 커스텀 유틸 기준)
+  const typoTopBase = "text-20 font-bold tabular-nums";
+  const typoTop = typography?.top ?? typoTopBase;
+  const typoLabel = typography?.label ?? "text-12 font-medium text-gray-600";
+  const typoValue = typography?.value ?? typoTopBase; // 행 값 = 별점과 동일
+  const typoSide = typography?.side ?? "text-12 font-medium tabular-nums";
+
+  // 사이즈
+  const px = size === "L" ? "px-28" : "px-6";
+  const py = size === "L" ? "py-4" : "py-3";
+  const rowH = size === "L" ? "h-35" : "h-9";
+  const gapX = "gap-x-6";
+  const gapY = size === "L" ? "gap-y-6" : "gap-y-4";
+
+  return (
+    <section
+      className={clsx("w-full rounded-20 bg-white shadow-sm ring-1 ring-gray-100", px, py, className)}
+      aria-label="compare table"
+    >
+      {/* 4열 고정: [라벨 160] [A] [B] [사이드 72] */}
+      <div className={clsx("grid items-start", "[grid-template-columns:160px_1fr_1fr_72px]", gapX, gapY)}>
+        {/* 상단 대표 수치는 2~3열에 위치시켜 가운데 정렬 */}
+        <div className="col-span-2 col-start-2 grid grid-cols-2 text-center">
+          <div className={clsx(typoTop)}>{top?.a}</div>
+          <div className={clsx(typoTop)}>{top?.b}</div>
         </div>
+        {/* 4열(사이드) 상단은 비움 */}
+        <div className="col-start-4" />
 
-        {/* 우측 사이드 */}
-        <aside className="flex flex-col justify-between">
-          <div className="space-y-4">
-            {side.pill1 && (
-              <div className="flex justify-end">
-                <Pill>{side.pill1}</Pill>
-              </div>
-            )}
-            {side.pill2 && (
-              <div className="flex justify-end">
-                <Pill>{side.pill2}</Pill>
-              </div>
-            )}
-            {side.pill3 && (
-              <div className="flex justify-end">
-                <Pill>{side.pill3}</Pill>
-              </div>
-            )}
-          </div>
+        {/* 데이터 행 */}
+        {rows.map((row, i) => {
+          const fmt = row.format ?? (v => v);
 
-          <div className="mt-8 flex items-center justify-end gap-3">
-            <span className="text-20-bold">{side.trophyIcon ?? "🏆"}</span>
-            <span className="text-14-medium md:text-16-medium">{side.trophyText ?? "0개"}</span>
-          </div>
-        </aside>
+          let winA = false,
+            winB = false;
+          if (row.isBetter) {
+            const r = row.isBetter(row.a, row.b);
+            winA = r === "a";
+            winB = r === "b";
+          } else if (row.betterBy && row.betterBy !== "none") {
+            const aNum = typeof row.a === "number" ? (row.a as number) : NaN;
+            const bNum = typeof row.b === "number" ? (row.b as number) : NaN;
+            if (!Number.isNaN(aNum) && !Number.isNaN(bNum)) {
+              winA = strictWin(aNum, bNum, row.betterBy);
+              winB = strictWin(bNum, aNum, row.betterBy);
+            }
+          }
+
+          return (
+            <React.Fragment key={i}>
+              {/* 1열: 라벨 */}
+              <div className={clsx(rowH, "flex items-center", typoLabel)}>{row.label ?? ""}</div>
+              {/* 2열: A */}
+              <ValueCell active={winA} className={clsx(rowH, typoValue)} iconRight={0}>
+                <Pill active={winA}>{fmt(row.a)}</Pill>
+              </ValueCell>
+              {/* 3열: B */}
+              <ValueCell active={winB} className={clsx(rowH, typoValue)} iconRight={0}>
+                <Pill active={winB}>{fmt(row.b)}</Pill>
+              </ValueCell>
+              {/* 4열: 사이드 */}
+              <div className={clsx(rowH, "flex items-center justify-end", typoSide)}>
+                {side?.[i] && <Pill>{side[i]}</Pill>}
+              </div>
+            </React.Fragment>
+          );
+        })}
       </div>
     </section>
   );
-};
-
-export default CompareTable;
+}
