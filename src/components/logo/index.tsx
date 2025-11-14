@@ -1,4 +1,4 @@
-import logoFull from "@/assets/logo_full.png";
+import logoFull from "@/assets/logo/logo_full.png";
 import Image from "next/image";
 import Link from "next/link";
 
