@@ -1,5 +1,10 @@
 import "@/styles/globals.css";
 import type { Preview } from "@storybook/nextjs-vite";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { ReactNode } from 'react';
+
+// QueryClient 인스턴스 생성
+const queryClient = new QueryClient();
 
 const preview: Preview = {
   parameters: {
@@ -18,5 +23,15 @@ const preview: Preview = {
     },
   },
 };
+
+
+// decorators 배열에 QueryClientProvider를 추가
+export const decorators = [
+   (Story: () => ReactNode) => (
+    <QueryClientProvider client={queryClient}>
+      <Story />
+    </QueryClientProvider>
+  ),
+];
 
 export default preview;

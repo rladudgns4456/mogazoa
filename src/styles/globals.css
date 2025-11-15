@@ -157,3 +157,7 @@ body {
     background-color: rgba(0, 0, 0, 0.3);
   }
 }
+
+.swiper-button-prev,.swiper-button-next {
+  display: none !important;
+}
