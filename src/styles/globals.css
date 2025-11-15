@@ -148,6 +148,12 @@ body {
 }
 
 @layer utilities {
+  .scrollbar-custom {
+    overflow: hidden;
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: var(--gray-300) var(--gray-200);
+  }
   .scrollbar-hide::-webkit-scrollbar {
     display: none;
     scrollbar-width: 0 none;
