@@ -105,11 +105,11 @@ export default function HeaderLayout({ children }: { children: ReactNode }) {
             <>
               <Link
                 className="rounded-100 border border-primary-500 px-16 py-12 text-14-bold text-primary-600"
-                href={"/"}
+                href={"/compare"}
               >
                 비교하기
               </Link>
-              <Link className="text-14-bold text-gray-700" href={"/myprofile"}>
+              <Link className="text-14-bold text-gray-700" href={"/mypage"}>
                 내 프로필
               </Link>
             </>
