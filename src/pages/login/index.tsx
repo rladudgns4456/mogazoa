@@ -5,6 +5,7 @@ import Logo from "@/assets/logo.png";
 import LogoTitle from "@/assets/logo_name.png";
 import Button from "@/components/Button";
 import Input from "@/components/input/Input";
+import { useAuth } from "@/components/login/AuthContext";
 import LoginFooter from "@/components/login/footer";
 import { cn } from "@/utils/cn";
 import Head from "next/head";
@@ -24,6 +25,7 @@ interface FormErrors {
 
 export default function Login() {
   const router = useRouter();
+  const { setAuth } = useAuth();
   const [disabled, setDisabled] = useState<boolean>(true);
   const [formData, setFormData] = useState<FormData>({
     email: "",
@@ -108,10 +110,13 @@ export default function Login() {
 
     if (isEmailValid && isPasswordValid) {
       try {
-        await login({
+        const response = await login({
           email: formData.email,
           password: formData.password,
         });
+
+        setAuth(response.user, response.accessToken);
+
         console.log("로그인 성공!");
         router.push("/");
       } catch (e) {

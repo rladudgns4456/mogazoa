@@ -1,17 +1,36 @@
 import IcMenu from "@/assets/icons/ic_menu.svg";
 import IcSearch from "@/assets/icons/ic_search.svg";
 import Input from "@/components/input/Input";
+import { useAuth } from "@/components/login/AuthContext";
 import Logo from "@/components/logo";
 import { useResponsive } from "@/hooks/useReponsive";
 import { cn } from "@/utils/cn";
 import Link from "next/link";
+import { useRouter } from "next/router";
 import { Activity, ReactNode, useEffect, useRef, useState } from "react";
+
+const CATEGORIES_LIST = [
+  "음악",
+  "영화/드라마",
+  "강의/책",
+  "호텔",
+  "가구/인테리어",
+  "식당",
+  "전자기기",
+  "화장품",
+  "의류/악세서리",
+  "앱",
+] as const;
 
 export default function HeaderLayout({ children }: { children: ReactNode }) {
   const [searchValue, setSearchValue] = useState("");
   const [isSearch, setIsSearch] = useState(false);
   const [isMenu, setIsMenu] = useState(false);
+  const { isAuthenticated } = useAuth();
   const { isMobile } = useResponsive();
+  const router = useRouter();
+
+  const ActiveList = router.query.category;
 
   const searchRef = useRef<HTMLDivElement>(null);
   const asideRef = useRef<HTMLDivElement>(null);
@@ -56,6 +75,7 @@ export default function HeaderLayout({ children }: { children: ReactNode }) {
   const LogoHeightSize = isMobile ? 40 : 32;
 
   const hoverCategory = `hover:bg-primary-200 hover:text-primary-600 rounded-8`;
+  const activeCategory = `bg-primary-200 text-primary-600 rounded-8`;
   const sideBarBasic = `cursor-pointer px-20 py-13 text-gray-600`;
 
   return (
@@ -72,12 +92,28 @@ export default function HeaderLayout({ children }: { children: ReactNode }) {
               placeholder="상품 이름을 검색해 보세요"
             />
           </div>
-          <Link className="text-gray-700" href={"/login"}>
-            로그인
-          </Link>
-          <Link className="text-gray-700" href={"/signup"}>
-            회원가입
-          </Link>
+          {!isAuthenticated ? (
+            <>
+              <Link className="text-14-regular text-gray-700" href={"/login"}>
+                로그인
+              </Link>
+              <Link className="text-14-regular text-gray-700" href={"/signup"}>
+                회원가입
+              </Link>
+            </>
+          ) : (
+            <>
+              <Link
+                className="rounded-100 border border-primary-500 px-16 py-12 text-14-bold text-primary-600"
+                href={"/"}
+              >
+                비교하기
+              </Link>
+              <Link className="text-14-bold text-gray-700" href={"/myprofile"}>
+                내 프로필
+              </Link>
+            </>
+          )}
         </div>
       </header>
       <header
@@ -106,19 +142,17 @@ export default function HeaderLayout({ children }: { children: ReactNode }) {
         <Activity mode={isMenu ? "visible" : "hidden"}>
           <aside className="absolute left-0 top-0">
             <div className="fixed h-full w-full bg-black opacity-30"></div>
-            <div className="fixed h-full w-180 bg-white py-10" ref={asideRef}>
+            <div className="fixed h-full w-180 bg-white px-10 py-10" ref={asideRef}>
               <p className="pb-20 pl-20 pt-45 text-14-regular">카테고리</p>
               <ul className="flex flex-col gap-4">
-                <li className={cn(sideBarBasic, hoverCategory)}>음악</li>
-                <li className={cn(sideBarBasic, hoverCategory)}>영화/드라마</li>
-                <li className={cn(sideBarBasic, hoverCategory)}>강의/책</li>
-                <li className={cn(sideBarBasic, hoverCategory)}>호텔</li>
-                <li className={cn(sideBarBasic, hoverCategory)}>가구/인테리어</li>
-                <li className={cn(sideBarBasic, hoverCategory)}>식당</li>
-                <li className={cn(sideBarBasic, hoverCategory)}>전자기기</li>
-                <li className={cn(sideBarBasic, hoverCategory)}>화장품</li>
-                <li className={cn(sideBarBasic, hoverCategory)}>의류/악세서리</li>
-                <li className={cn(sideBarBasic, hoverCategory)}>앱</li>
+                {CATEGORIES_LIST.map((list, i) => (
+                  <li
+                    key={i}
+                    className={cn(sideBarBasic, Number(ActiveList) === i ? activeCategory : null, hoverCategory)}
+                  >
+                    {list}
+                  </li>
+                ))}
               </ul>
             </div>
           </aside>
