@@ -21,6 +21,6 @@
     "incremental": true,
     "types": ["vite-plugin-svgr/client", "vite/client"]
   },
-  "include": ["src/types/svgr.d.ts", "next-env.d.ts", "**/*.ts", "**/*.tsx", "**/*.d.ts", ".next/types/**/*.ts"],
+  "include": ["src/types/svgr.d.ts", "next-env.d.ts", "**/*.ts", "**/*.tsx", "**/*.d.ts", ".next/types/**/*.ts", "src/pages/categories/[id].tsx"],
   "exclude": ["node_modules"]
 }

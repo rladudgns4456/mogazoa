@@ -24,7 +24,6 @@ const preview: Preview = {
   },
 };
 
-
 // decorators 배열에 QueryClientProvider를 추가
 export const decorators = [
    (Story: () => ReactNode) => (
