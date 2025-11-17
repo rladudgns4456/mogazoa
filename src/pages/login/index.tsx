@@ -1,8 +1,8 @@
 import { login } from "@/api/auth/auth";
 import IcGoogle from "@/assets/icons/ic_google.svg";
 import IcKakao from "@/assets/icons/ic_kakao.svg";
-import Logo from "@/assets/logo.png";
-import LogoTitle from "@/assets/logo_name.png";
+import Logo from "@/assets/logo/logo.png";
+import LogoTitle from "@/assets/logo/logo_name.png";
 import Button from "@/components/Button";
 import Input from "@/components/input/Input";
 import { useAuth } from "@/components/login/AuthContext";

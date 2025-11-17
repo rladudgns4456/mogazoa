@@ -1,4 +1,4 @@
-import LogoTitle from "@/assets/logo_name.png";
+import LogoTitle from "@/assets/logo/logo_name.png";
 import Image from "next/image";
 
 export default function LoginFooter() {

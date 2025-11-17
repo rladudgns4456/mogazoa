@@ -1,6 +1,6 @@
 import { signup } from "@/api/auth/auth";
-import Logo from "@/assets/logo.png";
-import LogoTitle from "@/assets/logo_name.png";
+import Logo from "@/assets/logo/logo.png";
+import LogoTitle from "@/assets//logo/logo_name.png";
 import Button from "@/components/Button";
 import Input from "@/components/input/Input";
 import LoginFooter from "@/components/login/footer";
