@@ -15,6 +15,15 @@ export default {
   presets: [pxToRem],
   theme: {
     extend: {
+      keyframes: {
+        shimmer: {
+          "0%": { transform: "translateX(-100%)" },
+          "100%": { transform: "translateX(100%)" },
+        },
+      },
+      animation: {
+        shimmer: "shimmer 2s infinite",
+      },
       fontFamily: {
         spoqa: ["Spoqa Han Sans Neo", "sans-serif"],
         cafe: ["Cafe24SuperMagic", "sans-serif"],
