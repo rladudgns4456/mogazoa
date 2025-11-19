@@ -9,7 +9,7 @@ const ModalWrap = () => {
       {modalState.isOpen &&
         createPortal(
           <div
-            className="black-op30 fixed inset-0 z-[100] min-h-full p-17"
+            className="black-op30 fixed inset-0 z-[100] min-h-full p-17 overflow-y-auto overscroll-none"
             onClick={() => {
               closeModal();
             }}
