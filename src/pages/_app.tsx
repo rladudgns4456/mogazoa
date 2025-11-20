@@ -1,4 +1,6 @@
 import { AuthProvider } from "@/components/login/AuthContext";
+import { ModalProvider } from "@/components/modal/modalBase";
+import { ModalWrap } from "@/components/modal/modalBase";
 import HeaderLayout from "@/layout/headerLayout";
 import { getQueryClient } from "@/lib/reactQuery";
 import "@/styles/globals.css";
@@ -12,10 +14,13 @@ export default function App({ Component, pageProps }: AppProps) {
   return (
     <AuthProvider>
       <QueryClientProvider client={queryClient}>
-        <HeaderLayout>
-          <Component {...pageProps} />
-        </HeaderLayout>
-        <ReactQueryDevtools initialIsOpen={false} />
+        <ModalProvider>
+          <HeaderLayout>
+            <Component {...pageProps} />
+          </HeaderLayout>
+          <ReactQueryDevtools initialIsOpen={false} />
+          <ModalWrap />
+        </ModalProvider>
       </QueryClientProvider>
     </AuthProvider>
   );
