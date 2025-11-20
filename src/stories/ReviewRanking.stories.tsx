@@ -1,4 +1,4 @@
-import ReviewerRanking from "@/components/review/ReviewRanking";
+import ReviewerRanking from "@/components/review/ReviewerRanking";
 import { Reviewer } from "@/types/review";
 
 export default {
