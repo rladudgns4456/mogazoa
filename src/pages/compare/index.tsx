@@ -3,6 +3,7 @@
 import React, { useEffect, useState, useCallback } from "react";
 import Button from "@/components/Button/index";
 import { compareProducts, ProductSummary, MetricKey, CompareResult, MetricResult } from "@/utils/compareUtils";
+import ReplaceModal from "@/components/compare/ReplaceModal";
 
 type CompareSide = "left" | "right";
 
@@ -343,6 +344,14 @@ export default function ComparePage() {
       {compareData && selected.left && selected.right && (
         <CompareResultSection left={selected.left} right={selected.right} data={compareData} />
       )}
+
+      {/* 교체 모달 */}
+      <ReplaceModal
+        state={modalState}
+        selected={selected}
+        onClose={() => setModalState({ isOpen: false, side: null, newProduct: null })}
+        onConfirmReplace={handleConfirmReplace}
+      />
     </div>
   );
 }
@@ -365,9 +374,7 @@ function ProductSlot({ side, product, keyword, onKeywordChange, results, onSelec
   const isLeft = side === "left";
   const defaultImage = isLeft ? ASSET_PATHS.DEFAULT_A : ASSET_PATHS.DEFAULT_B;
   const badgeImage = isLeft ? ASSET_PATHS.BADGE_A : ASSET_PATHS.BADGE_B;
-
-  // 🚨 썸네일 크기 수정: 모바일: h-40 w-40 (160px) / MD 이상: h-64 w-64 (256px)
-  const thumbnailSizeClass = "h-40 w-40 md:h-64 md:w-64";
+  const thumbnailSizeClass = "h-64 w-64";
 
   return (
     <div className={`relative mx-auto flex w-full max-w-[400px] flex-col items-center gap-4`}>

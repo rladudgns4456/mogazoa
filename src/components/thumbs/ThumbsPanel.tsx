@@ -42,7 +42,13 @@ export default function ThumbsPanel({
   };
 
   return (
-    <div title={title} className={cn("flex w-auto flex-col gap-12", className)}>
+    <div
+      title={title}
+      className={cn(
+        "flex w-fit flex-col items-start gap-12", // ⭐ 버튼 길이 강제 Hug
+        className,
+      )}
+    >
       {list.map(x => (
         <ThumbButton
           key={x.id}
@@ -50,6 +56,7 @@ export default function ThumbsPanel({
           count={x.count}
           variant={x.variant ?? "light"}
           onClick={() => handleToggle(x.id)}
+          className="w-fit flex-shrink-0" // ⭐ 버튼 자체도 Hug 유지
         />
       ))}
     </div>

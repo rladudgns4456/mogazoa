@@ -8,6 +8,7 @@ export type ThumbButtonProps = {
   label?: string;
   count?: number;
   variant?: "light" | "dark";
+  size?: "l" | "s"; // ⭐ 추가
   onClick?: () => void;
   className?: string;
   ariaLabel?: string;
@@ -17,11 +18,31 @@ export default function ThumbButton({
   label = "도움이 돼요",
   count = 0,
   variant = "light",
+  size = "l", // ⭐ 기본은 Large
   onClick,
   className,
   ariaLabel,
 }: ThumbButtonProps) {
   const Icon = getThumbIcon(variant === "dark" ? "ic_fill_True" : "ic_fill_False");
+
+  /** ------------------------
+   *  SIZE 스타일 정의
+   *  ------------------------ */
+
+  const sizeStyles =
+    size === "l"
+      ? {
+          container: "flex-row h-[42px] px-16 gap-10 min-w-[135px]",
+          icon: "w-20 h-20",
+          label: "text-14",
+          count: "text-12",
+        }
+      : {
+          container: "flex-col h-[31px] px-8 py-4 gap-2 min-w-[108px]",
+          icon: "w-16 h-16",
+          label: "text-12",
+          count: "text-11",
+        };
 
   return (
     <button
@@ -29,24 +50,41 @@ export default function ThumbButton({
       aria-label={ariaLabel ?? label}
       onClick={onClick}
       className={cn(
-        "h-42 w-180",
-        "flex items-center justify-between rounded-full text-14 font-medium transition-colors",
-        "px-16 shadow-sm ring-1 hover:ring-gray-300",
+        // -------------------------
+        // Large 기본(Hug)
+        // -------------------------
+        "h-[42px] w-auto min-w-[135px] px-16",
+
+        // -------------------------
+        // 모바일 Small(Hug)
+        // -------------------------
+        "md:h-[42px] md:min-w-[135px] md:px-16",
+        "h-[31px] min-w-[108px] px-10",
+
+        "flex items-center justify-between rounded-full shadow-sm ring-1 transition-colors",
         variant === "dark" ? "bg-gray-900 text-white ring-gray-800" : "bg-white text-gray-900 ring-gray-200",
+
         className,
       )}
     >
-      {/* 왼쪽: 아이콘 + 라벨 */}
-      <span className="inline-flex items-center gap-10">
-        <Icon className="h-20 w-20" aria-hidden />
-        <span className="leading-none">{label}</span>
+      <span className="inline-flex items-center gap-10 md:gap-10">
+        <Icon className="h-20 w-20 md:h-20 md:w-20" aria-hidden />
+        <span className="text-12 leading-none md:text-14">{label}</span>
       </span>
 
-      {/* 오른쪽 숫자 pill — 배경/색도 variant에 따라 고정 */}
       <span
         className={cn(
-          "rounded-full px-8 py-2 text-12 leading-none",
-          variant === "dark" ? "bg-white/20 text-white" : "bg-gray-100 text-gray-900",
+          // Large 기본 숫자 크기
+          "text-[14px] md:text-[14px]",
+
+          // Small (모바일) 숫자 크기 더 작게
+          "max-md:text-[11px]",
+
+          // 텍스트와 숫자 사이 5px 간격
+          "ml-[5px]",
+
+          "tabular-nums leading-none",
+          variant === "dark" ? "text-white/80" : "text-gray-500",
         )}
       >
         {count}

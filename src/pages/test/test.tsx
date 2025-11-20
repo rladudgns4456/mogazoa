@@ -30,7 +30,7 @@ export default function TestPage() {
       {/* Thumbs */}
       <div>
         <h2 className="mb-2 font-bold">ThumbsPanel</h2>
-        <ThumbsPanel items={[{ id: "1", label: "도움이 돼요", count: 0, variant: "light" }]} />
+        <ThumbsPanel items={[{ id: "1", label: "도움이 돼요 ", count: 0, variant: "light" }]} />
       </div>
 
       {/* Compare Table */}
