@@ -74,15 +74,9 @@ export default function ThumbButton({
 
       <span
         className={cn(
-          // Large 기본 숫자 크기
           "text-[14px] md:text-[14px]",
-
-          // Small (모바일) 숫자 크기 더 작게
           "max-md:text-[11px]",
-
-          // 텍스트와 숫자 사이 5px 간격
           "ml-[5px]",
-
           "tabular-nums leading-none",
           variant === "dark" ? "text-white/80" : "text-gray-500",
         )}
