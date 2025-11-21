@@ -15,13 +15,14 @@ interface ModalProps {
 
 const MODAL_POSITION = {
   up: "top-1/2 -translate-y-1/2",
-  down: "top-80 -translate-y-40 mb-80",
+  down: "top-80 -translate-y-40",
 };
 
 export default function ModalContainer({ children, styleClass }: ModalProps) {
   const { modalState, closeModal } = useModal();
   const { height } = useHeight();
   const modalRef = useRef<HTMLDivElement>(null);
+  const [isVisible, setIsVisible] = useState(false);
 
   const [isModalHeight, setIsModalHeight] = useState({ height: 0 });
   const [isTopPosition, setTopPosition] = useState(MODAL_POSITION.up);
@@ -31,6 +32,7 @@ export default function ModalContainer({ children, styleClass }: ModalProps) {
       const { clientHeight } = modalRef?.current;
       setIsModalHeight({ height: clientHeight });
     }
+    setIsVisible(modalState.isOpen);
   }, [height]);
 
   // resize 이벤트 등록 및 해제
@@ -42,9 +44,7 @@ export default function ModalContainer({ children, styleClass }: ModalProps) {
         setTopPosition(MODAL_POSITION.up);
       }
     };
-
     handleResize();
-
     window.addEventListener("resize", handleResize);
     // 컴포넌트 언마운트 시 이벤트 제거
     return () => {
@@ -54,11 +54,17 @@ export default function ModalContainer({ children, styleClass }: ModalProps) {
 
   return (
     <div
-      className={cn("absolute left-1/2 z-10 w-fit -translate-x-1/2", isTopPosition)}
+      className={cn("absolute -top-1000 left-1/2 z-10 flex -translate-x-1/2 justify-center", isTopPosition)}
       onClick={e => e.stopPropagation()}
       ref={modalRef}
     >
-      <div className={cn("round-lg mb-40 overflow-hidden border border-gray-200 bg-white", styleClass)}>
+      <div
+        className={cn(
+          "round-lg mb-40 overflow-hidden border border-gray-200 bg-white transition-all duration-300 ease-in-out",
+          styleClass,
+          isVisible ? "mt-0 opacity-100" : "mt-100 opacity-0",
+        )}
+      >
         <div className="relative">
           {children}
           <Button
