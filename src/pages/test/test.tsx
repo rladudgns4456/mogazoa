@@ -1,7 +1,5 @@
 "use client";
 import React from "react";
-import RankingItem from "@/components/ranking/RankingItem";
-import RankingList from "@/components/ranking/RankingList";
 import { CategoryList } from "@/components/category";
 import { ThumbsPanel } from "@/components/thumbs";
 import CompareTable from "@/components/table/CompareTable";
@@ -23,20 +21,6 @@ const categories = [
 export default function TestPage() {
   return (
     <div className="grid grid-cols-2 gap-8 p-8">
-      {/* Ranking */}
-      <div>
-        <h2 className="mb-2 font-bold">RankingItem</h2>
-        <div className="flex gap-2">
-          <RankingItem rank={1} />
-          <RankingItem rank={2} />
-          <RankingItem rank={3} />
-          <RankingItem rank={4} />
-        </div>
-
-        <h2 className="mb-2 mt-6 font-bold">RankingList</h2>
-        <RankingList ranks={[1, 2, 3, 4]} showFrame />
-      </div>
-
       {/* Category */}
       <div>
         <h2 className="mb-2 font-bold">Category</h2>
@@ -46,7 +30,7 @@ export default function TestPage() {
       {/* Thumbs */}
       <div>
         <h2 className="mb-2 font-bold">ThumbsPanel</h2>
-        <ThumbsPanel items={[{ id: "1", label: "도움이 돼요", count: 0, variant: "light" }]} />
+        <ThumbsPanel items={[{ id: "1", label: "도움이 돼요 ", count: 0, variant: "light" }]} />
       </div>
 
       {/* Compare Table */}
