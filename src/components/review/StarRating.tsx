@@ -1,3 +1,5 @@
+"use client";
+
 import { getStarIcon } from "@/assets/icons/star/icons";
 import cn from "clsx";
 import { useState } from "react";
@@ -5,8 +7,7 @@ import { useState } from "react";
 // StarRating 컴포넌트 별점 0~5점
 
 interface StarRatingProps {
-  value?: number;
-  rating?: number; // 읽기 전용 표시용 별점 (readonly=true일 때 사용)
+  rating?: number; // 별점 값 (0~5점)
   onChange?: (rating: number) => void; // 별점 변경 콜백 (readonly=false일 때만 작동)
   readonly?: boolean; // 읽기 전용 여부
   nickname?: string; // 별점 옆에 표시할 닉네임 (readonly=true일 때만 표시)
@@ -15,8 +16,7 @@ interface StarRatingProps {
 }
 
 export default function StarRating({
-  value = 0,
-  rating,
+  rating = 0,
   onChange,
   readonly = false,
   nickname,
@@ -24,9 +24,6 @@ export default function StarRating({
   disabled = false,
 }: StarRatingProps) {
   const [hoveredStar, setHoveredStar] = useState<number | null>(null);
-
-  // readonly일 때는 rating 우선, 아니면 value 사용
-  const currentRating = readonly ? (rating ?? value) : value;
 
   // 반응형 크기: 모바일(기본) → PC/태블릿(md 이상)
   const sizeClasses = readonly ? "w-10 h-10 md:w-15 md:h-15" : "w-23 h-23 md:w-33 md:h-33";
@@ -47,12 +44,13 @@ export default function StarRating({
     if (!readonly) setHoveredStar(null);
   };
 
-  const displayRating = readonly ? currentRating : (hoveredStar ?? currentRating);
+  const displayRating = readonly ? rating : (hoveredStar ?? rating);
 
   return (
     <div className={cn("flex items-center", gap, className)} onMouseLeave={handleMouseLeave}>
       <div className={cn("flex", gap)}>
-        {[1, 2, 3, 4, 5].map(star => {
+        {Array.from({ length: 5 }, (_, i) => {
+          const star = i + 1;
           const isFilled = star <= displayRating;
           // readonly면 검은별, 인터랙티브면 노란별
           const filledIcon = readonly ? "ic_star_fill" : "ic_star_y";
