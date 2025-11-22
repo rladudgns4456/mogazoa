@@ -18,7 +18,7 @@ export default function ComboBox({ placeHolder = "선택", items, styleClass, in
   const selectRef = useRef<HTMLDivElement | null>(null);
   const [isOpen, setIsOpen] = useState<boolean>(false);
   const [isOptionValue, setIsOptionValue] = useState<string>(placeHolder); //선택 옵션 텍스트
-  const [isOptionId, setIsOptionId] = useState<number | undefined>(initialValue);//선택 옵션 스타일 상태
+  const [isOptionId, setIsOptionId] = useState<number | undefined>(initialValue); //선택 옵션 스타일 상태
 
   const onHandleOutSideClick = (e: MouseEvent) => {
     if (isOpen && !selectRef.current?.contains(e.target as Node)) {
@@ -51,7 +51,7 @@ export default function ComboBox({ placeHolder = "선택", items, styleClass, in
       {isOpen && (
         <ul
           className={cn(
-            "round-md scrollbar-custom mt-8 flex max-h-228 flex-col gap-y-5 border border-gray-400 p-10 md:max-h-258",
+            "round-md scrollbar-custom absolute mt-8 flex max-h-228 w-full flex-col gap-y-5 border border-gray-400 p-10 md:max-h-258",
             "md:mt-12",
           )}
         >
@@ -66,7 +66,7 @@ export default function ComboBox({ placeHolder = "선택", items, styleClass, in
                     "round-ss px-20 py-8 text-14-medium text-gray-600 transition duration-300 hover:bg-gray-100 md:py-10",
                     "md:text-16-medium",
                     styleClass.optionItem,
-                    isOptionId === item.id ? styleClass.selected : "",//선택 옵션 스타일
+                    isOptionId === item.id ? styleClass.selected : "", //선택 옵션 스타일
                   )}
                   onClick={() => {
                     setIsOpen(prev => !prev);
