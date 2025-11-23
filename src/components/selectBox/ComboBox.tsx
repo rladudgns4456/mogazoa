@@ -51,7 +51,7 @@ export default function ComboBox({ placeHolder = "선택", items, styleClass, in
       {isOpen && (
         <ul
           className={cn(
-            "round-md scrollbar-custom absolute mt-8 flex max-h-228 w-full flex-col gap-y-5 border border-gray-400 p-10 md:max-h-258",
+            "round-md scrollbar-custom absolute mt-8 flex max-h-228 w-full flex-col gap-y-5 border border-gray-400 bg-white p-10 md:max-h-258",
             "md:mt-12",
           )}
         >
