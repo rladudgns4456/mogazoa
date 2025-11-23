@@ -2,34 +2,36 @@
 
 import React, { useEffect, useState, useCallback } from "react";
 import Button from "@/components/Button/index";
-import { compareProducts, ProductSummary, MetricKey, CompareResult, MetricResult } from "@/utils/compareUtils";
 import ReplaceModal from "@/components/compare/ReplaceModal";
+import { compareProducts, ProductSummary, MetricKey, CompareResult, MetricResult } from "@/utils/compareUtils";
 
 type CompareSide = "left" | "right";
 
 const STORAGE_KEY = "mogazoa:compare-products";
 
-// 환경 변수 설정
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE as string;
-const TEAM_ID = process.env.NEXT_PUBLIC_TEAM_ID ?? "18-2";
-
+// ==========================================================
 // 이미지 경로 정의
+// ==========================================================
 const ASSET_PATHS = {
   DEFAULT_A: "/assets/images/compare/compare_default_A.png",
   DEFAULT_B: "/assets/images/compare/compare_default_B.png",
   BADGE_A: "/assets/images/compare/compare_a.png",
   BADGE_B: "/assets/images/compare/compare_b.png",
-  WIN_BADGE: "/assets/images/compare/win.png",
+  WIN_BADGE: "/assets/images/compare/win.png", // public/assets/images/compare/win.png
 };
 
-// 메트릭 레이블 및 아이콘 (조회수 -> 리뷰 개수로 변경)
+// ==========================================================
+// 메트릭 레이블
+// ==========================================================
 const METRIC_LIST: { key: MetricKey; label: string; icon: string }[] = [
   { key: "rating", label: "별점", icon: "⭐" },
   { key: "viewCount", label: "리뷰 개수", icon: "📝" },
   { key: "favoriteCount", label: "찜 개수", icon: "🫶🏻" },
 ];
 
+// ==========================================================
 // API 응답 타입 정의
+// ==========================================================
 interface ProductApiResponse {
   id: number;
   name: string;
@@ -43,14 +45,28 @@ interface SearchApiResponse {
   list?: ProductApiResponse[];
 }
 
-// 공통: 상품 1개 조회 (최신 데이터)
-async function fetchProductById(id: number): Promise<ProductSummary> {
-  if (!API_BASE) throw new Error("API_BASE 환경 변수가 설정되지 않았습니다.");
+// ==========================================================
+// API 베이스 URL (환경 변수)
+// ==========================================================
+const API_BASE = process.env.NEXT_PUBLIC_API_BASE as string;
 
-  const res = await fetch(`${API_BASE}/products/${id}`);
-  if (!res.ok) {
-    throw new Error("상품 조회 실패");
-  }
+if (!API_BASE) {
+  throw new Error("NEXT_PUBLIC_API_BASE 환경 변수가 설정되어 있지 않습니다.");
+}
+
+console.log("✅ API_BASE:", API_BASE);
+
+// ==========================================================
+// API 호출 유틸
+// ==========================================================
+
+// 상품 단건 조회 (항상 최신 데이터 기준)
+async function fetchProductById(id: number): Promise<ProductSummary> {
+  const url = `${API_BASE}/products/${id}`;
+
+  const res = await fetch(url);
+  if (!res.ok) throw new Error("상품 조회 실패");
+
   const data: ProductApiResponse = await res.json();
 
   return {
@@ -63,31 +79,40 @@ async function fetchProductById(id: number): Promise<ProductSummary> {
   };
 }
 
-// 공통: 상품 리스트 검색
+// 상품 검색
 async function searchProductsApi(keyword: string): Promise<ProductSummary[]> {
-  if (!keyword.trim() || !API_BASE) return [];
+  if (!keyword.trim()) return [];
 
-  const res = await fetch(`${API_BASE}/products?query=${encodeURIComponent(keyword)}&size=5`);
-  if (!res.ok) {
+  try {
+    const url = `${API_BASE}/products?query=${encodeURIComponent(keyword)}&size=5`;
+
+    const res = await fetch(url);
+
+    if (!res.ok) {
+      console.error("searchProductsApi not ok:", res.status, res.statusText);
+      return [];
+    }
+
+    const json: SearchApiResponse = await res.json();
+    const items: ProductApiResponse[] = json.list ?? [];
+
+    return items.map(p => ({
+      id: p.id,
+      name: p.name,
+      thumbnailUrl: p.thumbnailUrl ?? null,
+      rating: p.rating,
+      favoriteCount: p.favoriteCount,
+      viewCount: p.viewCount,
+    }));
+  } catch (error) {
+    console.error("searchProductsApi error:", error);
     return [];
   }
-  const json: SearchApiResponse = await res.json();
-
-  const items: ProductApiResponse[] = (json.list ?? []) as ProductApiResponse[];
-
-  return items.map((p: ProductApiResponse) => ({
-    id: p.id,
-    name: p.name,
-    thumbnailUrl: p.thumbnailUrl ?? null,
-    rating: p.rating,
-    favoriteCount: p.favoriteCount,
-    viewCount: p.viewCount,
-  }));
 }
 
-// ------------------------------------------------------------------
-// ComparePage 컴포넌트 정의
-// ------------------------------------------------------------------
+// ==========================================================
+// ComparePage 컴포넌트
+// ==========================================================
 export default function ComparePage() {
   const [selected, setSelected] = useState<{
     left: ProductSummary | null;
@@ -123,7 +148,9 @@ export default function ComparePage() {
     newProduct: null,
   });
 
-  // ----------------- 초기 로드 -----------------
+  // ----------------------------------------------------------
+  // 초기 로딩: 저장된 상품 복원
+  // ----------------------------------------------------------
   useEffect(() => {
     if (typeof window === "undefined") return;
     const raw = window.localStorage.getItem(STORAGE_KEY);
@@ -136,13 +163,10 @@ export default function ComparePage() {
       };
 
       (async () => {
-        const [left, right]: [ProductSummary | null, ProductSummary | null] = await Promise.all([
-          parsed.leftId ? fetchProductById(parsed.leftId) : Promise.resolve(null),
-          parsed.rightId ? fetchProductById(parsed.rightId) : Promise.resolve(null),
-        ]);
+        const left = parsed.leftId ? await fetchProductById(parsed.leftId) : null;
+        const right = parsed.rightId ? await fetchProductById(parsed.rightId) : null;
 
         setSelected({ left, right });
-
         setKeyword({
           left: left?.name ?? "",
           right: right?.name ?? "",
@@ -153,9 +177,12 @@ export default function ComparePage() {
     }
   }, []);
 
-  // 선택 상품 id를 localStorage에 저장
+  // ----------------------------------------------------------
+  // 선택된 상품 ID 로컬스토리지 저장 + 비교 결과 초기화
+  // ----------------------------------------------------------
   const persistIds = useCallback((next: { left: ProductSummary | null; right: ProductSummary | null }) => {
     if (typeof window === "undefined") return;
+
     window.localStorage.setItem(
       STORAGE_KEY,
       JSON.stringify({
@@ -163,21 +190,22 @@ export default function ComparePage() {
         rightId: next.right?.id ?? null,
       }),
     );
+    // 상품이 바뀌면 이전 비교 결과는 초기화
     setCompareData(null);
   }, []);
 
-  // 상품 선택/교체 로직
+  // ----------------------------------------------------------
+  // 상품 선택 & 교체
+  // ----------------------------------------------------------
   const handleSelectProduct = (side: CompareSide, product: ProductSummary) => {
+    // 이미 양쪽 다 선택된 상태라면 교체 모달 오픈
     if (selected.left && selected.right) {
-      setModalState({
-        isOpen: true,
-        side,
-        newProduct: product,
-      });
+      setModalState({ isOpen: true, side, newProduct: product });
       setSearchResult(prev => ({ ...prev, [side]: [] }));
       return;
     }
 
+    // 한쪽만 선택된 상태면 바로 세팅
     setSelected(prev => {
       const next = { ...prev, [side]: product };
       persistIds(next);
@@ -188,44 +216,40 @@ export default function ComparePage() {
     setSearchResult(prev => ({ ...prev, [side]: [] }));
   };
 
-  // 모달에서 교체 확정 시 실행되는 함수
-  const handleConfirmReplace = useCallback(
-    (sideToKeep: CompareSide, newProduct: ProductSummary) => {
-      const sideToReplace = sideToKeep === "left" ? "right" : "left";
+  const handleConfirmReplace = (sideToKeep: CompareSide, newProduct: ProductSummary) => {
+    const sideToReplace: CompareSide = sideToKeep === "left" ? "right" : "left";
 
-      setSelected(prev => {
-        const next: typeof selected = { ...prev };
-        next[sideToReplace] = newProduct;
+    setSelected(prev => {
+      const next = { ...prev, [sideToReplace]: newProduct };
+      persistIds(next);
+      return next;
+    });
 
-        setKeyword(k => ({ ...k, [sideToReplace]: newProduct.name }));
+    setKeyword(prev => ({
+      ...prev,
+      [sideToReplace]: newProduct.name,
+    }));
 
-        persistIds(next);
-        return next;
-      });
+    setModalState({ isOpen: false, side: null, newProduct: null });
+  };
 
-      setModalState({ isOpen: false, side: null, newProduct: null });
-    },
-    [persistIds],
-  );
-
-  // 선택 해제 (수정/제거)
+  // ----------------------------------------------------------
+  // 선택 해제
+  // ----------------------------------------------------------
   const handleClear = (side: CompareSide) => {
     setSelected(prev => {
       const next = { ...prev, [side]: null };
       persistIds(next);
       return next;
     });
+
     setKeyword(prev => ({ ...prev, [side]: "" }));
     setSearchResult(prev => ({ ...prev, [side]: [] }));
   };
 
-  // 검색어 변경 + 검색
-  const handleChangeKeyword = (side: CompareSide, value: string) => {
-    setKeyword(prev => ({ ...prev, [side]: value }));
-    searchProducts(side, value);
-  };
-
-  // 실제 검색 함수
+  // ----------------------------------------------------------
+  // 검색 실행
+  // ----------------------------------------------------------
   const searchProducts = useCallback(async (side: CompareSide, value: string) => {
     if (!value.trim()) {
       setSearchResult(prev => ({ ...prev, [side]: [] }));
@@ -235,7 +259,14 @@ export default function ComparePage() {
     setSearchResult(prev => ({ ...prev, [side]: list }));
   }, []);
 
-  // 비교 버튼 클릭
+  const handleChangeKeyword = (side: CompareSide, value: string) => {
+    setKeyword(prev => ({ ...prev, [side]: value }));
+    searchProducts(side, value);
+  };
+
+  // ----------------------------------------------------------
+  // 비교 실행
+  // ----------------------------------------------------------
   const handleCompare = async () => {
     if (!selected.left || !selected.right) return;
 
@@ -243,7 +274,8 @@ export default function ComparePage() {
     setCompareData(null);
 
     try {
-      const [freshLeft, freshRight]: ProductSummary[] = await Promise.all([
+      // 항상 최신 데이터를 기준으로 비교
+      const [freshLeft, freshRight] = await Promise.all([
         fetchProductById(selected.left.id),
         fetchProductById(selected.right.id),
       ]);
@@ -252,8 +284,7 @@ export default function ComparePage() {
 
       const result = compareProducts(freshLeft, freshRight);
       setCompareData(result);
-    } catch (e) {
-      console.error("비교 중 에러 발생:", e);
+    } catch {
       alert("상품 정보를 불러오는 데 실패했습니다.");
     } finally {
       setIsComparing(false);
@@ -261,86 +292,73 @@ export default function ComparePage() {
   };
 
   const isReady = !!(selected.left && selected.right);
+  const selectedCount = (selected.left ? 1 : 0) + (selected.right ? 1 : 0);
 
   return (
     <div className="px-4 py-10 md:px-10 lg:px-24">
       <h1 className="mb-10 text-center text-32-bold">둘 중 뭐가 더 나을까?</h1>
 
-      {/* 상단 비교 영역 */}
+      {/* 상단 비교 영역 (기본 / typing / filled 상태) */}
       <div className="flex justify-center">
-        {/* max-w-[1280px]은 피그마에서 확인된 PC 최대 너비를 참고했습니다. */}
         <div className="grid w-full max-w-[1280px] grid-cols-1 items-start gap-10 md:grid-cols-[1fr_auto_1fr] md:gap-6">
-          {/* A (LEFT) 슬롯 영역 */}
+          {/* LEFT */}
           <div className="flex justify-center md:justify-end lg:justify-start">
-            {/* 좌측 메트릭 리스트 (PC에서만 표시) */}
-            <div className="hidden w-[120px] pr-6 pt-24 lg:block">
-              <ul className="space-y-4 text-right">
-                {METRIC_LIST.map(m => (
-                  <li key={m.key} className="text-16-medium text-gray-700">
-                    {m.icon} {m.label}
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-            {/* A 상품 슬롯 */}
             <ProductSlot
               side="left"
               product={selected.left}
               keyword={keyword.left}
-              onKeywordChange={(v: string) => handleChangeKeyword("left", v)}
+              onKeywordChange={value => handleChangeKeyword("left", value)}
               results={searchResult.left}
-              onSelectProduct={(p: ProductSummary) => handleSelectProduct("left", p)}
+              onSelectProduct={product => handleSelectProduct("left", product)}
               onClear={() => handleClear("left")}
             />
           </div>
 
-          {/* 중앙 VS 텍스트 (MD 이상에서만 표시) */}
-          {/* 상품 카드의 중앙 높이에 맞추기 위해 pt 클래스 조정 */}
+          {/* VS (데스크톱) */}
           <div className="hidden items-center justify-center pt-32 md:flex lg:pt-36">
             <span className="text-40-bold text-gray-500">VS</span>
           </div>
 
-          {/* B (RIGHT) 슬롯 영역 */}
+          {/* RIGHT */}
           <div className="flex justify-center md:justify-start lg:justify-end">
             <ProductSlot
               side="right"
               product={selected.right}
               keyword={keyword.right}
-              onKeywordChange={(v: string) => handleChangeKeyword("right", v)}
+              onKeywordChange={value => handleChangeKeyword("right", value)}
               results={searchResult.right}
-              onSelectProduct={(p: ProductSummary) => handleSelectProduct("right", p)}
+              onSelectProduct={product => handleSelectProduct("right", product)}
               onClear={() => handleClear("right")}
             />
           </div>
         </div>
       </div>
 
-      {/* 모바일에서만 보이는 VS 텍스트 (A와 B 사이에 배치) */}
+      {/* 모바일 VS */}
       <div className="mt-6 flex items-center justify-center md:hidden">
         <span className="text-40-bold text-gray-500">VS</span>
       </div>
 
-      {/* 비교 버튼 / 안내 메시지 */}
+      {/* 비교하기 버튼 + 안내 메시지 */}
       <div className="mt-10 flex flex-col items-center gap-3">
         {isComparing && <p className="text-14-regular text-gray-500">최신 데이터를 불러오는 중...</p>}
+
         {!isReady && !isComparing && (
-          <p className="text-14-regular text-gray-500">비교할 상품을 두 개 모두 선택해주세요.</p>
+          <p className="text-14-regular text-gray-500">비교할 상품 2개를 입력해 주세요 ({selectedCount}/2)</p>
         )}
 
         <Button
           type="button"
           variant="primary"
-          // w-full max-w-md 는 그대로 유지하되, 높이를 h-56으로 명시
           styleClass="w-full max-w-md !h-[56px]"
           onClick={handleCompare}
           disabled={!isReady || isComparing}
         >
-          {isComparing ? "비교 중..." : "비교하기"}
+          {isComparing ? "비교 중..." : "상품 비교하기"}
         </Button>
       </div>
 
-      {/* 비교 결과 */}
+      {/* 비교 결과 영역 (승리 / 무승부 상태) */}
       {compareData && selected.left && selected.right && (
         <CompareResultSection left={selected.left} right={selected.right} data={compareData} />
       )}
@@ -356,10 +374,10 @@ export default function ComparePage() {
   );
 }
 
-// ------------------------------------------------------------------
-// ProductSlot 컴포넌트 정의 (이미지 크기 수정 및 정렬 유지)
-// ------------------------------------------------------------------
-
+// ==========================================================
+// ProductSlot 컴포넌트 (한쪽 슬롯: A / B)
+//  - 기본 / typing / filled 상태 UI 담당
+// ==========================================================
 type ProductSlotProps = {
   side: CompareSide;
   product: ProductSummary | null;
@@ -374,44 +392,46 @@ function ProductSlot({ side, product, keyword, onKeywordChange, results, onSelec
   const isLeft = side === "left";
   const defaultImage = isLeft ? ASSET_PATHS.DEFAULT_A : ASSET_PATHS.DEFAULT_B;
   const badgeImage = isLeft ? ASSET_PATHS.BADGE_A : ASSET_PATHS.BADGE_B;
-  const thumbnailSizeClass = "h-64 w-64";
+
+  const badgeSizeClass = "h-[180px] w-[180px] rounded-[20px]";
+  const thumbnailSizeClass = "h-[200px] w-[260px] rounded-[20px]";
 
   return (
-    <div className={`relative mx-auto flex w-full max-w-[400px] flex-col items-center gap-4`}>
-      {/* 1. 상단 배지 이미지 & 이름 */}
+    <div className="relative mx-auto flex w-full max-w-[500px] flex-col items-center gap-8">
+      {/* 1. 상단 A/B 배지 이미지 */}
       <div className="flex flex-col items-center">
-        <img src={badgeImage} alt={`${isLeft ? "A" : "B"} 배지`} className="h-12 w-12" />
-        <p className="mt-1 text-20-bold text-gray-900">{isLeft ? "A" : "B"}</p>
+        <img
+          src={badgeImage}
+          alt={`${isLeft ? "A" : "B"} 배지`}
+          className={`${badgeSizeClass} bg-gray-200 object-cover`}
+        />
       </div>
 
-      {/* 2. 입력 박스 (점선 적용) */}
-      <div className="relative w-full">
-        <div
-          className={`flex items-center gap-2 rounded-full border-2 border-dashed bg-white px-4 py-3 text-16-regular shadow-sm ${product ? "border-primary-500" : "border-gray-400"}`}
-        >
+      {/* 2. 인풋 박스 + 자동완성 (기본 / typing / filled) */}
+      <div className="relative flex w-full justify-center">
+        <div className="flex w-full max-w-[350px] items-center gap-3 rounded-full border-[2px] border-dashed border-[#FD7E35] bg-white px-5 py-[14px] shadow-sm">
           <input
             value={keyword}
             onChange={e => onKeywordChange(e.target.value)}
             placeholder={product ? product.name : "상품명을 입력해주세요"}
-            className={`flex-1 truncate bg-transparent text-16-medium outline-none ${product ? "text-gray-900" : "text-gray-500"}`}
+            className="flex-1 truncate bg-transparent text-16-medium text-gray-900 outline-none placeholder:text-gray-500"
             readOnly={!!product}
           />
+
           {product && (
-            <button type="button" onClick={onClear} className="text-14-medium text-primary-500 hover:text-red-500">
+            <button type="button" onClick={onClear} className="text-14-medium text-[#FD7E35] hover:text-red-500">
               삭제
             </button>
           )}
         </div>
 
-        {/* 자동완성 리스트 */}
+        {/* 자동완성 드롭다운 (typing 상태) */}
         {results.length > 0 && keyword.trim() && !product && (
-          <ul
-            className={`absolute z-10 mt-1 max-h-60 w-full overflow-y-auto rounded-xl border border-gray-200 bg-white shadow-lg`}
-          >
-            {results.map((item: ProductSummary) => (
+          <ul className="absolute left-1/2 top-full z-10 mt-1 max-h-60 w-full max-w-[350px] -translate-x-1/2 overflow-y-auto rounded-xl border border-gray-200 bg-white shadow-lg">
+            {results.map(item => (
               <li
                 key={item.id}
-                className="cursor-pointer px-4 py-2 text-14-regular first:rounded-t-xl last:rounded-b-xl hover:bg-gray-50"
+                className="cursor-pointer px-4 py-2 text-14-regular hover:bg-gray-50"
                 onClick={() => onSelectProduct(item)}
               >
                 {item.name}
@@ -421,31 +441,50 @@ function ProductSlot({ side, product, keyword, onKeywordChange, results, onSelec
         )}
       </div>
 
-      {/* 3. 디폴트 썸네일 카드 - 크기 수정 및 p-1 제거 */}
-      <div
-        // p-1 제거로 인해 border 안쪽 전체 공간을 이미지에 할당
-        className={`mt-4 ${thumbnailSizeClass} rounded-2xl border-2 shadow-lg ${isLeft ? "border-primary-400" : "border-error"} ${product ? "bg-white" : "bg-gray-100"} overflow-hidden`}
-      >
-        {product ? (
+      {/* 3. 이미지 + 메트릭 카드 (filled / 기본) */}
+      <div className="flex flex-col items-center gap-4">
+        {/* 썸네일 이미지 */}
+        <div className={`${thumbnailSizeClass} bg-gray-150 overflow-hidden shadow-lg ${product ? "bg-white" : ""}`}>
           <img
-            src={product.thumbnailUrl ?? defaultImage}
-            alt={product.name}
-            className="h-full w-full rounded-2xl object-cover"
+            src={product?.thumbnailUrl ?? defaultImage}
+            alt={product?.name ?? "디폴트"}
+            className="h-full w-full object-cover"
           />
-        ) : (
-          <img
-            src={defaultImage}
-            alt={`${isLeft ? "A" : "B"} 디폴트`}
-            className="h-full w-full rounded-2xl object-cover"
-          />
-        )}
+        </div>
+
+        {/* 메트릭 카드: 별점 / 리뷰 개수 / 찜 개수 or 플레이스홀더 */}
+        <div className="w-full max-w-[350px] rounded-2xl bg-gray-50 px-6 py-4">
+          {product ? (
+            <ul className="flex flex-col gap-3 text-14-medium text-gray-900">
+              {METRIC_LIST.map(m => (
+                <li key={m.key} className="flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-2 text-gray-500">
+                    <span className="text-[18px]" aria-hidden>
+                      {m.icon}
+                    </span>
+                    <span>{m.label}</span>
+                  </div>
+                  <span className="text-14-bold">
+                    {product[m.key].toLocaleString()}
+                    {m.key === "rating" ? "" : "개"}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <div className="flex h-[112px] items-center justify-center text-14-regular text-gray-400">
+              비교할 상품을 입력해 주세요
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
 }
 
-// -------------------- 비교 결과 섹션 --------------------
-
+// ==========================================================
+// 결과 섹션 (승리 / 무승부 상태 UI)
+// ==========================================================
 type CompareResultSectionProps = {
   left: ProductSummary;
   right: ProductSummary;
@@ -455,7 +494,7 @@ type CompareResultSectionProps = {
 function metricLabel(metric: MetricKey): string {
   if (metric === "rating") return "별점";
   if (metric === "favoriteCount") return "찜 개수";
-  return "리뷰 개수"; // 조회수 대신 리뷰 개수 텍스트 사용
+  return "리뷰 개수";
 }
 
 function CompareResultSection({ left, right, data }: CompareResultSectionProps) {
@@ -463,68 +502,68 @@ function CompareResultSection({ left, right, data }: CompareResultSectionProps) 
 
   const overallText =
     overall === "draw"
-      ? "우열을 가릴 수 없는 흥미진진한 대결이었어요!"
-      : `${overall === "left" ? `'${left.name}'` : `'${right.name}'`} 이(가) 승리하여 더 나은 선택이에요!`;
+      ? "둘 다 좋은 선택이에요!"
+      : `${overall === "left" ? `'${left.name}'` : `'${right.name}'`} 이(가) 승리했어요!`;
 
-  const leftWin = overall === "left";
-  const rightWin = overall === "right";
+  const getWinnerName = (winner: "left" | "right" | "draw") => {
+    if (winner === "draw") return "무승부";
+    return winner === "left" ? left.name : right.name;
+  };
 
   return (
-    <section className="mt-12">
-      <p className="mb-6 text-center text-18-bold text-primary-600">{overallText}</p>
+    <section className="mt-16">
+      {/* 전체 결과 문구 */}
+      <p className="mb-3 text-center text-24-bold text-primary-600">{overallText}</p>
 
-      {/* 조아 뱃지 표시 */}
-      <div className="mx-auto mb-8 flex max-w-3xl justify-center">
-        {overall !== "draw" && <img src={ASSET_PATHS.WIN_BADGE} alt="조아 뱃지" className="h-auto w-24" />}
-      </div>
+      <p className="mb-8 text-center text-14-regular text-gray-500">상품을 선택하는 데 참고해 보세요!</p>
 
+      {/* 전체 승자 배지 (승리일 때만) */}
+      {overall !== "draw" && (
+        <div className="mx-auto mb-8 flex max-w-3xl justify-center">
+          <img src={ASSET_PATHS.WIN_BADGE} alt="WIN" className="w-24" />
+        </div>
+      )}
+
+      {/* 상세 비교 테이블 */}
       <div className="mx-auto max-w-3xl overflow-hidden rounded-xl border border-gray-100 bg-white shadow-md">
         <table className="w-full text-center text-14-regular">
           <thead className="bg-gray-50">
             <tr>
-              <th className={`py-3 text-16-bold ${leftWin ? "text-primary-500" : "text-gray-900"}`}>{left.name}</th>
+              <th className="py-3 text-16-bold">{left.name}</th>
               <th className="py-3 text-16-bold">항목</th>
-              <th className={`py-3 text-16-bold ${rightWin ? "text-primary-500" : "text-gray-900"}`}>{right.name}</th>
+              <th className="py-3 text-16-bold">{right.name}</th>
             </tr>
           </thead>
           <tbody>
             {results.map((r: MetricResult) => {
-              const leftStrong = r.winner === "left";
-              const rightStrong = r.winner === "right";
-
-              // diffText는 차이 값을 보여주기 위해 사용
-              const diffText =
-                r.winner === "draw"
-                  ? "0"
-                  : r.winner === "left"
-                    ? `+${r.diff.toLocaleString()}`
-                    : `+${r.diff.toLocaleString()}`; // 절대값이므로 양수로 표시
+              const isLeftWin = r.winner === "left";
+              const isRightWin = r.winner === "right";
+              const isDraw = r.winner === "draw";
 
               return (
                 <tr key={r.metric} className="border-t border-gray-100">
-                  <td className="py-3">
-                    <span className={leftStrong ? "text-18-medium font-bold text-primary-500" : "text-16-regular"}>
-                      {r.leftValue.toLocaleString()} {r.metric === "rating" ? "점" : "개"}
-                    </span>
-                    {/* 개별 지표의 승자 텍스트를 값 아래에 표시 */}
-                    {leftStrong && (
-                      <span className="mt-1 block text-12-regular text-primary-400">WIN! ({diffText})</span>
-                    )}
+                  {/* 왼쪽 값 */}
+                  <td className={`py-3 ${isLeftWin ? "font-semibold text-primary-600" : ""}`}>
+                    {r.leftValue.toLocaleString()}
                   </td>
+
+                  {/* 메트릭 이름 + 차이/승자 설명 */}
                   <td className="py-3">
-                    <div className="flex flex-col items-center gap-1">
-                      <span className="text-14-medium">{metricLabel(r.metric)}</span>
-                      {r.winner === "draw" && <span className="text-12-regular text-gray-400">동점</span>}
+                    <div className="text-14-medium">{metricLabel(r.metric)}</div>
+                    <div className="mt-1 text-12-regular text-gray-500">
+                      {isDraw ? (
+                        <>무승부</>
+                      ) : (
+                        <>
+                          {getWinnerName(r.winner)}이(가) {r.diff.toLocaleString()} 만큼 더 우세해요.
+                        </>
+                      )}
                     </div>
                   </td>
-                  <td className="py-3">
-                    <span className={rightStrong ? "text-18-medium font-bold text-primary-500" : "text-16-regular"}>
-                      {r.rightValue.toLocaleString()} {r.metric === "rating" ? "점" : "개"}
-                    </span>
-                    {/* 개별 지표의 승자 텍스트를 값 아래에 표시 */}
-                    {rightStrong && (
-                      <span className="mt-1 block text-12-regular text-primary-400">WIN! ({diffText})</span>
-                    )}
+
+                  {/* 오른쪽 값 */}
+                  <td className={`py-3 ${isRightWin ? "font-semibold text-primary-600" : ""}`}>
+                    {r.rightValue.toLocaleString()}
                   </td>
                 </tr>
               );
