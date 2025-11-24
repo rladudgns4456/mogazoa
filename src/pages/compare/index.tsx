@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useState, useCallback } from "react";
-import Button from "@/components/Button/index";
+import Button from "@/components/Button";
 import ReplaceModal from "@/components/compare/ReplaceModal";
 import { compareProducts, ProductSummary, MetricKey, CompareResult, MetricResult } from "@/utils/compareUtils";
 
@@ -17,7 +17,7 @@ const ASSET_PATHS = {
   DEFAULT_B: "/assets/images/compare/compare_default_B.png",
   BADGE_A: "/assets/images/compare/compare_a.png",
   BADGE_B: "/assets/images/compare/compare_b.png",
-  WIN_BADGE: "/assets/images/compare/win.png", // public/assets/images/compare/win.png
+  WIN_BADGE: "/assets/images/compare/win.png",
 };
 
 // ==========================================================
@@ -25,7 +25,7 @@ const ASSET_PATHS = {
 // ==========================================================
 const METRIC_LIST: { key: MetricKey; label: string; icon: string }[] = [
   { key: "rating", label: "별점", icon: "⭐" },
-  { key: "viewCount", label: "리뷰 개수", icon: "📝" },
+  { key: "reviewCount", label: "리뷰 개수", icon: "📝" },
   { key: "favoriteCount", label: "찜 개수", icon: "🫶🏻" },
 ];
 
@@ -35,10 +35,11 @@ const METRIC_LIST: { key: MetricKey; label: string; icon: string }[] = [
 interface ProductApiResponse {
   id: number;
   name: string;
-  thumbnailUrl?: string | null;
+  image?: string | null; // swagger의 image
+  thumbnailUrl?: string | null; // 혹시 이미 이렇게 내려오는 경우 대비
   rating: number;
+  reviewCount: number;
   favoriteCount: number;
-  viewCount: number;
 }
 
 interface SearchApiResponse {
@@ -56,6 +57,11 @@ if (!API_BASE) {
 
 console.log("✅ API_BASE:", API_BASE);
 
+// 공통 썸네일 추출
+function getThumb(src: ProductApiResponse): string | null {
+  return src.thumbnailUrl ?? src.image ?? null;
+}
+
 // ==========================================================
 // API 호출 유틸
 // ==========================================================
@@ -63,8 +69,8 @@ console.log("✅ API_BASE:", API_BASE);
 // 상품 단건 조회 (항상 최신 데이터 기준)
 async function fetchProductById(id: number): Promise<ProductSummary> {
   const url = `${API_BASE}/products/${id}`;
-
   const res = await fetch(url);
+
   if (!res.ok) throw new Error("상품 조회 실패");
 
   const data: ProductApiResponse = await res.json();
@@ -72,10 +78,10 @@ async function fetchProductById(id: number): Promise<ProductSummary> {
   return {
     id: data.id,
     name: data.name,
-    thumbnailUrl: data.thumbnailUrl ?? null,
+    thumbnailUrl: getThumb(data),
     rating: data.rating,
+    reviewCount: data.reviewCount,
     favoriteCount: data.favoriteCount,
-    viewCount: data.viewCount,
   };
 }
 
@@ -85,7 +91,6 @@ async function searchProductsApi(keyword: string): Promise<ProductSummary[]> {
 
   try {
     const url = `${API_BASE}/products?query=${encodeURIComponent(keyword)}&size=5`;
-
     const res = await fetch(url);
 
     if (!res.ok) {
@@ -99,10 +104,10 @@ async function searchProductsApi(keyword: string): Promise<ProductSummary[]> {
     return items.map(p => ({
       id: p.id,
       name: p.name,
-      thumbnailUrl: p.thumbnailUrl ?? null,
+      thumbnailUrl: getThumb(p),
       rating: p.rating,
+      reviewCount: p.reviewCount,
       favoriteCount: p.favoriteCount,
-      viewCount: p.viewCount,
     }));
   } catch (error) {
     console.error("searchProductsApi error:", error);
@@ -114,10 +119,7 @@ async function searchProductsApi(keyword: string): Promise<ProductSummary[]> {
 // ComparePage 컴포넌트
 // ==========================================================
 export default function ComparePage() {
-  const [selected, setSelected] = useState<{
-    left: ProductSummary | null;
-    right: ProductSummary | null;
-  }>({
+  const [selected, setSelected] = useState<{ left: ProductSummary | null; right: ProductSummary | null }>({
     left: null,
     right: null,
   });
@@ -127,10 +129,7 @@ export default function ComparePage() {
     right: "",
   });
 
-  const [searchResult, setSearchResult] = useState<{
-    left: ProductSummary[];
-    right: ProductSummary[];
-  }>({
+  const [searchResult, setSearchResult] = useState<{ left: ProductSummary[]; right: ProductSummary[] }>({
     left: [],
     right: [],
   });
@@ -153,14 +152,12 @@ export default function ComparePage() {
   // ----------------------------------------------------------
   useEffect(() => {
     if (typeof window === "undefined") return;
+
     const raw = window.localStorage.getItem(STORAGE_KEY);
     if (!raw) return;
 
     try {
-      const parsed = JSON.parse(raw) as {
-        leftId: number | null;
-        rightId: number | null;
-      };
+      const parsed = JSON.parse(raw) as { leftId: number | null; rightId: number | null };
 
       (async () => {
         const left = parsed.leftId ? await fetchProductById(parsed.leftId) : null;
@@ -168,8 +165,8 @@ export default function ComparePage() {
 
         setSelected({ left, right });
         setKeyword({
-          left: left?.name ?? "",
-          right: right?.name ?? "",
+          left: "",
+          right: "",
         });
       })();
     } catch {
@@ -190,7 +187,7 @@ export default function ComparePage() {
         rightId: next.right?.id ?? null,
       }),
     );
-    // 상품이 바뀌면 이전 비교 결과는 초기화
+
     setCompareData(null);
   }, []);
 
@@ -198,21 +195,20 @@ export default function ComparePage() {
   // 상품 선택 & 교체
   // ----------------------------------------------------------
   const handleSelectProduct = (side: CompareSide, product: ProductSummary) => {
-    // 이미 양쪽 다 선택된 상태라면 교체 모달 오픈
     if (selected.left && selected.right) {
+      // 둘 다 이미 선택된 상태라면 교체 모달
       setModalState({ isOpen: true, side, newProduct: product });
       setSearchResult(prev => ({ ...prev, [side]: [] }));
       return;
     }
 
-    // 한쪽만 선택된 상태면 바로 세팅
     setSelected(prev => {
       const next = { ...prev, [side]: product };
       persistIds(next);
       return next;
     });
 
-    setKeyword(prev => ({ ...prev, [side]: product.name }));
+    setKeyword(prev => ({ ...prev, [side]: "" }));
     setSearchResult(prev => ({ ...prev, [side]: [] }));
   };
 
@@ -225,11 +221,7 @@ export default function ComparePage() {
       return next;
     });
 
-    setKeyword(prev => ({
-      ...prev,
-      [sideToReplace]: newProduct.name,
-    }));
-
+    setKeyword(prev => ({ ...prev, [sideToReplace]: "" }));
     setModalState({ isOpen: false, side: null, newProduct: null });
   };
 
@@ -255,6 +247,7 @@ export default function ComparePage() {
       setSearchResult(prev => ({ ...prev, [side]: [] }));
       return;
     }
+
     const list = await searchProductsApi(value);
     setSearchResult(prev => ({ ...prev, [side]: list }));
   }, []);
@@ -274,7 +267,6 @@ export default function ComparePage() {
     setCompareData(null);
 
     try {
-      // 항상 최신 데이터를 기준으로 비교
       const [freshLeft, freshRight] = await Promise.all([
         fetchProductById(selected.left.id),
         fetchProductById(selected.right.id),
@@ -298,7 +290,7 @@ export default function ComparePage() {
     <div className="px-4 py-10 md:px-10 lg:px-24">
       <h1 className="mb-10 text-center text-32-bold">둘 중 뭐가 더 나을까?</h1>
 
-      {/* 상단 비교 영역 (기본 / typing / filled 상태) */}
+      {/* 상단 비교 영역 */}
       <div className="flex justify-center">
         <div className="grid w-full max-w-[1280px] grid-cols-1 items-start gap-10 md:grid-cols-[1fr_auto_1fr] md:gap-6">
           {/* LEFT */}
@@ -307,15 +299,15 @@ export default function ComparePage() {
               side="left"
               product={selected.left}
               keyword={keyword.left}
-              onKeywordChange={value => handleChangeKeyword("left", value)}
+              onKeywordChange={v => handleChangeKeyword("left", v)}
               results={searchResult.left}
-              onSelectProduct={product => handleSelectProduct("left", product)}
+              onSelectProduct={p => handleSelectProduct("left", p)}
               onClear={() => handleClear("left")}
             />
           </div>
 
           {/* VS (데스크톱) */}
-          <div className="hidden items-center justify-center pt-32 md:flex lg:pt-36">
+          <div className="hidden items-center justify-center pt-24 md:flex lg:pt-28">
             <span className="text-40-bold text-gray-500">VS</span>
           </div>
 
@@ -325,9 +317,9 @@ export default function ComparePage() {
               side="right"
               product={selected.right}
               keyword={keyword.right}
-              onKeywordChange={value => handleChangeKeyword("right", value)}
+              onKeywordChange={v => handleChangeKeyword("right", v)}
               results={searchResult.right}
-              onSelectProduct={product => handleSelectProduct("right", product)}
+              onSelectProduct={p => handleSelectProduct("right", p)}
               onClear={() => handleClear("right")}
             />
           </div>
@@ -349,12 +341,12 @@ export default function ComparePage() {
 
         <Button
           type="button"
-          variant="primary"
-          styleClass="w-full max-w-md !h-[56px]"
+          variant={isReady ? "primary" : "secondary"}
+          styleClass="w-full max-w-[420px] !h-[56px]"
           onClick={handleCompare}
           disabled={!isReady || isComparing}
         >
-          {isComparing ? "비교 중..." : "상품 비교하기"}
+          {isReady ? "상품 비교하기" : `비교할 상품 2개를 입력해 주세요 (${selectedCount}/2)`}
         </Button>
       </div>
 
@@ -375,8 +367,10 @@ export default function ComparePage() {
 }
 
 // ==========================================================
-// ProductSlot 컴포넌트 (한쪽 슬롯: A / B)
-//  - 기본 / typing / filled 상태 UI 담당
+// ProductSlot: A/B 한쪽 영역
+//  - 위: 180x180 이미지
+//  - 중간: 검색/선택 pill
+//  - 아래: 405x282 카드 (상품 없으면 DEFAULT 이미지, 선택되면 메트릭)
 // ==========================================================
 type ProductSlotProps = {
   side: CompareSide;
@@ -390,43 +384,56 @@ type ProductSlotProps = {
 
 function ProductSlot({ side, product, keyword, onKeywordChange, results, onSelectProduct, onClear }: ProductSlotProps) {
   const isLeft = side === "left";
-  const defaultImage = isLeft ? ASSET_PATHS.DEFAULT_A : ASSET_PATHS.DEFAULT_B;
+  const defaultCardImage = isLeft ? ASSET_PATHS.DEFAULT_A : ASSET_PATHS.DEFAULT_B;
   const badgeImage = isLeft ? ASSET_PATHS.BADGE_A : ASSET_PATHS.BADGE_B;
 
+  // 피그마 기준 사이즈 조정
   const badgeSizeClass = "h-[180px] w-[180px] rounded-[20px]";
-  const thumbnailSizeClass = "h-[200px] w-[260px] rounded-[20px]";
+  const tableHeightClass = "h-[260px]"; // 카드/아이콘 공통 높이
+  const tableSizeClass = `${tableHeightClass} w-[480px] rounded-[24px]`;
 
   return (
     <div className="relative mx-auto flex w-full max-w-[500px] flex-col items-center gap-8">
-      {/* 1. 상단 A/B 배지 이미지 */}
+      {/* 1. 상단 A/B 배지 + 실제 상품 이미지 */}
       <div className="flex flex-col items-center">
-        <img
-          src={badgeImage}
-          alt={`${isLeft ? "A" : "B"} 배지`}
-          className={`${badgeSizeClass} bg-gray-200 object-cover`}
-        />
+        <div className={`${badgeSizeClass} overflow-hidden bg-gray-200`}>
+          <img
+            src={product?.thumbnailUrl ?? badgeImage}
+            alt={product?.name ?? (isLeft ? "A 배지" : "B 배지")}
+            className="h-full w-full object-cover"
+          />
+        </div>
       </div>
 
-      {/* 2. 인풋 박스 + 자동완성 (기본 / typing / filled) */}
+      {/* 2. 검색 / 선택 pill */}
       <div className="relative flex w-full justify-center">
-        <div className="flex w-full max-w-[350px] items-center gap-3 rounded-full border-[2px] border-dashed border-[#FD7E35] bg-white px-5 py-[14px] shadow-sm">
-          <input
-            value={keyword}
-            onChange={e => onKeywordChange(e.target.value)}
-            placeholder={product ? product.name : "상품명을 입력해주세요"}
-            className="flex-1 truncate bg-transparent text-16-medium text-gray-900 outline-none placeholder:text-gray-500"
-            readOnly={!!product}
-          />
-
-          {product && (
-            <button type="button" onClick={onClear} className="text-14-medium text-[#FD7E35] hover:text-red-500">
-              삭제
+        {product ? (
+          // 선택된 상태: 검정 pill
+          <div className="flex h-50 w-full max-w-300 items-center justify-between rounded-full bg-[#2F323A] px-20 text-14-medium text-white shadow-sm">
+            <span className="mr-3 truncate leading-[20px]">{product.name}</span>
+            <button
+              type="button"
+              onClick={onClear}
+              className="hover:bg-black/40 flex h-5 w-5 items-center justify-center rounded-full text-16-bold"
+              aria-label="선택한 상품 삭제"
+            >
+              ✕
             </button>
-          )}
-        </div>
+          </div>
+        ) : (
+          // 미선택 상태: 주황 점선 인풋
+          <div className="flex h-[56px] w-full max-w-300 items-center gap-3 rounded-full border-[2px] border-dashed border-[#FD7E35] bg-white px-5 shadow-sm">
+            <input
+              value={keyword}
+              onChange={e => onKeywordChange(e.target.value)}
+              placeholder="상품명을 입력해주세요"
+              className="flex-1 truncate bg-transparent text-16-medium text-gray-900 outline-none placeholder:text-gray-500"
+            />
+          </div>
+        )}
 
-        {/* 자동완성 드롭다운 (typing 상태) */}
-        {results.length > 0 && keyword.trim() && !product && (
+        {/* 자동완성 드롭다운 (상품 없고 타이핑 중일 때만) */}
+        {!product && results.length > 0 && keyword.trim() && (
           <ul className="absolute left-1/2 top-full z-10 mt-1 max-h-60 w-full max-w-[350px] -translate-x-1/2 overflow-y-auto rounded-xl border border-gray-200 bg-white shadow-lg">
             {results.map(item => (
               <li
@@ -441,41 +448,60 @@ function ProductSlot({ side, product, keyword, onKeywordChange, results, onSelec
         )}
       </div>
 
-      {/* 3. 이미지 + 메트릭 카드 (filled / 기본) */}
-      <div className="flex flex-col items-center gap-4">
-        {/* 썸네일 이미지 */}
-        <div className={`${thumbnailSizeClass} bg-gray-150 overflow-hidden shadow-lg ${product ? "bg-white" : ""}`}>
-          <img
-            src={product?.thumbnailUrl ?? defaultImage}
-            alt={product?.name ?? "디폴트"}
-            className="h-full w-full object-cover"
-          />
-        </div>
-
-        {/* 메트릭 카드: 별점 / 리뷰 개수 / 찜 개수 or 플레이스홀더 */}
-        <div className="w-full max-w-[350px] rounded-2xl bg-gray-50 px-6 py-4">
-          {product ? (
-            <ul className="flex flex-col gap-3 text-14-medium text-gray-900">
+      {/* 3. 아이콘 컬럼 + 메트릭 / 플레이스홀더 카드 */}
+      {/* 피그마처럼: 카드가 가운데, 메트릭 라벨은 카드 왼쪽 바깥에 정렬 */}
+      <div className="mt-8 flex w-full justify-center">
+        <div className="relative flex">
+          {/* 왼쪽 아이콘 컬럼 (A 쪽만) */}
+          {isLeft && (
+            <ul
+              className={`${tableHeightClass} absolute -left-20 top-1/2 hidden -translate-y-1/2 flex-col text-14-medium text-gray-500 md:flex xl:-left-24`}
+            >
               {METRIC_LIST.map(m => (
-                <li key={m.key} className="flex items-center justify-between gap-3">
-                  <div className="flex items-center gap-2 text-gray-500">
-                    <span className="text-[18px]" aria-hidden>
-                      {m.icon}
-                    </span>
-                    <span>{m.label}</span>
-                  </div>
-                  <span className="text-14-bold">
-                    {product[m.key].toLocaleString()}
-                    {m.key === "rating" ? "" : "개"}
+                // 각 항목이 전체 높이의 1/3을 차지하도록 flex-1
+                <li key={m.key} className="flex flex-1 items-center gap-2">
+                  <span className="text-[18px]" aria-hidden>
+                    {m.icon}
                   </span>
+                  <span>{m.label}</span>
                 </li>
               ))}
             </ul>
-          ) : (
-            <div className="flex h-[112px] items-center justify-center text-14-regular text-gray-400">
-              비교할 상품을 입력해 주세요
-            </div>
           )}
+
+          {/* 메인 카드 */}
+          <div className={`${tableSizeClass} overflow-hidden shadow-sm ${product ? "bg-white" : "bg-gray-150"}`}>
+            {/* 상품 없을 때: DEFAULT 이미지 (사이즈 키워서 가운데 정렬) */}
+            {!product && (
+              <div className="flex h-full w-full items-center justify-center">
+                <img
+                  src={defaultCardImage}
+                  alt={isLeft ? "기본 A 카드" : "기본 B 카드"}
+                  className="h-[250px] w-auto object-contain"
+                />
+              </div>
+            )}
+
+            {/* 상품 있을 때: 메트릭 3줄 */}
+            {product && (
+              <div className="flex h-full w-full flex-col justify-center px-7">
+                {/* 별점 */}
+                <div className="flex h-1/3 items-center justify-center text-20-bold text-gray-900">
+                  {product.rating.toFixed(1)}
+                </div>
+                <div className="h-px w-full bg-gray-100" />
+                {/* 리뷰 개수 */}
+                <div className="flex h-1/3 items-center justify-center text-20-bold text-gray-900">
+                  {product.reviewCount.toLocaleString()}개
+                </div>
+                <div className="h-px w-full bg-gray-100" />
+                {/* 찜 개수 */}
+                <div className="flex h-1/3 items-center justify-center text-20-bold text-gray-900">
+                  {product.favoriteCount.toLocaleString()}개
+                </div>
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </div>
@@ -483,7 +509,7 @@ function ProductSlot({ side, product, keyword, onKeywordChange, results, onSelec
 }
 
 // ==========================================================
-// 결과 섹션 (승리 / 무승부 상태 UI)
+// 결과 섹션 (비교 버튼 클릭 후: 승리 / 무승부)
 // ==========================================================
 type CompareResultSectionProps = {
   left: ProductSummary;
@@ -512,19 +538,15 @@ function CompareResultSection({ left, right, data }: CompareResultSectionProps) 
 
   return (
     <section className="mt-16">
-      {/* 전체 결과 문구 */}
       <p className="mb-3 text-center text-24-bold text-primary-600">{overallText}</p>
-
       <p className="mb-8 text-center text-14-regular text-gray-500">상품을 선택하는 데 참고해 보세요!</p>
 
-      {/* 전체 승자 배지 (승리일 때만) */}
       {overall !== "draw" && (
         <div className="mx-auto mb-8 flex max-w-3xl justify-center">
           <img src={ASSET_PATHS.WIN_BADGE} alt="WIN" className="w-24" />
         </div>
       )}
 
-      {/* 상세 비교 테이블 */}
       <div className="mx-auto max-w-3xl overflow-hidden rounded-xl border border-gray-100 bg-white shadow-md">
         <table className="w-full text-center text-14-regular">
           <thead className="bg-gray-50">
@@ -542,12 +564,9 @@ function CompareResultSection({ left, right, data }: CompareResultSectionProps) 
 
               return (
                 <tr key={r.metric} className="border-t border-gray-100">
-                  {/* 왼쪽 값 */}
                   <td className={`py-3 ${isLeftWin ? "font-semibold text-primary-600" : ""}`}>
                     {r.leftValue.toLocaleString()}
                   </td>
-
-                  {/* 메트릭 이름 + 차이/승자 설명 */}
                   <td className="py-3">
                     <div className="text-14-medium">{metricLabel(r.metric)}</div>
                     <div className="mt-1 text-12-regular text-gray-500">
@@ -560,8 +579,6 @@ function CompareResultSection({ left, right, data }: CompareResultSectionProps) 
                       )}
                     </div>
                   </td>
-
-                  {/* 오른쪽 값 */}
                   <td className={`py-3 ${isRightWin ? "font-semibold text-primary-600" : ""}`}>
                     {r.rightValue.toLocaleString()}
                   </td>
