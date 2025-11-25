@@ -36,6 +36,45 @@ interface LoginResponse {
   };
 }
 
+interface SnsLoginRequest {
+  redirectUri: string;
+  token: string;
+}
+
+interface SnsLoginResponse {
+  accessToken: string;
+  user: {
+    updatedAt: string;
+    createdAt: string;
+    teamId: string;
+    image: string;
+    description: string;
+    nickname: string;
+    id: number;
+    email: string;
+  };
+}
+
+interface SnsSignupRequest {
+  nickname: string;
+  redirectUri: string;
+  token: string;
+}
+
+interface SnsSignupResponse {
+  accessToken: string;
+  user: {
+    updatedAt: string;
+    createdAt: string;
+    teamId: string;
+    image: string;
+    description: string;
+    nickname: string;
+    id: number;
+    email: string;
+  };
+}
+
 export async function signup(body: SignupRequest): Promise<SignupResponse> {
   const response = await axiosInstance.post("/auth/signUp", body);
   console.log(response.data);
@@ -59,6 +98,16 @@ export async function login(body: LoginRequest): Promise<LoginResponse> {
 }
 
 // 로그아웃
-export function logout() {
-  Cookies.remove("accessToken");
+// export function logout() {
+//   Cookies.remove("accessToken");
+// }
+
+export async function Snslogin(provider: string, body: SnsLoginRequest): Promise<SnsLoginResponse> {
+  const response = await axiosInstance.post(`/auth/signIn/${provider}`, body);
+  return response.data;
+}
+
+export async function SnsSignup(provider: string, body: SnsSignupRequest): Promise<SnsSignupResponse> {
+  const response = await axiosInstance.post(`/auth/signUp/${provider}`, body);
+  return response.data;
 }

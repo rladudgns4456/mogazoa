@@ -1,5 +1,5 @@
 import Cookies from "js-cookie";
-import { createContext, useContext, useEffect, useState, ReactNode } from "react";
+import { createContext, ReactNode, useContext, useEffect, useState } from "react";
 
 interface User {
   id: number;
@@ -41,10 +41,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const setAuth = (userData: User | null, token?: string) => {
     if (userData && token) {
+      // 1. 쿠키 저장
+      Cookies.set("accessToken", token, { path: "/" });
+
+      // 2. 유저 상태 저장
       setUser(userData);
       setIsAuthenticated(true);
+
+      // 3. localStorage 저장
       localStorage.setItem("user", JSON.stringify(userData));
     } else {
+      // 로그아웃 처리
+      Cookies.remove("accessToken");
       setUser(null);
       setIsAuthenticated(false);
       localStorage.removeItem("user");
@@ -62,11 +70,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return null;
   }
 
-  return (
-    <AuthContext.Provider value={{ isAuthenticated, user, setAuth, logout }}>
-      {children}
-    </AuthContext.Provider>
-  );
+  return <AuthContext.Provider value={{ isAuthenticated, user, setAuth, logout }}>{children}</AuthContext.Provider>;
 }
 
 export function useAuth() {

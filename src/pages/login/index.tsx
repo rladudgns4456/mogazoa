@@ -10,6 +10,7 @@ import LoginFooter from "@/components/login/footer";
 import { cn } from "@/utils/cn";
 import Head from "next/head";
 import Image from "next/image";
+import Link from "next/link";
 import { useRouter } from "next/router";
 import { KeyboardEvent, useEffect, useState } from "react";
 
@@ -197,9 +198,13 @@ export default function Login() {
             <button className={cn(snsButton)}>
               <IcGoogle />
             </button>
-            <button className={cn(snsButton)}>
+            <Link
+              href={`https://kauth.kakao.com/oauth/authorize?response_type=code&client_id=${process.env.NEXT_PUBLIC_KAKAO_CLIENT_ID}&redirect_uri=http://localhost:3000/auth/kakao`}
+              onClick={() => localStorage.setItem("sns_provider", "kakao")}
+              className={cn(snsButton)}
+            >
               <IcKakao />
-            </button>
+            </Link>
           </div>
           <LoginFooter />
         </div>
