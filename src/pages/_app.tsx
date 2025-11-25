@@ -1,6 +1,7 @@
 import { AuthProvider } from "@/components/login/AuthContext";
 import { ModalProvider } from "@/components/modal/modalBase";
 import { ModalWrap } from "@/components/modal/modalBase";
+import { ToastProvider,ToastWrap} from "@/components/toast";
 import HeaderLayout from "@/layout/headerLayout";
 import { getQueryClient } from "@/lib/reactQuery";
 import "@/styles/globals.css";
@@ -15,11 +16,14 @@ export default function App({ Component, pageProps }: AppProps) {
     <AuthProvider>
       <QueryClientProvider client={queryClient}>
         <ModalProvider>
-          <HeaderLayout>
-            <Component {...pageProps} />
-          </HeaderLayout>
-          <ReactQueryDevtools initialIsOpen={false} />
-          <ModalWrap />
+          <ToastProvider>
+            <HeaderLayout>
+              <Component {...pageProps} />
+            </HeaderLayout>
+            <ReactQueryDevtools initialIsOpen={false} />
+            <ModalWrap />
+            <ToastWrap />
+          </ToastProvider>
         </ModalProvider>
       </QueryClientProvider>
     </AuthProvider>
