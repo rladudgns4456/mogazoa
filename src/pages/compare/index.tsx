@@ -137,6 +137,7 @@ export default function ComparePage() {
   const [isComparing, setIsComparing] = useState(false);
   const [compareData, setCompareData] = useState<CompareResult | null>(null);
 
+  // 교체 모달 상태
   const [modalState, setModalState] = useState<{
     isOpen: boolean;
     side: CompareSide | null;
@@ -212,6 +213,7 @@ export default function ComparePage() {
     setSearchResult(prev => ({ ...prev, [side]: [] }));
   };
 
+  // 모달에서 "어느 상품을 유지할지" 확정했을 때 호출됨
   const handleConfirmReplace = (sideToKeep: CompareSide, newProduct: ProductSummary) => {
     const sideToReplace: CompareSide = sideToKeep === "left" ? "right" : "left";
 
@@ -222,7 +224,7 @@ export default function ComparePage() {
     });
 
     setKeyword(prev => ({ ...prev, [sideToReplace]: "" }));
-    setModalState({ isOpen: false, side: null, newProduct: null });
+    // 여기서는 모달을 닫지 않음 (모달 내부에서 완료 단계로 전환 후, 사용자가 닫기/바로가기 선택)
   };
 
   // ----------------------------------------------------------
@@ -367,9 +369,6 @@ export default function ComparePage() {
 
 // ==========================================================
 // ProductSlot: A/B 한쪽 영역
-//  - 위: 180x180 이미지
-//  - 중간: 검색/선택 pill
-//  - 아래: 405x282 카드 (상품 없으면 DEFAULT 이미지, 선택되면 메트릭)
 // ==========================================================
 type ProductSlotProps = {
   side: CompareSide;
@@ -421,7 +420,7 @@ function ProductSlot({
 
           {isWinner && (
             <img
-              src={ASSET_PATHS.WIN_BADGE} // "/assets/images/compare/win.png"
+              src={ASSET_PATHS.WIN_BADGE}
               alt="이게 조아! 뱃지"
               className="pointer-events-none absolute -top-4 left-1/2 h-30 w-auto -translate-x-1/2"
             />
@@ -473,7 +472,6 @@ function ProductSlot({
       </div>
 
       {/* 3. 아이콘 컬럼 + 메트릭 / 플레이스홀더 카드 */}
-      {/* 피그마처럼: 카드가 가운데, 메트릭 라벨은 카드 왼쪽 바깥에 정렬 */}
       <div className="mt-8 flex w-full justify-center">
         <div className="relative flex">
           {/* 왼쪽 아이콘 컬럼 (A 쪽만) */}
@@ -494,7 +492,7 @@ function ProductSlot({
 
           {/* 메인 카드 */}
           <div className={`${tableSizeClass} overflow-hidden shadow-sm ${product ? "bg-white" : "bg-gray-150"}`}>
-            {/* 상품 없을 때: DEFAULT 이미지 (사이즈 키워서 가운데 정렬) */}
+            {/* 상품 없을 때: DEFAULT 이미지 */}
             {!product && (
               <div className="flex h-full w-full items-center justify-center">
                 <img
@@ -505,7 +503,7 @@ function ProductSlot({
               </div>
             )}
 
-            {/* 상품 있을 때: 메트릭 3줄 (CompareTable 스타일 재사용 + 하이라이트) */}
+            {/* 상품 있을 때: 메트릭 3줄 */}
             {product && <MetricCardContent side={side} product={product} metricResults={metricResults} />}
           </div>
         </div>
@@ -537,7 +535,12 @@ function MetricCardContent({ side, product, metricResults }: MetricCardContentPr
     return r.winner === mySide ? "win" : "lose";
   };
 
-  const rows: { key: MetricKey; value: number; display: string; status: "win" | "lose" | "draw" | "none" }[] = [
+  const rows: {
+    key: MetricKey;
+    value: number;
+    display: string;
+    status: "win" | "lose" | "draw" | "none";
+  }[] = [
     {
       key: "rating",
       value: product.rating,

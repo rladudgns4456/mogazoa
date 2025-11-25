@@ -1,87 +1,169 @@
-// src/components/compare/ReplaceModal.tsx
+"use client";
 
-import React from "react";
-import { ProductSummary } from "@/utils/compareUtils"; // tsconfig.json paths 적용
-import { useRouter } from "next/router";
-// NOTE: 프로젝트에 useRouter가 없으므로 임시로 주석 처리하거나, 필요하다면 설치해야 합니다.
-// 'next/router'는 package.json에 없으므로, Next.js 버전을 고려하여 'next/navigation' 또는 'next/router' 사용 여부를 결정하세요.
-// 여기서는 `next/router`가 Next.js 16.0.1에 호환된다고 가정하고 추가했습니다.
+import React, { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import type { ProductSummary, MetricKey } from "@/utils/compareUtils";
 
 type CompareSide = "left" | "right";
 
-interface ReplaceModalProps {
-  state: {
-    isOpen: boolean;
-    side: CompareSide | null;
-    newProduct: ProductSummary | null;
-  };
-  selected: { left: ProductSummary | null; right: ProductSummary | null };
-  onClose: () => void;
+type ModalState = {
+  isOpen: boolean;
+  side: CompareSide | null; // 사용자가 처음 선택을 시도한 쪽
+  newProduct: ProductSummary | null; // 새로 선택한 상품
+};
+
+type SelectedProducts = {
+  left: ProductSummary | null;
+  right: ProductSummary | null;
+};
+
+type ReplaceModalProps = {
+  state: ModalState;
+  selected: SelectedProducts;
+  onClose: () => void; // 모달 완전히 닫기
   onConfirmReplace: (sideToKeep: CompareSide, newProduct: ProductSummary) => void;
-}
+};
+
+type Step = "select" | "done";
 
 export default function ReplaceModal({ state, selected, onClose, onConfirmReplace }: ReplaceModalProps) {
   const router = useRouter();
-  const { isOpen, newProduct } = state;
+  const [step, setStep] = useState<Step>("select");
+  const [keepSide, setKeepSide] = useState<CompareSide>("left");
 
-  if (!isOpen || !newProduct || !selected.left || !selected.right) return null;
+  const open = state.isOpen && !!state.newProduct;
+  const { newProduct } = state;
+  const { left, right } = selected;
 
-  // 교체 대상 상품들 (현재 선택된 상품들)
-  const productsToReplace = [
-    { side: "left" as CompareSide, product: selected.left },
-    { side: "right" as CompareSide, product: selected.right },
-  ];
+  // 모달이 열릴 때마다 초기화
+  useEffect(() => {
+    if (!open) return;
 
-  const handleConfirm = (sideToKeep: CompareSide) => {
-    onConfirmReplace(sideToKeep, newProduct);
+    setStep("select");
 
-    // [요구사항 반영] 교체 완료 메시지 및 이동 여부 처리
-    const confirmMove = window.confirm(
-      `비교 상품이 '${newProduct.name}'(으)로 변경되었습니다. 바로 비교 화면으로 이동하시겠어요?`,
-    );
+    // 기본값: 사용자가 바꾸려고 했던 쪽의 반대편을 유지
+    if (state.side === "left") setKeepSide("right");
+    else if (state.side === "right") setKeepSide("left");
+    else setKeepSide("left");
+  }, [open, state.side]);
 
-    if (confirmMove) {
-      // 이미 /compare 페이지에 있으므로, 상태 업데이트 후 모달을 닫는 것으로 충분하지만,
-      // 명시적으로 이동하려면 router.push('/compare')를 사용합니다.
-      // 여기서는 닫기만 합니다.
+  // 기본적으로 두 상품이 모두 없는 상태에서는 모달을 띄우지 않음
+  if (!open || !newProduct || !left || !right) return null;
+
+  const handleBackdropClick = () => {
+    // 교체 확정 전에는 닫으면 아무 변화 없음
+    if (step === "select") {
+      onClose();
+      return;
     }
+    // step === "done" 인 경우에는 이미 교체된 뒤이므로 그냥 닫기만
+    onClose();
   };
 
+  const handleCardClick: React.MouseEventHandler<HTMLDivElement> = e => {
+    e.stopPropagation();
+  };
+
+  const handleCloseClick = () => {
+    onClose();
+  };
+
+  const handleSelectKeepSide = (side: CompareSide) => {
+    setKeepSide(side);
+  };
+
+  const handleReplaceClick = () => {
+    if (!newProduct) return;
+    onConfirmReplace(keepSide, newProduct);
+    setStep("done");
+  };
+
+  const handleGoCompare = () => {
+    router.push("/compare");
+    onClose();
+  };
+
+  // 현재 유지하기로 선택된 상품
+  const keepProduct = keepSide === "left" ? left : right;
+  const replaceProduct = keepSide === "left" ? right : left;
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-      <div className="w-full max-w-lg transform rounded-xl bg-white p-6 shadow-2xl transition-all">
-        <h3 className="mb-4 text-20-bold">⚠️ 비교 상품 교체 확인</h3>
-        <p className="mb-4 text-16-regular">
-          새로 선택한 상품: <strong className="text-orange-500">"{newProduct.name}"</strong>
-        </p>
+    <div className="bg-black/40 fixed inset-0 z-[1000] flex items-center justify-center" onClick={handleBackdropClick}>
+      <div className="relative w-full max-w-[480px] rounded-[24px] bg-white p-8 shadow-xl" onClick={handleCardClick}>
+        {/* 닫기 버튼 */}
+        <button
+          type="button"
+          onClick={handleCloseClick}
+          aria-label="닫기"
+          className="absolute right-4 top-4 text-xl leading-none text-gray-400"
+        >
+          ×
+        </button>
 
-        <p className="mb-4 text-sm text-gray-600">현재 등록된 두 상품 중, 새 상품으로 **교체할 상품**을 선택하세요.</p>
+        {step === "select" ? (
+          <>
+            {/* 새 상품 이름 */}
+            <p className="mb-1 text-center text-base font-semibold text-gray-800">{`'${newProduct.name}'`}</p>
+            <p className="mb-6 text-center text-sm text-gray-500">어떤 상품과 비교할까요?</p>
 
-        {/* 기존 상품 2개 선택 영역 */}
-        <div className="grid grid-cols-2 gap-4">
-          {productsToReplace.map(({ side, product }) => (
+            {/* 기존 2개 상품 선택 영역 */}
+            <div className="mb-8 space-y-3">
+              <button
+                type="button"
+                onClick={() => handleSelectKeepSide("left")}
+                className={[
+                  "flex w-full items-center justify-center rounded-full border px-4 py-3 text-sm transition-colors",
+                  keepSide === "left"
+                    ? "border-orange-400 bg-orange-50 text-orange-500"
+                    : "border-gray-200 bg-gray-50 text-gray-400",
+                ]
+                  .filter(Boolean)
+                  .join(" ")}
+              >
+                <span className="truncate">{left.name}</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => handleSelectKeepSide("right")}
+                className={[
+                  "flex w-full items-center justify-center rounded-full border px-4 py-3 text-sm transition-colors",
+                  keepSide === "right"
+                    ? "border-orange-400 bg-orange-50 text-orange-500"
+                    : "border-gray-200 bg-gray-50 text-gray-400",
+                ]
+                  .filter(Boolean)
+                  .join(" ")}
+              >
+                <span className="truncate">{right.name}</span>
+              </button>
+            </div>
+
+            {/* 교체하기 버튼 */}
             <button
-              key={side}
-              // 사용자가 선택한 쪽(side)을 유지하고 반대쪽을 교체하는 로직이므로,
-              // 버튼을 누르는 것은 "이 상품을 남기겠다"는 의미입니다.
-              onClick={() => handleConfirm(side)}
-              className="flex flex-col items-center rounded-lg border p-4 transition-colors hover:border-red-500 hover:bg-red-50"
+              type="button"
+              onClick={handleReplaceClick}
+              className="flex w-full items-center justify-center rounded-full bg-orange-500 py-3 text-sm font-semibold text-white"
             >
-              <span className="mb-1 text-14-medium text-gray-700">
-                {side === "left" ? "왼쪽 상품 남기고" : "오른쪽 상품 남기고"}
-              </span>
-              <strong className="text-16-bold text-red-600">
-                "{side === "left" ? selected.right?.name : selected.left?.name}" 교체
-              </strong>
+              교체하기
             </button>
-          ))}
-        </div>
+          </>
+        ) : (
+          <>
+            {/* 교체 완료 메시지 */}
+            <p className="mb-2 text-center text-base font-semibold text-gray-800">비교 상품이 교체되었습니다.</p>
+            <p className="mb-8 text-center text-sm text-gray-500">바로 확인해 보시겠어요?</p>
 
-        <div className="mt-6 flex justify-end">
-          <button onClick={onClose} className="rounded-lg px-4 py-2 text-14-medium text-gray-600 hover:bg-gray-100">
-            닫기 (변경 없음)
-          </button>
-        </div>
+            {/* 바로가기 버튼 */}
+            <button
+              type="button"
+              onClick={handleGoCompare}
+              className="flex w-full items-center justify-center rounded-full bg-orange-500 py-3 text-sm font-semibold text-white"
+            >
+              바로가기
+            </button>
+          </>
+        )}
       </div>
     </div>
   );
