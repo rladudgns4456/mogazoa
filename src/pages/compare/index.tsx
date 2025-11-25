@@ -1,5 +1,5 @@
 "use client";
-
+import CompareTable, { CompareRow, Pill, ValueCell } from "@/components/table/CompareTable";
 import React, { useEffect, useState, useCallback } from "react";
 import Button from "@/components/Button";
 import ReplaceModal from "@/components/compare/ReplaceModal";
@@ -303,6 +303,8 @@ export default function ComparePage() {
               results={searchResult.left}
               onSelectProduct={p => handleSelectProduct("left", p)}
               onClear={() => handleClear("left")}
+              overallWinner={compareData?.overall ?? null}
+              metricResults={compareData?.results ?? null}
             />
           </div>
 
@@ -321,6 +323,8 @@ export default function ComparePage() {
               results={searchResult.right}
               onSelectProduct={p => handleSelectProduct("right", p)}
               onClear={() => handleClear("right")}
+              overallWinner={compareData?.overall ?? null}
+              metricResults={compareData?.results ?? null}
             />
           </div>
         </div>
@@ -350,11 +354,6 @@ export default function ComparePage() {
         </Button>
       </div>
 
-      {/* 비교 결과 영역 (승리 / 무승부 상태) */}
-      {compareData && selected.left && selected.right && (
-        <CompareResultSection left={selected.left} right={selected.right} data={compareData} />
-      )}
-
       {/* 교체 모달 */}
       <ReplaceModal
         state={modalState}
@@ -380,28 +379,53 @@ type ProductSlotProps = {
   results: ProductSummary[];
   onSelectProduct: (product: ProductSummary) => void;
   onClear: () => void;
+  overallWinner?: "left" | "right" | "draw" | null;
+  metricResults?: MetricResult[] | null;
 };
 
-function ProductSlot({ side, product, keyword, onKeywordChange, results, onSelectProduct, onClear }: ProductSlotProps) {
+function ProductSlot({
+  side,
+  product,
+  keyword,
+  onKeywordChange,
+  results,
+  onSelectProduct,
+  onClear,
+  overallWinner,
+  metricResults,
+}: ProductSlotProps) {
   const isLeft = side === "left";
   const defaultCardImage = isLeft ? ASSET_PATHS.DEFAULT_A : ASSET_PATHS.DEFAULT_B;
   const badgeImage = isLeft ? ASSET_PATHS.BADGE_A : ASSET_PATHS.BADGE_B;
 
-  // 피그마 기준 사이즈 조정
   const badgeSizeClass = "h-[180px] w-[180px] rounded-[20px]";
-  const tableHeightClass = "h-[260px]"; // 카드/아이콘 공통 높이
+  const tableHeightClass = "h-[260px]";
   const tableSizeClass = `${tableHeightClass} w-[480px] rounded-[24px]`;
+
+  // 이게조아 승리 여부
+  const isWinner =
+    overallWinner &&
+    overallWinner !== "draw" &&
+    ((overallWinner === "left" && isLeft) || (overallWinner === "right" && !isLeft));
 
   return (
     <div className="relative mx-auto flex w-full max-w-[500px] flex-col items-center gap-8">
-      {/* 1. 상단 A/B 배지 + 실제 상품 이미지 */}
-      <div className="flex flex-col items-center">
+      {/* 1. 상단 A/B 배지 + 실제 상품 이미지 + 이게조아 뱃지 */}
+      <div className="relative flex flex-col items-center">
         <div className={`${badgeSizeClass} overflow-hidden bg-gray-200`}>
           <img
             src={product?.thumbnailUrl ?? badgeImage}
             alt={product?.name ?? (isLeft ? "A 배지" : "B 배지")}
             className="h-full w-full object-cover"
           />
+
+          {isWinner && (
+            <img
+              src={ASSET_PATHS.WIN_BADGE} // "/assets/images/compare/win.png"
+              alt="이게 조아! 뱃지"
+              className="pointer-events-none absolute -top-4 left-1/2 h-30 w-auto -translate-x-1/2"
+            />
+          )}
         </div>
       </div>
 
@@ -458,7 +482,6 @@ function ProductSlot({ side, product, keyword, onKeywordChange, results, onSelec
               className={`${tableHeightClass} absolute -left-20 top-1/2 hidden -translate-y-1/2 flex-col text-14-medium text-gray-500 md:flex xl:-left-24`}
             >
               {METRIC_LIST.map(m => (
-                // 각 항목이 전체 높이의 1/3을 차지하도록 flex-1
                 <li key={m.key} className="flex flex-1 items-center gap-2">
                   <span className="text-[18px]" aria-hidden>
                     {m.icon}
@@ -482,25 +505,8 @@ function ProductSlot({ side, product, keyword, onKeywordChange, results, onSelec
               </div>
             )}
 
-            {/* 상품 있을 때: 메트릭 3줄 */}
-            {product && (
-              <div className="flex h-full w-full flex-col justify-center px-7">
-                {/* 별점 */}
-                <div className="flex h-1/3 items-center justify-center text-20-bold text-gray-900">
-                  {product.rating.toFixed(1)}
-                </div>
-                <div className="h-px w-full bg-gray-100" />
-                {/* 리뷰 개수 */}
-                <div className="flex h-1/3 items-center justify-center text-20-bold text-gray-900">
-                  {product.reviewCount.toLocaleString()}개
-                </div>
-                <div className="h-px w-full bg-gray-100" />
-                {/* 찜 개수 */}
-                <div className="flex h-1/3 items-center justify-center text-20-bold text-gray-900">
-                  {product.favoriteCount.toLocaleString()}개
-                </div>
-              </div>
-            )}
+            {/* 상품 있을 때: 메트릭 3줄 (CompareTable 스타일 재사용 + 하이라이트) */}
+            {product && <MetricCardContent side={side} product={product} metricResults={metricResults} />}
           </div>
         </div>
       </div>
@@ -508,86 +514,62 @@ function ProductSlot({ side, product, keyword, onKeywordChange, results, onSelec
   );
 }
 
-// ==========================================================
-// 결과 섹션 (비교 버튼 클릭 후: 승리 / 무승부)
-// ==========================================================
-type CompareResultSectionProps = {
-  left: ProductSummary;
-  right: ProductSummary;
-  data: CompareResult;
+type MetricCardContentProps = {
+  side: CompareSide;
+  product: ProductSummary;
+  metricResults?: MetricResult[] | null;
 };
 
-function metricLabel(metric: MetricKey): string {
-  if (metric === "rating") return "별점";
-  if (metric === "favoriteCount") return "찜 개수";
-  return "리뷰 개수";
-}
+function MetricCardContent({ side, product, metricResults }: MetricCardContentProps) {
+  const isLeft = side === "left";
+  const mySide: "left" | "right" = isLeft ? "left" : "right";
 
-function CompareResultSection({ left, right, data }: CompareResultSectionProps) {
-  const { results, overall } = data;
+  // MetricResult 배열을 metricKey → 결과 맵으로 변환
+  const metricMap: Partial<Record<MetricKey, MetricResult>> = {};
+  metricResults?.forEach(r => {
+    metricMap[r.metric] = r;
+  });
 
-  const overallText =
-    overall === "draw"
-      ? "둘 다 좋은 선택이에요!"
-      : `${overall === "left" ? `'${left.name}'` : `'${right.name}'`} 이(가) 승리했어요!`;
-
-  const getWinnerName = (winner: "left" | "right" | "draw") => {
-    if (winner === "draw") return "무승부";
-    return winner === "left" ? left.name : right.name;
+  const getStatus = (metric: MetricKey) => {
+    const r = metricMap[metric];
+    if (!r) return "none" as const;
+    if (r.winner === "draw") return "draw" as const;
+    return r.winner === mySide ? "win" : "lose";
   };
 
+  const rows: { key: MetricKey; value: number; display: string; status: "win" | "lose" | "draw" | "none" }[] = [
+    {
+      key: "rating",
+      value: product.rating,
+      display: product.rating.toFixed(1),
+      status: getStatus("rating"),
+    },
+    {
+      key: "reviewCount",
+      value: product.reviewCount,
+      display: `${product.reviewCount.toLocaleString()}개`,
+      status: getStatus("reviewCount"),
+    },
+    {
+      key: "favoriteCount",
+      value: product.favoriteCount,
+      display: `${product.favoriteCount.toLocaleString()}개`,
+      status: getStatus("favoriteCount"),
+    },
+  ];
+
   return (
-    <section className="mt-16">
-      <p className="mb-3 text-center text-24-bold text-primary-600">{overallText}</p>
-      <p className="mb-8 text-center text-14-regular text-gray-500">상품을 선택하는 데 참고해 보세요!</p>
+    <div className="flex h-full w-full flex-col justify-center px-7 text-20-bold text-gray-900">
+      {rows.map((row, index) => {
+        const isFirst = index === 0;
+        const isWin = row.status === "win";
 
-      {overall !== "draw" && (
-        <div className="mx-auto mb-8 flex max-w-3xl justify-center">
-          <img src={ASSET_PATHS.WIN_BADGE} alt="WIN" className="w-24" />
-        </div>
-      )}
-
-      <div className="mx-auto max-w-3xl overflow-hidden rounded-xl border border-gray-100 bg-white shadow-md">
-        <table className="w-full text-center text-14-regular">
-          <thead className="bg-gray-50">
-            <tr>
-              <th className="py-3 text-16-bold">{left.name}</th>
-              <th className="py-3 text-16-bold">항목</th>
-              <th className="py-3 text-16-bold">{right.name}</th>
-            </tr>
-          </thead>
-          <tbody>
-            {results.map((r: MetricResult) => {
-              const isLeftWin = r.winner === "left";
-              const isRightWin = r.winner === "right";
-              const isDraw = r.winner === "draw";
-
-              return (
-                <tr key={r.metric} className="border-t border-gray-100">
-                  <td className={`py-3 ${isLeftWin ? "font-semibold text-primary-600" : ""}`}>
-                    {r.leftValue.toLocaleString()}
-                  </td>
-                  <td className="py-3">
-                    <div className="text-14-medium">{metricLabel(r.metric)}</div>
-                    <div className="mt-1 text-12-regular text-gray-500">
-                      {isDraw ? (
-                        <>무승부</>
-                      ) : (
-                        <>
-                          {getWinnerName(r.winner)}이(가) {r.diff.toLocaleString()} 만큼 더 우세해요.
-                        </>
-                      )}
-                    </div>
-                  </td>
-                  <td className={`py-3 ${isRightWin ? "font-semibold text-primary-600" : ""}`}>
-                    {r.rightValue.toLocaleString()}
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
-      </div>
-    </section>
+        return (
+          <ValueCell key={row.key} active={isWin} iconRight={8} className={`flex-1 ${isFirst ? "border-t-0" : ""}`}>
+            <Pill active={isWin}>{row.display}</Pill>
+          </ValueCell>
+        );
+      })}
+    </div>
   );
 }
