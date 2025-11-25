@@ -1,4 +1,4 @@
-import ErrorImage from "@/assets/error_page.png";
+import ErrorImage from "@/assets/images/error_page.png";
 import Head from "next/head";
 import Image from "next/image";
 import Link from "next/link";

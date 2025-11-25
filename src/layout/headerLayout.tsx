@@ -26,7 +26,7 @@ export default function HeaderLayout({ children }: { children: ReactNode }) {
   const [searchValue, setSearchValue] = useState("");
   const [isSearch, setIsSearch] = useState(false);
   const [isMenu, setIsMenu] = useState(false);
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, logout } = useAuth();
   const { isMobile } = useResponsive();
   const router = useRouter();
 
@@ -35,7 +35,18 @@ export default function HeaderLayout({ children }: { children: ReactNode }) {
   const searchRef = useRef<HTMLDivElement>(null);
   const asideRef = useRef<HTMLDivElement>(null);
 
+  const handleLogoutClick = () => {
+    logout();
+    router.push("/");
+  };
+
   useEffect(() => {
+    if (isMobile) {
+      if (isSearch === true || isMenu === true) {
+        setIsSearch(false);
+        setIsMenu(false);
+      }
+    }
     const handleClickOutside = (event: MouseEvent) => {
       // Search 영역 외부 클릭 시
       if (isSearch && searchRef.current && !searchRef.current.contains(event.target as Node)) {
@@ -56,7 +67,7 @@ export default function HeaderLayout({ children }: { children: ReactNode }) {
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
-  }, [isSearch, isMenu]);
+  }, [isSearch, isMenu, isMobile]);
 
   const handleSearchOpenClick = () => {
     setIsSearch(!isSearch);
@@ -112,12 +123,15 @@ export default function HeaderLayout({ children }: { children: ReactNode }) {
               <Link className="text-14-bold text-gray-700" href={"/mypage"}>
                 내 프로필
               </Link>
+              <button onClick={handleLogoutClick} className="text-14-bold text-gray-700">
+                로그아웃
+              </button>
             </>
           )}
         </div>
       </header>
       <header
-        className={`relative flex h-64 items-center justify-between gap-20 border-b border-gray-200 px-20 py-16 md:hidden ${getMobilePadding()}`}
+        className={`relative z-10 flex h-64 items-center justify-between gap-20 border-b border-gray-200 px-20 py-16 md:hidden ${getMobilePadding()}`}
       >
         <button onClick={handleMenuOpenClick}>
           <IcMenu className="h-24 w-24" />
@@ -154,6 +168,28 @@ export default function HeaderLayout({ children }: { children: ReactNode }) {
                   </li>
                 ))}
               </ul>
+              <div>
+                {!isAuthenticated ? (
+                  <ul className="flex flex-col gap-10">
+                    <li>
+                      <Link className={sideBarBasic} href={"/login"}>
+                        로그인
+                      </Link>
+                    </li>
+                    <li>
+                      <Link className={sideBarBasic} href={"/signup"}>
+                        회원가입
+                      </Link>
+                    </li>
+                  </ul>
+                ) : (
+                  <>
+                    <button onClick={handleLogoutClick} className={sideBarBasic}>
+                      로그아웃
+                    </button>
+                  </>
+                )}
+              </div>
             </div>
           </aside>
         </Activity>
