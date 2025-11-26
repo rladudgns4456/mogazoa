@@ -1,4 +1,3 @@
-import { SnsSignup } from "@/api/auth/auth";
 import PopPage from "@/assets/icons/ic_pop.svg";
 import Logo from "@/assets/logo/logo.png";
 import LogoTitle from "@/assets/logo/logo_name.png";
@@ -56,15 +55,9 @@ export default function SnsSignupPage() {
     const isValid = validateNickname();
     if (!isValid) return;
 
-    try {
-      await SnsSignup(provider!, {
-        nickname,
-        redirectUri: `http://localhost:3000/auth/${provider}`,
-        token: code ?? "",
-      });
-    } catch (e) {
-      console.error(e);
-    }
+    localStorage.setItem("sns_nickname", nickname);
+
+    window.location.href = `https://kauth.kakao.com/oauth/authorize?response_type=code&client_id=${process.env.NEXT_PUBLIC_KAKAO_CLIENT_ID}&redirect_uri=http://localhost:3000/auth/kakaoSignup`;
 
     setError("");
   };

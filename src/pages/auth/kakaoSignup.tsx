@@ -1,4 +1,4 @@
-import { Snslogin } from "@/api/auth/auth";
+import { SnsSignup } from "@/api/auth/auth";
 import { useAuth } from "@/components/login/AuthContext";
 import Cookies from "js-cookie";
 import { useRouter } from "next/router";
@@ -14,10 +14,17 @@ export default function KakaoCallbackPage() {
     const code = router.query.code;
     if (typeof code !== "string") return;
 
-    const loginWithKakao = async () => {
+    const nickname = localStorage.getItem("sns_nickname");
+    if (!nickname) {
+      router.replace("/snsSignup");
+      return;
+    }
+
+    const signupWithKakao = async () => {
       try {
-        const res = await Snslogin("kakao", {
-          redirectUri: "http://localhost:3000/auth/kakao",
+        const res = await SnsSignup("kakao", {
+          nickname,
+          redirectUri: "http://localhost:3000/auth/kakaoSignup",
           token: code,
         });
 
@@ -27,16 +34,13 @@ export default function KakaoCallbackPage() {
 
         router.replace("/");
       } catch (error: any) {
-        if (error?.response?.status === 401 || error?.response?.status === 403) {
-          router.replace("/snsSignup");
-          return;
-        }
+        router.replace("/404");
         console.error(error);
       }
     };
 
-    loginWithKakao();
+    signupWithKakao();
   }, [router]);
 
-  return <div>카카오 로그인 처리중...</div>;
+  return <div>카카오 회원가입 처리중...</div>;
 }
