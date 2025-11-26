@@ -9,6 +9,15 @@ export interface User {
   description: string;
   image: string;
   teamId: string;
+  mostFavoriteCategory?: {
+    id: number;
+    name: string;
+  };
+  averageRating: number;
+  reviewCount: number;
+  followeesCount: number;
+  followersCount: number;
+  isFollowing?: boolean;
   createdAt: string;
   updatedAt: string;
 }
