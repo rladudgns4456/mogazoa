@@ -1,3 +1,5 @@
+"use client";
+
 import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
@@ -32,7 +34,7 @@ export default function ItemCard({ product, rank, showRank = false }: ItemCardPr
           <div className={cn("absolute inset-0 overflow-hidden rounded-8 bg-gray-300")}>
             <div
               className={cn(
-                "animate-shimmer via-white/20 absolute inset-0 bg-gradient-to-r from-transparent to-transparent",
+                "via-white/20 absolute inset-0 animate-shimmer bg-gradient-to-r from-transparent to-transparent",
               )}
             />
           </div>

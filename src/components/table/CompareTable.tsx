@@ -138,3 +138,5 @@ export default function CompareTable({ top, rows = [], side, className, size = "
     </section>
   );
 }
+
+export { Pill, ValueCell };
