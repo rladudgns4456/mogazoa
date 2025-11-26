@@ -1,5 +1,7 @@
 "use client";
 import CompareTable, { CompareRow, Pill, ValueCell } from "@/components/table/CompareTable";
+import { useModal } from "@/components/modal/modalBase/modalProvider";
+import ModalContainer from "@/components/modal/modalBase/ModalContainer";
 import React, { useEffect, useState, useCallback } from "react";
 import Button from "@/components/Button";
 import ReplaceModal from "@/components/compare/ReplaceModal";
@@ -119,6 +121,8 @@ async function searchProductsApi(keyword: string): Promise<ProductSummary[]> {
 // ComparePage 컴포넌트
 // ==========================================================
 export default function ComparePage() {
+  const { openModal } = useModal();
+
   const [selected, setSelected] = useState<{ left: ProductSummary | null; right: ProductSummary | null }>({
     left: null,
     right: null,
@@ -136,17 +140,6 @@ export default function ComparePage() {
 
   const [isComparing, setIsComparing] = useState(false);
   const [compareData, setCompareData] = useState<CompareResult | null>(null);
-
-  // 교체 모달 상태
-  const [modalState, setModalState] = useState<{
-    isOpen: boolean;
-    side: CompareSide | null;
-    newProduct: ProductSummary | null;
-  }>({
-    isOpen: false,
-    side: null,
-    newProduct: null,
-  });
 
   // ----------------------------------------------------------
   // 초기 로딩: 저장된 상품 복원
@@ -193,12 +186,48 @@ export default function ComparePage() {
   }, []);
 
   // ----------------------------------------------------------
+  // 비교 교체 모달 열기 (modalBase 사용)
+  // ----------------------------------------------------------
+
+  const openReplaceModal = (side: CompareSide, newProduct: ProductSummary) => {
+    if (!selected.left || !selected.right) return;
+
+    openModal(
+      <ModalContainer
+        styleClass="
+        w-[500px]
+        rounded-[20px]
+        border-[#EFF0F3]
+        shadow-[0_4px_30px_rgba(92,104,177,0.05)]
+      "
+      >
+        <ReplaceModal
+          triggerSide={side}
+          left={selected.left}
+          right={selected.right}
+          newProduct={newProduct}
+          onConfirmReplace={keepSide => {
+            const sideToReplace: CompareSide = keepSide === "left" ? "right" : "left";
+
+            setSelected(prev => {
+              const next = { ...prev, [sideToReplace]: newProduct };
+              persistIds(next);
+              return next;
+            });
+
+            setKeyword(prev => ({ ...prev, [sideToReplace]: "" }));
+          }}
+        />
+      </ModalContainer>,
+    );
+  };
+
+  // ----------------------------------------------------------
   // 상품 선택 & 교체
   // ----------------------------------------------------------
   const handleSelectProduct = (side: CompareSide, product: ProductSummary) => {
     if (selected.left && selected.right) {
-      // 둘 다 이미 선택된 상태라면 교체 모달
-      setModalState({ isOpen: true, side, newProduct: product });
+      openReplaceModal(side, product);
       setSearchResult(prev => ({ ...prev, [side]: [] }));
       return;
     }
@@ -307,6 +336,9 @@ export default function ComparePage() {
               onClear={() => handleClear("left")}
               overallWinner={compareData?.overall ?? null}
               metricResults={compareData?.results ?? null}
+              onClickReplace={
+                selected.left && selected.right ? () => openReplaceModal("left", selected.left!) : undefined
+              }
             />
           </div>
 
@@ -327,6 +359,9 @@ export default function ComparePage() {
               onClear={() => handleClear("right")}
               overallWinner={compareData?.overall ?? null}
               metricResults={compareData?.results ?? null}
+              onClickReplace={
+                selected.left && selected.right ? () => openReplaceModal("right", selected.right!) : undefined
+              }
             />
           </div>
         </div>
@@ -340,11 +375,9 @@ export default function ComparePage() {
       {/* 비교하기 버튼 + 안내 메시지 */}
       <div className="mt-10 flex flex-col items-center gap-3">
         {isComparing && <p className="text-14-regular text-gray-500">최신 데이터를 불러오는 중...</p>}
-
         {!isReady && !isComparing && (
           <p className="text-14-regular text-gray-500">비교할 상품 2개를 입력해 주세요 ({selectedCount}/2)</p>
         )}
-
         <Button
           type="button"
           variant={isReady ? "primary" : "secondary"}
@@ -355,14 +388,6 @@ export default function ComparePage() {
           {isReady ? "상품 비교하기" : `비교할 상품 2개를 입력해 주세요 (${selectedCount}/2)`}
         </Button>
       </div>
-
-      {/* 교체 모달 */}
-      <ReplaceModal
-        state={modalState}
-        selected={selected}
-        onClose={() => setModalState({ isOpen: false, side: null, newProduct: null })}
-        onConfirmReplace={handleConfirmReplace}
-      />
     </div>
   );
 }
@@ -380,6 +405,7 @@ type ProductSlotProps = {
   onClear: () => void;
   overallWinner?: "left" | "right" | "draw" | null;
   metricResults?: MetricResult[] | null;
+  onClickReplace?: () => void;
 };
 
 function ProductSlot({
@@ -392,6 +418,7 @@ function ProductSlot({
   onClear,
   overallWinner,
   metricResults,
+  onClickReplace,
 }: ProductSlotProps) {
   const isLeft = side === "left";
   const defaultCardImage = isLeft ? ASSET_PATHS.DEFAULT_A : ASSET_PATHS.DEFAULT_B;
@@ -431,13 +458,14 @@ function ProductSlot({
       {/* 2. 검색 / 선택 pill */}
       <div className="relative flex w-full justify-center">
         {product ? (
-          // 선택된 상태: 검정 pill
-          <div className="flex h-50 w-full max-w-300 items-center justify-between rounded-full bg-[#2F323A] px-20 text-14-medium text-white shadow-sm">
-            <span className="mr-3 truncate leading-[20px]">{product.name}</span>
+          <div className="flex h-50 w-full max-w-300 items-center rounded-full bg-[#2F323A] px-20 text-14-medium text-white shadow-sm">
+            <button type="button" className="flex flex-1 items-center justify-start" onClick={onClickReplace}>
+              <span className="mr-3 truncate leading-[20px]">{product.name}</span>
+            </button>
             <button
               type="button"
               onClick={onClear}
-              className="hover:bg-black/40 flex h-5 w-5 items-center justify-center rounded-full text-16-bold"
+              className="hover:bg-black/40 ml-2 flex h-5 w-5 items-center justify-center rounded-full text-16-bold"
               aria-label="선택한 상품 삭제"
             >
               ✕
