@@ -1,91 +1,68 @@
-// 상품 기본 정보 타입
-export type ProductSummary = {
+// src/utils/compareUtils.ts
+
+// 비교에 사용할 메트릭 키
+export type MetricKey = "rating" | "reviewCount" | "favoriteCount";
+
+// 화면에서 쓸 상품 요약 타입
+export interface ProductSummary {
   id: number;
   name: string;
   thumbnailUrl: string | null;
-  rating: number; // 별점
-  favoriteCount: number; // 찜 개수
-  viewCount: number; // (현재 용도: 리뷰 개수)
-};
+  rating: number;
+  reviewCount: number;
+  favoriteCount: number;
+}
 
-// 비교에 사용되는 메트릭 키
-export type MetricKey = "rating" | "favoriteCount" | "viewCount";
-
-// 한 메트릭에 대한 승자 정보
-export type MetricResult = {
+// 개별 메트릭 비교 결과
+export interface MetricResult {
   metric: MetricKey;
   leftValue: number;
   rightValue: number;
-  winner: "left" | "right" | "draw";
-  /** 두 값 차이의 절댓값 (항상 양수 또는 0) */
   diff: number;
-};
+  winner: "left" | "right" | "draw";
+}
 
 // 전체 비교 결과
-export type CompareResult = {
+export interface CompareResult {
   results: MetricResult[];
-  /** 전체 승자: left / right / draw */
   overall: "left" | "right" | "draw";
-};
-
-// 비교에 사용할 메트릭 목록 (순서 유지)
-const METRICS: MetricKey[] = ["rating", "viewCount", "favoriteCount"];
-
-/**
- * 개별 메트릭 비교 유틸
- */
-function compareMetric(
-  leftValue: number,
-  rightValue: number,
-): {
-  winner: "left" | "right" | "draw";
-  diff: number;
-} {
-  if (leftValue === rightValue) {
-    return { winner: "draw", diff: 0 };
-  }
-
-  const winner = leftValue > rightValue ? "left" : "right";
-  const diff = Math.abs(leftValue - rightValue);
-
-  return { winner, diff };
 }
 
 /**
- * 두 상품을 메트릭별로 비교하고 전체 승자를 계산
+ * 두 상품을 메트릭별로 비교해서 결과를 반환
  */
 export function compareProducts(left: ProductSummary, right: ProductSummary): CompareResult {
-  const results: MetricResult[] = METRICS.map(metric => {
-    const leftValue = left[metric];
-    const rightValue = right[metric];
+  const metrics: MetricKey[] = ["rating", "reviewCount", "favoriteCount"];
 
-    const { winner, diff } = compareMetric(leftValue, rightValue);
+  const results: MetricResult[] = metrics.map(metric => {
+    const leftValue = left[metric] ?? 0;
+    const rightValue = right[metric] ?? 0;
+
+    let winner: "left" | "right" | "draw" = "draw";
+    if (leftValue > rightValue) winner = "left";
+    else if (rightValue > leftValue) winner = "right";
 
     return {
       metric,
       leftValue,
       rightValue,
+      diff: Math.abs(leftValue - rightValue),
       winner,
-      diff,
     };
   });
 
-  // 전체 승자 계산: 메트릭별 승 수를 기준으로 판단
-  let leftWinCount = 0;
-  let rightWinCount = 0;
+  // 전체 승/패 계산
+  let leftWins = 0;
+  let rightWins = 0;
 
   results.forEach(r => {
-    if (r.winner === "left") leftWinCount += 1;
-    else if (r.winner === "right") rightWinCount += 1;
+    if (r.winner === "left") leftWins += 1;
+    if (r.winner === "right") rightWins += 1;
   });
 
   let overall: "left" | "right" | "draw" = "draw";
-  if (leftWinCount > rightWinCount) overall = "left";
-  else if (rightWinCount > leftWinCount) overall = "right";
-  // 같으면 그대로 draw 유지
+  if (leftWins > rightWins) overall = "left";
+  else if (rightWins > leftWins) overall = "right";
 
-  return {
-    results,
-    overall,
-  };
+  return { results, overall };
 }
