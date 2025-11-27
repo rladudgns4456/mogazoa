@@ -98,13 +98,13 @@ export default function MyProfilePage() {
         />
 
         {/* 탭 영역 */}
-        <div className="mx-auto mt-40 max-w-940">
+        <div className="mx-auto mt-40 max-w-940 px-18 md:px-62 lg:px-0">
           <ItemTab activeTab={activeTab} onTabChange={setActiveTab} />
 
           {/* 상품 목록 */}
           <div className="mt-40">
             {activeTab === "reviews" && (
-              <div className="grid grid-cols-2 gap-20 md:grid-cols-3 md:gap-24 lg:grid-cols-4">
+              <div className="grid grid-cols-2 gap-20 md:grid-cols-3 md:gap-24">
                 {reviewedProducts?.list.length ? (
                   reviewedProducts.list.map(product => <ItemCard key={product.id} product={product} />)
                 ) : (
@@ -114,7 +114,7 @@ export default function MyProfilePage() {
             )}
 
             {activeTab === "created" && (
-              <div className="grid grid-cols-2 gap-20 md:grid-cols-3 md:gap-24 lg:grid-cols-4">
+              <div className="grid grid-cols-2 gap-20 md:grid-cols-3 md:gap-24">
                 {createdProducts?.list.length ? (
                   createdProducts.list.map(product => <ItemCard key={product.id} product={product} />)
                 ) : (
@@ -124,7 +124,7 @@ export default function MyProfilePage() {
             )}
 
             {activeTab === "favorite" && (
-              <div className="grid grid-cols-2 gap-20 md:grid-cols-3 md:gap-24 lg:grid-cols-4">
+              <div className="grid grid-cols-2 gap-20 md:grid-cols-3 md:gap-24">
                 {favoriteProducts?.list.length ? (
                   favoriteProducts.list.map(product => <ItemCard key={product.id} product={product} />)
                 ) : (
