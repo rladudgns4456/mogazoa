@@ -15,7 +15,7 @@ export type CategoryChipProps = {
 
 const sizeMap = {
   sm: { iconBox: 16, pad: "px-2 py-1", text: "text-14 font-bold" },
-  md: { iconBox: 20, pad: "px-3 py-2", text: "text-16 font-bold" },
+  md: { iconBox: 20, pad: "px-3 py-2", text: "text-16-bold md:text-20-bold" },
   lg: { iconBox: 24, pad: "px-4 py-3", text: "text-18 font-bold" },
 };
 
@@ -30,7 +30,7 @@ const CategoryChip = forwardRef<HTMLElement, CategoryChipProps>(function Categor
 
   const IconBox = SvgIcon ? (
     <div
-      className="relative shrink-0 overflow-visible"
+      className={cn("relative shrink-0 overflow-visible", size === "md" && "md:!h-28 md:!w-28")}
       style={{ width: S.iconBox * 1.2, height: S.iconBox }}
       aria-hidden
     >

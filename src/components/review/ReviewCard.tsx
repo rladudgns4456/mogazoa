@@ -6,20 +6,48 @@ import Image from "next/image";
 import { Review } from "@/types/review";
 import { ThumbButton } from "@/components/thumbs";
 import StarRating from "./StarRating";
+import { useToast, Toast } from "@/components/toast";
 import cn from "clsx";
 
 interface ReviewCardProps {
-  review: Review;
-  onLike?: (reviewId: number) => void;
+  review: Review; // 리뷰 데이터 객체
+  onLike?: (reviewId: number) => void; // 좋아요 버튼 클릭 시 호출되는 콜백 (API 호출 등)
+  showActions?: boolean; // 수정/삭제 버튼 표시 여부 (본인 리뷰일 때 true)
+  onEdit?: (reviewId: number) => void; // 수정 버튼 클릭 시 호출되는 콜백
+  onDelete?: (reviewId: number) => void; // 삭제 버튼 클릭 시 호출되는 콜백
 }
 
 /**
  * 리뷰 카드 컴포넌트
+ *
+ * @description
  * - 리뷰어 정보, 별점, 리뷰 내용, 이미지, 좋아요 수 표시
- * - 내가 작성한 리뷰면 수정/삭제 버튼 표시
+ * - 본인의 리뷰인 경우 수정/삭제 버튼 표시 가능
+ *
+ * @example
+ * ```tsx
+ * // 기본 사용 (읽기 전용)
+ * <ReviewCard review={reviewData} onLike={handleLike} />
+ *
+ * // 본인 리뷰 (수정/삭제 버튼 표시)
+ * const { user } = useAuth();
+ *
+ * <ReviewCard
+ *   review={reviewData}
+ *   onLike={handleLike}
+ *   showActions={user?.id === reviewData.userId}
+ *   onEdit={handleEdit}
+ *   onDelete={handleDelete}
+ * />
+ * ```
+ *
+ * @important
+ * - showActions는 페이지/부모 컴포넌트에서 권한 체크 후 전달해야 합니다
  */
-export default function ReviewCard({ review, onLike }: ReviewCardProps) {
+
+export default function ReviewCard({ review, onLike, showActions = false, onEdit, onDelete }: ReviewCardProps) {
   const { id, user, rating, content, reviewImages, createdAt } = review;
+  const { openToast } = useToast();
 
   // 로컬 상태로 좋아요 관리 (낙관적 업데이트)
   const [isLiked, setIsLiked] = useState(review.isLiked);
@@ -45,6 +73,8 @@ export default function ReviewCard({ review, onLike }: ReviewCardProps) {
       // 실패 시 롤백
       setIsLiked(!newIsLiked);
       setLikeCount(prev => prev - delta);
+      // 에러 토스트 표시
+      openToast(<Toast label="다시 시도해 주세요" error />);
     }
   };
 
@@ -54,9 +84,7 @@ export default function ReviewCard({ review, onLike }: ReviewCardProps) {
       <div className={cn("mb-12 flex items-start justify-between")}>
         <Link href={`/user/${user.id}`} className={cn("flex items-center gap-12 hover:opacity-90")}>
           {/* 별점(닉네임포함) */}
-          <div>
-            <StarRating rating={rating} readonly nickname={user.nickname} />
-          </div>
+          <StarRating rating={rating} readonly nickname={user.nickname} />
         </Link>
 
         <span className={cn("text-12-regular text-gray-700 md:text-14-regular")}>{formattedDate}</span>
@@ -83,14 +111,45 @@ export default function ReviewCard({ review, onLike }: ReviewCardProps) {
         </div>
       )}
 
-      {/* 하단: 좋아요 버튼*/}
-      <div className={cn("flex items-center justify-end")}>
-        <ThumbButton
-          label="도움이 돼요"
-          count={likeCount}
-          variant={isLiked ? "dark" : "light"}
-          onClick={handleClickLike}
-        />
+      {/* 하단: 좋아요 버튼 + 수정/삭제 버튼 */}
+      <div className={cn("flex items-center justify-between")}>
+        {/* 수정/삭제 버튼 (showActions가 true일 때만 표시) */}
+        {showActions && (
+          <div className={cn("flex gap-8")}>
+            <button
+              onClick={() => onEdit?.(id)}
+              aria-label="리뷰 수정"
+              className={cn(
+                "bg-gray-300 px-20 py-6 text-14-regular text-gray-700",
+                "transition-colors hover:bg-primary-600 hover:text-white",
+                "rounded-15 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-300",
+              )}
+            >
+              수정
+            </button>
+            <button
+              onClick={() => onDelete?.(id)}
+              aria-label="리뷰 삭제"
+              className={cn(
+                "bg-gray-300 px-20 py-6 text-14-regular text-gray-700",
+                "transition-colors hover:bg-red-500 hover:text-white",
+                "rounded-15 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-300",
+              )}
+            >
+              삭제
+            </button>
+          </div>
+        )}
+
+        {/* 좋아요 버튼 */}
+        <div className={cn("ml-auto")}>
+          <ThumbButton
+            label="도움이 돼요"
+            count={likeCount}
+            variant={isLiked ? "dark" : "light"}
+            onClick={handleClickLike}
+          />
+        </div>
       </div>
     </div>
   );
