@@ -6,6 +6,7 @@ import { User } from "@/types/user";
 import { formatNumber } from "@/utils/formatNumber";
 import { CategoryChip } from "@/components/Category";
 import Button from "@/components/Button";
+import DefaultProfileImage from "@/assets/images/not_card.svg";
 
 // 카테고리 이름별 아이콘 매핑
 const CATEGORY_ICON_MAP: Record<string, string> = {
@@ -70,7 +71,13 @@ export default function ProfileCard({
               "relative size-68 overflow-hidden rounded-full md:size-160",
             )}
           >
-            <Image src={image} alt={`${nickname} 프로필`} fill className={cn("object-cover")} />
+            {image ? (
+              <Image src={image} alt={`${nickname} 프로필`} fill className={cn("object-cover")} />
+            ) : (
+              <div className={cn("flex h-full w-full items-center justify-center bg-gray-100")}>
+                <DefaultProfileImage className={cn("h-full w-full opacity-60")} />
+              </div>
+            )}
           </div>
           <h2
             className={cn(
