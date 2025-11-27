@@ -1,4 +1,4 @@
-<!-- ic_chevron_right.svg -->
+<!-- ic_chevron_left.svg -->
 <svg
   width="16"
   height="16"
@@ -7,7 +7,7 @@
   xmlns="http://www.w3.org/2000/svg"
 >
   <path
-    d="M6.5 4L10 8l-3.5 4"
+    d="M9.5 4L6 8l3.5 4"
     fill="none"
     stroke="currentColor"
     stroke-width="1.5"

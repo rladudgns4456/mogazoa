@@ -1,7 +1,7 @@
 import { AuthProvider } from "@/components/login/AuthContext";
 import { ModalProvider } from "@/components/modal/modalBase";
 import { ModalWrap } from "@/components/modal/modalBase";
-import { ToastProvider,ToastWrap} from "@/components/toast";
+import { ToastProvider, ToastWrap } from "@/components/toast";
 import HeaderLayout from "@/layout/headerLayout";
 import { getQueryClient } from "@/lib/reactQuery";
 import "@/styles/globals.css";

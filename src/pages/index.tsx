@@ -1,7 +1,7 @@
-export default function Home() {
-  return (
-    <div>
-      <main>메인</main>
-    </div>
-  );
+// pages/index.tsx
+import React from "react";
+import MainPage from "@/components/mainpage";
+
+export default function IndexPage() {
+  return <MainPage />;
 }
