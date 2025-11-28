@@ -107,7 +107,7 @@ export default function UserProfilePage() {
     }
   };
 
-  if (!isAuthenticated || isLoading || !user) {
+  if (isLoading || !user) {
     return (
       <div className="min-h-screen bg-gray-50">
         <ProfileSkeleton />
