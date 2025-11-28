@@ -1,3 +1,5 @@
+"use client";
+
 import { Reviewer, ReviewerRankingItemProps } from "@/types/review";
 import { formatNumber } from "@/utils/formatNumber";
 import RankBadge from "./RankBadge";
@@ -5,6 +7,7 @@ import cn from "clsx";
 import Link from "next/link";
 import Image from "next/image";
 import DefaultProfileImage from "@/assets/images/not_card.svg";
+import { isValidImageUrl } from "@/utils/validateImageUrl";
 
 // 1~3등 리뷰어 컴포넌트
 export default function ReviewerRankingTopItem({ reviewer, rank }: ReviewerRankingItemProps) {
@@ -18,9 +21,9 @@ export default function ReviewerRankingTopItem({ reviewer, rank }: ReviewerRanki
             rank === 1 ? "h-64 w-64 md:h-100 md:w-100" : "h-56 w-56 md:h-84 md:w-84",
           )}
         >
-          {reviewer.image ? (
+          {isValidImageUrl(reviewer.image) ? (
             <Image
-              src={reviewer.image}
+              src={reviewer.image!}
               alt={`${reviewer.nickname} 프로필`}
               width={rank === 1 ? 100 : 84}
               height={rank === 1 ? 100 : 84}
