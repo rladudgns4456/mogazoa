@@ -1,6 +1,7 @@
+import React, { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { useMemo } from "react";
-import { getCategories } from "@/pages/api/category";
+import { fetchCategories, type CategoryApiResponse } from "@/api/categories";
+
 import Ic_music from "@/assets/svgr/ic_music.svg?react";
 import Ic_movies from "@/assets/svgr/ic_movies.svg?react";
 import Ic_lecture from "@/assets/svgr/ic_lecture.svg?react";
@@ -25,13 +26,6 @@ const ICON_ARR = [
   { id: 10, icon: <Ic_application /> },
 ];
 
-type DataType = {
-  id: number;
-  name: string;
-  createdAt: string;
-  updatedAt: string;
-};
-
 export type CategoryType = {
   id: number;
   label: string;
@@ -43,18 +37,20 @@ export function useCategories() {
     data: response,
     isLoading,
     isError,
-  } = useQuery<DataType[]>({ queryKey: ["categories"], queryFn: getCategories });
+  } = useQuery<CategoryApiResponse[]>({
+    queryKey: ["categories"],
+    queryFn: fetchCategories, // ✅ 함수 이름 맞추기
+  });
 
-  //get한 카테고리 값과 아이콘 합친 배열 만들기
+  // get한 카테고리 값과 아이콘 합친 배열 만들기
   const combinedCategory: CategoryType[] = useMemo(() => {
     if (!response) return [];
-    return response.map((item, id: number) => {
-      return {
-        id: item.id,
-        label: item.name,
-        icon: ICON_ARR[id].icon,
-      };
-    });
+
+    return response.map((item, index) => ({
+      id: item.id,
+      label: item.name,
+      icon: ICON_ARR[index]?.icon ?? null, // ✅ 인덱스 안전하게
+    }));
   }, [response]);
 
   return { combinedCategory, isLoading, isError };
