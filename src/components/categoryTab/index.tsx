@@ -6,8 +6,6 @@ import { useRef, useState, useEffect } from "react";
 import { Swiper, SwiperSlide, SwiperClass } from "swiper/react";
 import { Navigation } from "swiper/modules";
 import Ic_Next from "@/assets/svgr/ic_chevron_right.svg?react";
-import "swiper/css";
-import "swiper/css/navigation";
 
 interface TabPops {
   isHome?: boolean;
