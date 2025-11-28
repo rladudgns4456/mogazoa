@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { getUserReviewedProducts, getUserCreatedProducts, getUserFavoriteProducts } from "@/api/users";
-import { TabType } from "@/components/profile/ItemTab";
+import { TabType } from "@/components/Profile/ItemTab";
 
 export function useProfileProducts(userId: number | undefined, activeTab: TabType) {
   // 리뷰 남긴 상품 조회
