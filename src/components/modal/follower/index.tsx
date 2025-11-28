@@ -52,11 +52,11 @@ export default function FollowerModal({ userId, type }: FollowerModalProps) {
   };
 
   return (
-    <ModalContainer styleClass="w-[90vw] max-w-500 rounded-20">
-      <div className="px-24 py-32">
+    <ModalContainer styleClass="w-[90vw] max-w-500 rounded-20 px-27 py-32 md:p-40">
+      <div>
         {/* 헤더 */}
-        <h2 className="mb-24 pr-32 text-20-bold text-gray-900">
-          {title} {followers.length}
+        <h2 className="mb-24 pr-32 text-18-bold text-gray-900 md:text-24-bold">
+          {title} <span className="text-primary-600">{followers.length}</span>
         </h2>
 
         {/* 팔로워/팔로잉 목록 */}
