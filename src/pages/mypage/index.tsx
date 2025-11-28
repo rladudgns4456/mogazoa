@@ -1,12 +1,12 @@
 import { useAuth } from "@/components/login/AuthContext";
-import ProfileCard from "@/components/profile";
-import ProfileProductTabs from "@/components/profile/ProfileProductTabs";
+import ProfileCard from "@/components/Profile";
+import ProfileProductTabs from "@/components/Profile/ProfileProductTabs";
 import { ProfileSkeleton } from "@/components/skeleton";
 import { getMyProfile } from "@/api/users";
 import { useQuery } from "@tanstack/react-query";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
-import { TabType } from "@/components/profile/ItemTab";
+import { TabType } from "@/components/Profile/ItemTab";
 import { useProfileProducts } from "@/hooks/useProfileProducts";
 import { useFollowModal } from "@/hooks/useFollowModal";
 
