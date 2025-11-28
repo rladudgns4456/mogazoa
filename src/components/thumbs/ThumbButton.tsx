@@ -12,6 +12,7 @@ export type ThumbButtonProps = {
   onClick?: () => void;
   className?: string;
   ariaLabel?: string;
+  disabled?: boolean;
 };
 
 export default function ThumbButton({
@@ -22,6 +23,7 @@ export default function ThumbButton({
   onClick,
   className,
   ariaLabel,
+  disabled = false,
 }: ThumbButtonProps) {
   const Icon = getThumbIcon(variant === "dark" ? "ic_fill_True" : "ic_fill_False");
 
@@ -49,6 +51,7 @@ export default function ThumbButton({
       type="button"
       aria-label={ariaLabel ?? label}
       onClick={onClick}
+      disabled={disabled}
       className={cn(
         // -------------------------
         // Large 기본(Hug)
@@ -63,6 +66,7 @@ export default function ThumbButton({
 
         "flex items-center justify-between rounded-full shadow-sm ring-1 transition-colors",
         variant === "dark" ? "bg-gray-900 text-white ring-gray-800" : "bg-white text-gray-900 ring-gray-200",
+        disabled && "cursor-not-allowed opacity-50",
 
         className,
       )}
