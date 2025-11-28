@@ -29,7 +29,6 @@ export interface Product {
   isFavorite?: boolean;
 }
 
-
 // 상품 목록 응답
 export interface ProductListResponse {
   list: Product[];

@@ -3,13 +3,10 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/router";
 import Banner from "@/components/banner";
-import { ChevronLeft, ChevronRight } from "lucide-react";
 import cn from "clsx";
 import { CategoryList, CategoryItem } from "@/components/Category";
 import ReviewerRanking from "@/components/review/ReviewerRanking";
 import ItemCard from "@/components/ItemCard";
-import IcArrowLeft from "@/assets/svgr/ic_chevron_left.svg";
-import IcArrowRight from "@/assets/svgr/ic_chevron_right.svg";
 import { useCategories } from "@/hooks/useCategories";
 import { Product } from "@/types/product";
 
@@ -33,15 +30,22 @@ type ProductListResponse = {
 
 // 리스트 응답 -> Product 타입으로 보정
 const toProduct = (raw: ProductListItemFromApi): Product => ({
-  ...raw,
-  // 리스트 응답에 없는 필드는 기본값으로 채워줌
+  id: raw.id,
+  name: raw.name,
   description: "",
+  image: raw.image,
+  rating: raw.rating,
+  reviewCount: raw.reviewCount,
+  favoriteCount: raw.favoriteCount,
+  categoryId: raw.categoryId,
+  userId: raw.writerId, // writerId -> userId 매핑
+  createdAt: raw.createdAt,
+  updatedAt: raw.updatedAt,
   isFavorite: false,
   category: {
     id: raw.categoryId,
     name: "",
   },
-  categoryMetric: undefined,
 });
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE ?? "";
@@ -65,6 +69,7 @@ type OrderType = "recent" | "rating" | "reviewCount";
 export default function MainPage() {
   const router = useRouter();
   const [ratingPage, setRatingPage] = useState(0);
+
   // =========================
   // 1) 카테고리
   // =========================
@@ -240,15 +245,21 @@ export default function MainPage() {
         if (!res.ok) throw new Error("상품 목록 조회 실패");
 
         const data: ProductListResponse = await res.json();
+        if (cancelled) return;
 
         setProducts((data.list ?? []).map(toProduct));
         const next = data.nextCursor ?? null;
         setCursor(next);
         setHasMore(Boolean(next));
       } catch (error) {
-        // ...
+        if (!cancelled) {
+          console.error(error);
+          setListError("상품 목록을 불러오는 중 오류가 발생했어요.");
+        }
       } finally {
-        setIsLoadingList(false);
+        if (!cancelled) {
+          setIsLoadingList(false);
+        }
       }
     };
 
