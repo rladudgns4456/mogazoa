@@ -131,6 +131,13 @@ export default function Login() {
         router.push("/");
       } catch (e) {
         console.error(e);
+        if (e && typeof e === "object" && "response" in e) {
+          const error = e as { response?: { data?: { message?: string } } };
+          const errorMessage = error.response?.data?.message || "로그인에 실패했습니다.";
+          alert(errorMessage);
+        } else {
+          alert("로그인에 실패했습니다.");
+        }
       }
     }
   };

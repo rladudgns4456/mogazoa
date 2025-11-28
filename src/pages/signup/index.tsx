@@ -182,6 +182,13 @@ export default function Signup() {
         router.push("/login");
       } catch (e) {
         console.error(e);
+        if (e && typeof e === "object" && "response" in e) {
+          const error = e as { response?: { data?: { message?: string } } };
+          const errorMessage = error.response?.data?.message || "회원가입에 실패했습니다.";
+          alert(errorMessage);
+        } else {
+          alert("회원가입에 실패했습니다.");
+        }
       }
     }
   };
