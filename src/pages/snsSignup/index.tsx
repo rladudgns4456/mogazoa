@@ -19,16 +19,17 @@ export default function SnsSignupPage() {
     setDisabled(!validated);
   }, [validated]);
 
-  const validateNickname = () => {
-    const value = nickname.trim();
+  // 닉네임 유효성 검사 (값을 직접 받는 버전)
+  const validateNicknameValue = (value: string) => {
+    const trimmedValue = value.trim();
 
-    if (!value) {
+    if (!trimmedValue) {
       setError("닉네임을 입력해 주세요");
       setValidated(false);
       return false;
     }
 
-    if (value.length > 10) {
+    if (trimmedValue.length > 10) {
       setError("최대 10자 입력이 가능해요.");
       setValidated(false);
       return false;
@@ -39,17 +40,14 @@ export default function SnsSignupPage() {
     return true;
   };
 
+  // 기존 함수는 onBlur와 handleSubmit에서 사용
+  const validateNickname = () => validateNicknameValue(nickname);
+
   const handleChange = (value: string) => {
     setNickname(value);
-    if (error) {
-      setError("");
-    }
+    // 실시간 유효성 검사
+    validateNicknameValue(value);
   };
-
-  const provider = localStorage.getItem("sns_provider");
-
-  const code =
-    provider === "kakao" ? localStorage.getItem("kakao_auth_code") : localStorage.getItem("google_auth_code");
 
   const handleSubmit = async () => {
     const isValid = validateNickname();
@@ -57,7 +55,8 @@ export default function SnsSignupPage() {
 
     localStorage.setItem("sns_nickname", nickname);
 
-    window.location.href = `https://kauth.kakao.com/oauth/authorize?response_type=code&client_id=${process.env.NEXT_PUBLIC_KAKAO_CLIENT_ID}&redirect_uri=http://localhost:3000/auth/kakaoSignup`;
+    const redirectUri = `${window.location.origin}/auth/kakaoSignup`;
+    window.location.href = `https://kauth.kakao.com/oauth/authorize?response_type=code&client_id=${process.env.NEXT_PUBLIC_KAKAO_CLIENT_ID}&redirect_uri=${encodeURIComponent(redirectUri)}`;
 
     setError("");
   };

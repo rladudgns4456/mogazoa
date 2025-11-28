@@ -43,14 +43,6 @@ export default function Login() {
     password: false,
   });
 
-  // 값 변경 핸들러
-  const handleChange = (field: keyof FormData, value: string) => {
-    setFormData(prev => ({
-      ...prev,
-      [field]: value,
-    }));
-  };
-
   // 에러 설정 핸들러
   const setError = (field: keyof FormErrors, message: string) => {
     setErrors(prev => ({
@@ -59,9 +51,8 @@ export default function Login() {
     }));
   };
 
-  // 이메일 유효성 검사
-  const validateEmail = () => {
-    const value = formData.email;
+  // 이메일 유효성 검사 (값을 직접 받는 버전)
+  const validateEmailValue = (value: string) => {
     if (!value.trim()) {
       setError("email", "이메일을 입력해 주세요");
       setValidated(prev => ({ ...prev, email: false }));
@@ -78,9 +69,8 @@ export default function Login() {
     return true;
   };
 
-  // 비밀번호 유효성 검사
-  const validatePassword = () => {
-    const value = formData.password;
+  // 비밀번호 유효성 검사 (값을 직접 받는 버전)
+  const validatePasswordValue = (value: string) => {
     if (!value.trim()) {
       setError("password", "비밀번호를 입력해 주세요");
       setValidated(prev => ({ ...prev, password: false }));
@@ -99,6 +89,25 @@ export default function Login() {
     setError("password", "");
     setValidated(prev => ({ ...prev, password: true }));
     return true;
+  };
+
+  // 기존 함수는 onBlur와 handleSubmit에서 사용
+  const validateEmail = () => validateEmailValue(formData.email);
+  const validatePassword = () => validatePasswordValue(formData.password);
+
+  // 값 변경 핸들러
+  const handleChange = (field: keyof FormData, value: string) => {
+    setFormData(prev => ({
+      ...prev,
+      [field]: value,
+    }));
+
+    // 실시간 유효성 검사
+    if (field === "email") {
+      validateEmailValue(value);
+    } else if (field === "password") {
+      validatePasswordValue(value);
+    }
   };
 
   useEffect(() => {
@@ -122,6 +131,13 @@ export default function Login() {
         router.push("/");
       } catch (e) {
         console.error(e);
+        if (e && typeof e === "object" && "response" in e) {
+          const error = e as { response?: { data?: { message?: string } } };
+          const errorMessage = error.response?.data?.message || "로그인에 실패했습니다.";
+          alert(errorMessage);
+        } else {
+          alert("로그인에 실패했습니다.");
+        }
       }
     }
   };
@@ -134,6 +150,7 @@ export default function Login() {
   };
 
   const snsButton = `flex h-56 w-56 items-center justify-center rounded-100 border border-gray-300`;
+  const redirectUri = `${window.location.origin}/auth/kakao`;
 
   return (
     <>
@@ -199,7 +216,7 @@ export default function Login() {
               <IcGoogle />
             </button>
             <Link
-              href={`https://kauth.kakao.com/oauth/authorize?response_type=code&client_id=${process.env.NEXT_PUBLIC_KAKAO_CLIENT_ID}&redirect_uri=http://localhost:3000/auth/kakao`}
+              href={`https://kauth.kakao.com/oauth/authorize?response_type=code&client_id=${process.env.NEXT_PUBLIC_KAKAO_CLIENT_ID}&redirect_uri=${encodeURIComponent(redirectUri)}`}
               onClick={() => localStorage.setItem("sns_provider", "kakao")}
               className={cn(snsButton)}
             >

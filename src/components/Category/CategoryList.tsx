@@ -7,13 +7,14 @@ export type CategoryListProps = {
   items: CategoryItem[];
   className?: string;
   layout?: "list" | "grid";
-  columns?: 1 | 2 | 3 | 4;
+  columns?: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10;
   withDividers?: boolean;
   size?: CategoryChipProps["size"];
   iconPlacement?: CategoryChipProps["iconPlacement"];
   selectable?: boolean;
   selectedId?: string | null;
   onSelect?: (id: string) => void;
+  variant?: CategoryChipProps["variant"];
 };
 
 export default function CategoryList({
@@ -27,6 +28,7 @@ export default function CategoryList({
   selectable = false,
   selectedId = null,
   onSelect,
+  variant = "default",
 }: CategoryListProps) {
   const handleClick = useCallback((id: string) => () => onSelect?.(id), [onSelect]);
 
@@ -36,6 +38,12 @@ export default function CategoryList({
       2: "grid-cols-2",
       3: "grid-cols-3",
       4: "grid-cols-4",
+      5: "grid-cols-5",
+      6: "grid-cols-6",
+      7: "grid-cols-7",
+      8: "grid-cols-8",
+      9: "grid-cols-9",
+      10: "grid-cols-10", // ⬅ 추가
     }[columns] || "grid-cols-2";
 
   const a11yProps = selectable
@@ -45,7 +53,7 @@ export default function CategoryList({
   return (
     <div className={className} {...a11yProps}>
       {layout === "grid" ? (
-        <ul className={["grid gap-4", colClass].join(" ")}>
+        <ul className={["grid gap-2", colClass].join(" ")}>
           {items.map(it => (
             <li key={it.id} role={selectable ? "option" : undefined} aria-selected={selectedId === it.id}>
               <CategoryChip
@@ -57,6 +65,7 @@ export default function CategoryList({
                 onClick={handleClick(it.id)}
                 selected={selectedId === it.id}
                 className="justify-start"
+                variant={variant}
               />
             </li>
           ))}
@@ -78,6 +87,7 @@ export default function CategoryList({
                 iconPlacement={iconPlacement}
                 onClick={handleClick(it.id)}
                 selected={selectedId === it.id}
+                variant={variant}
               />
             </li>
           ))}

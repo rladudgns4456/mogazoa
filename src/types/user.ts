@@ -1,6 +1,4 @@
-/**
- * 사용자 타입 정의
- */
+// 사용자 타입 정의
 
 export interface User {
   id: number;
@@ -22,11 +20,10 @@ export interface User {
   updatedAt: string;
 }
 
-/**
- * 팔로워/팔로잉 사용자 타입
- */
+// 팔로워/팔로잉 사용자 타입
+
 export interface Follower {
   id: number;
   nickname: string;
-  image: string;
+  image: string | null;
 }
