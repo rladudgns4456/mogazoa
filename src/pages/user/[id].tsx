@@ -2,10 +2,10 @@ import { useAuth } from "@/components/login/AuthContext";
 import ProfileCard from "@/components/profile";
 import ProfileProductTabs from "@/components/profile/ProfileProductTabs";
 import { ProfileSkeleton } from "@/components/skeleton";
-import { getUserProfile, followUser, unfollowUser } from "@/api/users";
+import { getUserProfile, getMyProfile, followUser, unfollowUser } from "@/api/users";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/router";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { User } from "@/types/user";
 import { TabType } from "@/components/profile/ItemTab";
 import { useProfileProducts } from "@/hooks/useProfileProducts";
@@ -32,6 +32,20 @@ export default function UserProfilePage() {
     queryFn: () => getUserProfile(userId!),
     enabled: !!userId,
   });
+
+  // 내 프로필 조회 (본인 확인용)
+  const { data: myProfile } = useQuery({
+    queryKey: ["myProfile"],
+    queryFn: getMyProfile,
+    enabled: isAuthenticated,
+  });
+
+  // 내 ID로 접근하면 mypage로 리다이렉트
+  useEffect(() => {
+    if (myProfile && userId && myProfile.id === userId) {
+      router.replace("/mypage");
+    }
+  }, [myProfile, userId, router]);
 
   // 상품 데이터 조회
   const { reviewedProducts, createdProducts, favoriteProducts } = useProfileProducts(userId || undefined, activeTab);
