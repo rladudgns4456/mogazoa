@@ -19,7 +19,7 @@ export interface Product {
   reviewCount: number;
   favoriteCount: number;
   categoryId: number;
-  writerId: number;
+  userId: number;
   categoryMetric?: CategoryMetric;
   createdAt: string;
   updatedAt: string;

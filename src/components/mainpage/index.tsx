@@ -38,7 +38,7 @@ const toProduct = (raw: ProductListItemFromApi): Product => ({
   reviewCount: raw.reviewCount,
   favoriteCount: raw.favoriteCount,
   categoryId: raw.categoryId,
-  userId: raw.writerId, // writerId -> userId 매핑
+  userId: raw.writerId,
   createdAt: raw.createdAt,
   updatedAt: raw.updatedAt,
   isFavorite: false,
