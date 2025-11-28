@@ -43,11 +43,11 @@ export default function FollowerModal({ userId, type }: FollowerModalProps) {
   const handleFollowerClick = (followerId: number) => {
     closeModal();
 
-    // 자신의 프로필이면 mypage로, 아니면 profile/[id]로
+    // 자신의 프로필이면 mypage로, 아니면 user/[id]로
     if (authUser && followerId === authUser.id) {
       router.push("/mypage");
     } else {
-      router.push(`/profile/${followerId}`);
+      router.push(`/user/${followerId}`);
     }
   };
 

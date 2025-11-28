@@ -5,8 +5,10 @@ import Link from "next/link";
 import Image from "next/image";
 import { Product } from "@/types/product";
 import { formatNumber } from "@/utils/formatNumber";
+import { isValidImageUrl } from "@/utils/validateImageUrl";
 import cn from "clsx";
 import Badge from "./Badge";
+import DefaultProductImage from "@/assets/images/not_card.svg";
 
 interface ItemCardProps {
   product: Product;
@@ -40,18 +42,24 @@ export default function ItemCard({ product, rank, showRank = false }: ItemCardPr
           </div>
         )}
 
-        <Image
-          src={image}
-          alt={name}
-          fill
-          sizes="100vw"
-          className={cn(
-            "rounded-8 object-cover transition-transform duration-300",
-            isLoading && "opacity-0",
-            "hover:scale-105",
-          )}
-          onLoad={() => setIsLoading(false)}
-        />
+        {isValidImageUrl(image) ? (
+          <Image
+            src={image}
+            alt={name}
+            fill
+            sizes="100vw"
+            className={cn(
+              "rounded-8 object-cover transition-transform duration-300",
+              isLoading && "opacity-0",
+              "hover:scale-105",
+            )}
+            onLoad={() => setIsLoading(false)}
+          />
+        ) : (
+          <div className={cn("flex h-full w-full items-center justify-center bg-gray-100")}>
+            <DefaultProductImage className={cn("h-full w-full opacity-60")} />
+          </div>
+        )}
 
         {/* 순위 뱃지 */}
         {showRank && rank && (

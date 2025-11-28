@@ -1,7 +1,10 @@
+"use client";
+
 import cn from "clsx";
 import Image from "next/image";
 import { Follower } from "@/types/user";
 import DefaultProfileImage from "@/assets/images/not_card.svg";
+import { isValidImageUrl } from "@/utils/validateImageUrl";
 
 interface FollowerItemProps {
   follower: Follower;
@@ -33,8 +36,8 @@ export default function FollowerItem({ follower, onClick }: FollowerItemProps) {
       )}
     >
       <div className={cn("relative size-48 flex-shrink-0 overflow-hidden rounded-full", "md:size-52")}>
-        {image ? (
-          <Image src={image} alt={`${nickname} 프로필`} fill className={cn("object-cover")} />
+        {isValidImageUrl(image) ? (
+          <Image src={image!} alt={`${nickname} 프로필`} fill className={cn("object-cover")} />
         ) : (
           <div className={cn("flex h-full w-full items-center justify-center bg-gray-100")}>
             <DefaultProfileImage className={cn("h-full w-full opacity-60")} />
