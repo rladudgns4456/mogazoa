@@ -59,9 +59,8 @@ const CATEGORY_ICON_MAP: Record<string, string> = {
   식당: "ic_noodle",
   전자기기: "ic_computer",
   화장품: "ic_brush",
-  // 나머지 카테고리 이름들 있으면 여기 계속 추가
   앱: "ic_box",
-  "의류/잡화": "ic_box", // 아이콘 따로 있으면 나중에 바꿔주면 됨
+  "의류/잡화": "ic_box",
 };
 
 type OrderType = "recent" | "rating" | "reviewCount";
@@ -94,7 +93,7 @@ export default function MainPage() {
   const handleSelectCategory = useCallback((id: string) => {
     setSelectedCategoryId(prev => {
       const numericId = Number(id);
-      return prev === numericId ? null : numericId; // 다시 누르면 해제
+      return prev === numericId ? null : numericId;
     });
 
     // 카테고리 바뀔 때 스크롤 상단으로
