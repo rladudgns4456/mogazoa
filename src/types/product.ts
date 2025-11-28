@@ -1,5 +1,4 @@
 // 상품 관련 타입 정의
-
 export interface Category {
   id: number;
   name: string;
@@ -20,10 +19,19 @@ export interface Product {
   reviewCount: number;
   favoriteCount: number;
   categoryId: number;
-  writerId: number;
-  isFavorite: boolean;
-  category: Category;
-  categoryMetric?: CategoryMetric;
+  userId: number;
   createdAt: string;
   updatedAt: string;
+  category?: {
+    id: number;
+    name: string;
+  };
+  isFavorite?: boolean;
+}
+
+
+// 상품 목록 응답
+export interface ProductListResponse {
+  list: Product[];
+  nextCursor: number | null;
 }
