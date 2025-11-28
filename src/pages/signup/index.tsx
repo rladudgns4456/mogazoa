@@ -1,6 +1,6 @@
 import { signup } from "@/api/auth/auth";
-import Logo from "@/assets/logo/logo.png";
 import LogoTitle from "@/assets//logo/logo_name.png";
+import Logo from "@/assets/logo/logo.png";
 import Button from "@/components/Button";
 import Input from "@/components/input/Input";
 import LoginFooter from "@/components/login/footer";
@@ -47,14 +47,6 @@ export default function Signup() {
     passwordConfirmation: false,
   });
 
-  // 값 변경 핸들러
-  const handleChange = (field: keyof FormData, value: string) => {
-    setFormData(prev => ({
-      ...prev,
-      [field]: value,
-    }));
-  };
-
   // 에러 설정 핸들러
   const setError = (field: keyof FormErrors, message: string) => {
     setErrors(prev => ({
@@ -63,9 +55,8 @@ export default function Signup() {
     }));
   };
 
-  // 이메일 유효성 검사
-  const validateEmail = () => {
-    const value = formData.email;
+  // 이메일 유효성 검사 (값을 직접 받는 버전)
+  const validateEmailValue = (value: string) => {
     if (!value.trim()) {
       setError("email", "이메일을 입력해 주세요");
       setValidated(prev => ({ ...prev, email: false }));
@@ -82,9 +73,8 @@ export default function Signup() {
     return true;
   };
 
-  // 닉네임 유효성 검사
-  const validateNickName = () => {
-    const value = formData.nickName;
+  // 닉네임 유효성 검사 (값을 직접 받는 버전)
+  const validateNickNameValue = (value: string) => {
     if (!value.trim()) {
       setError("nickName", "닉네임을 입력해 주세요");
       setValidated(prev => ({ ...prev, nickName: false }));
@@ -100,9 +90,8 @@ export default function Signup() {
     return true;
   };
 
-  // 비밀번호 유효성 검사
-  const validatePassword = () => {
-    const value = formData.password;
+  // 비밀번호 유효성 검사 (값을 직접 받는 버전)
+  const validatePasswordValue = (value: string) => {
     if (!value.trim()) {
       setError("password", "비밀번호를 입력해 주세요");
       setValidated(prev => ({ ...prev, password: false }));
@@ -123,15 +112,14 @@ export default function Signup() {
     return true;
   };
 
-  // 비밀번호 확인 유효성 검사
-  const validatePasswordConfirm = () => {
-    const value = formData.passwordConfirmation;
+  // 비밀번호 확인 유효성 검사 (값을 직접 받는 버전)
+  const validatePasswordConfirmValue = (value: string, passwordToCompare: string) => {
     if (!value.trim()) {
       setError("passwordConfirmation", "비밀번호 확인을 입력해 주세요");
       setValidated(prev => ({ ...prev, passwordConfirmation: false }));
       return false;
     }
-    if (value !== formData.password) {
+    if (value !== passwordToCompare) {
       setError("passwordConfirmation", "비밀번호가 일치하지 않습니다");
       setValidated(prev => ({ ...prev, passwordConfirmation: false }));
       return false;
@@ -139,6 +127,35 @@ export default function Signup() {
     setError("passwordConfirmation", "");
     setValidated(prev => ({ ...prev, passwordConfirmation: true }));
     return true;
+  };
+
+  // 기존 함수는 onBlur와 handleSubmit에서 사용
+  const validateEmail = () => validateEmailValue(formData.email);
+  const validateNickName = () => validateNickNameValue(formData.nickName);
+  const validatePassword = () => validatePasswordValue(formData.password);
+  const validatePasswordConfirm = () => validatePasswordConfirmValue(formData.passwordConfirmation, formData.password);
+
+  // 값 변경 핸들러
+  const handleChange = (field: keyof FormData, value: string) => {
+    setFormData(prev => ({
+      ...prev,
+      [field]: value,
+    }));
+
+    // 실시간 유효성 검사
+    if (field === "email") {
+      validateEmailValue(value);
+    } else if (field === "nickName") {
+      validateNickNameValue(value);
+    } else if (field === "password") {
+      validatePasswordValue(value);
+      // 비밀번호 변경 시 비밀번호 확인도 재검증
+      if (formData.passwordConfirmation) {
+        validatePasswordConfirmValue(formData.passwordConfirmation, value);
+      }
+    } else if (field === "passwordConfirmation") {
+      validatePasswordConfirmValue(value, formData.password);
+    }
   };
 
   useEffect(() => {
