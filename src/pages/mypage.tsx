@@ -2,8 +2,11 @@ import { useAuth } from "@/components/login/AuthContext";
 import ProfileCard from "@/components/Profile";
 import ItemTab, { TabType } from "@/components/ItemTab";
 import ItemCard from "@/components/ItemCard";
+import FollowerModal from "@/components/modal/follower";
+import { useModal } from "@/components/modal/modalBase";
+import { ProfileSkeleton } from "@/components/skeleton";
 import { getMyProfile, getUserReviewedProducts, getUserCreatedProducts, getUserFavoriteProducts } from "@/api/users";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 
@@ -13,9 +16,9 @@ import { useEffect, useState } from "react";
  * - 내 프로필 정보 표시
  */
 export default function MyProfilePage() {
-  const { isAuthenticated, user: authUser, logout } = useAuth();
+  const { isAuthenticated, logout } = useAuth();
   const router = useRouter();
-  const queryClient = useQueryClient();
+  const { openModal } = useModal();
   const [activeTab, setActiveTab] = useState<TabType>("reviews");
 
   // 로그인 체크
@@ -61,26 +64,27 @@ export default function MyProfilePage() {
 
   // 프로필 편집 (추후 구현)
   const handleEdit = () => {
-    // 프로필 편집 모달 표시
     console.log("프로필 편집");
   };
 
-  // 팔로워 목록 (추후 구현)
+  // 팔로워 목록
   const handleFollowers = () => {
-    // 팔로워 목록 모달 표시
-    console.log("팔로워 목록");
+    if (user) {
+      openModal(<FollowerModal userId={user.id} type="followers" />);
+    }
   };
 
-  // 팔로잉 목록 (추후 구현)
+  // 팔로잉 목록
   const handleFollowees = () => {
-    // 팔로잉 목록 모달 표시
-    console.log("팔로잉 목록");
+    if (user) {
+      openModal(<FollowerModal userId={user.id} type="followees" />);
+    }
   };
 
   if (!isAuthenticated || isLoading || !user) {
     return (
-      <div className="flex min-h-screen items-center justify-center">
-        <div className="text-gray-500">로딩 중...</div>
+      <div className="min-h-screen bg-gray-50">
+        <ProfileSkeleton />
       </div>
     );
   }
