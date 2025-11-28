@@ -1,88 +1,123 @@
-// src/components/compare/ReplaceModal.tsx
+"use client";
 
-import React from "react";
-import { ProductSummary } from "@/utils/compareUtils"; // tsconfig.json paths 적용
-import { useRouter } from "next/router";
-// NOTE: 프로젝트에 useRouter가 없으므로 임시로 주석 처리하거나, 필요하다면 설치해야 합니다.
-// 'next/router'는 package.json에 없으므로, Next.js 버전을 고려하여 'next/navigation' 또는 'next/router' 사용 여부를 결정하세요.
-// 여기서는 `next/router`가 Next.js 16.0.1에 호환된다고 가정하고 추가했습니다.
+import React, { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { useModal } from "@/components/modal/modalBase/modalProvider";
+import type { ProductSummary } from "@/utils/compareUtils";
 
 type CompareSide = "left" | "right";
+type Step = "select" | "done";
 
 interface ReplaceModalProps {
-  state: {
-    isOpen: boolean;
-    side: CompareSide | null;
-    newProduct: ProductSummary | null;
-  };
-  selected: { left: ProductSummary | null; right: ProductSummary | null };
-  onClose: () => void;
-  onConfirmReplace: (sideToKeep: CompareSide, newProduct: ProductSummary) => void;
+  triggerSide: CompareSide;
+  left: ProductSummary;
+  right: ProductSummary;
+  newProduct: ProductSummary;
+  onConfirmReplace: (keepSide: CompareSide) => void;
 }
+// 공통 레이아웃
+const InnerSelect: React.FC<{ children: React.ReactNode }> = ({ children }) => (
+  <div className="flex h-[453px] w-full flex-col items-center px-10 pb-9 pt-8">{children}</div>
+);
 
-export default function ReplaceModal({ state, selected, onClose, onConfirmReplace }: ReplaceModalProps) {
+const InnerDone: React.FC<{ children: React.ReactNode }> = ({ children }) => (
+  <div className="flex h-[263px] w-full flex-col items-center px-10 pb-9 pt-8">{children}</div>
+);
+
+const ReplaceModal: React.FC<ReplaceModalProps> = ({ triggerSide, left, right, newProduct, onConfirmReplace }) => {
   const router = useRouter();
-  const { isOpen, newProduct } = state;
+  const { closeModal } = useModal();
 
-  if (!isOpen || !newProduct || !selected.left || !selected.right) return null;
+  const [step, setStep] = useState<Step>("select");
+  const [keepSide, setKeepSide] = useState<CompareSide>("left");
 
-  // 교체 대상 상품들 (현재 선택된 상품들)
-  const productsToReplace = [
-    { side: "left" as CompareSide, product: selected.left },
-    { side: "right" as CompareSide, product: selected.right },
-  ];
+  // 모달 열릴 때 기본 선택값 세팅
+  useEffect(() => {
+    setStep("select");
+    setKeepSide(triggerSide === "left" ? "right" : "left");
+  }, [triggerSide]);
 
-  const handleConfirm = (sideToKeep: CompareSide) => {
-    onConfirmReplace(sideToKeep, newProduct);
-
-    // [요구사항 반영] 교체 완료 메시지 및 이동 여부 처리
-    const confirmMove = window.confirm(
-      `비교 상품이 '${newProduct.name}'(으)로 변경되었습니다. 바로 비교 화면으로 이동하시겠어요?`,
-    );
-
-    if (confirmMove) {
-      // 이미 /compare 페이지에 있으므로, 상태 업데이트 후 모달을 닫는 것으로 충분하지만,
-      // 명시적으로 이동하려면 router.push('/compare')를 사용합니다.
-      // 여기서는 닫기만 합니다.
-    }
+  const handleReplaceClick = () => {
+    onConfirmReplace(keepSide);
+    setStep("done");
   };
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-      <div className="w-full max-w-lg transform rounded-xl bg-white p-6 shadow-2xl transition-all">
-        <h3 className="mb-4 text-20-bold">⚠️ 비교 상품 교체 확인</h3>
-        <p className="mb-4 text-16-regular">
-          새로 선택한 상품: <strong className="text-orange-500">"{newProduct.name}"</strong>
-        </p>
+  const handleGoCompare = () => {
+    router.push("/compare");
+    closeModal();
+  };
 
-        <p className="mb-4 text-sm text-gray-600">현재 등록된 두 상품 중, 새 상품으로 **교체할 상품**을 선택하세요.</p>
+  if (!left || !right) return null;
 
-        {/* 기존 상품 2개 선택 영역 */}
-        <div className="grid grid-cols-2 gap-4">
-          {productsToReplace.map(({ side, product }) => (
-            <button
-              key={side}
-              // 사용자가 선택한 쪽(side)을 유지하고 반대쪽을 교체하는 로직이므로,
-              // 버튼을 누르는 것은 "이 상품을 남기겠다"는 의미입니다.
-              onClick={() => handleConfirm(side)}
-              className="flex flex-col items-center rounded-lg border p-4 transition-colors hover:border-red-500 hover:bg-red-50"
-            >
-              <span className="mb-1 text-14-medium text-gray-700">
-                {side === "left" ? "왼쪽 상품 남기고" : "오른쪽 상품 남기고"}
-              </span>
-              <strong className="text-16-bold text-red-600">
-                "{side === "left" ? selected.right?.name : selected.left?.name}" 교체
-              </strong>
-            </button>
-          ))}
-        </div>
-
-        <div className="mt-6 flex justify-end">
-          <button onClick={onClose} className="rounded-lg px-4 py-2 text-14-medium text-gray-600 hover:bg-gray-100">
-            닫기 (변경 없음)
-          </button>
-        </div>
-      </div>
-    </div>
+  const Inner: React.FC<{ children: React.ReactNode }> = ({ children }) => (
+    <div className="flex h-[453px] w-full flex-col items-center gap-20 px-10 pb-9 pt-8">{children}</div>
   );
-}
+
+  const SecondaryButton: React.FC<{
+    active?: boolean;
+    label: string;
+    onClick: () => void;
+  }> = ({ active, label, onClick }) => {
+    const base =
+      "flex w-full max-w-[420px] h-[60px] items-center justify-center rounded-[1000px] border text-[14px] transition-colors";
+    const activeClass = "border-[#FF9A00] text-[#FF9A00] bg-white";
+    const inactiveClass = "border-[#DBDCE1] text-gray-400 bg-white hover:border-[#FF9A00] hover:text-[#FF9A00]";
+
+    return (
+      <button type="button" onClick={onClick} className={`${base} ${active ? activeClass : inactiveClass}`}>
+        <span className="truncate">{label}</span>
+      </button>
+    );
+  };
+
+  const PrimaryButton: React.FC<{
+    label: string;
+    onClick: () => void;
+  }> = ({ label, onClick }) => (
+    <button
+      type="button"
+      onClick={onClick}
+      className="mt-5 flex h-[67px] w-full max-w-[420px] items-center justify-center rounded-[1000px] bg-[#FD7E35] text-[15px] font-semibold text-white"
+    >
+      {label}
+    </button>
+  );
+
+  // ===================== STEP 1: 어떤 상품과 비교할까요? =====================
+  if (step === "select") {
+    const keepLeft = keepSide === "left";
+
+    return (
+      <InnerSelect>
+        {/* 제목 */}
+        <div className="mb-8 text-center">
+          <p className="text-[20px] font-medium leading-[24px] text-[#000000]">{`'${newProduct.name}'`}</p>
+          <p className="mt-2 text-[14px] leading-[20px] text-[#555A64]">어떤 상품과 비교할까요?</p>
+        </div>
+
+        {/* 상품 버튼 */}
+        <div className="mb-10 flex w-full flex-col items-center gap-20">
+          <SecondaryButton label={left.name} active={keepLeft} onClick={() => setKeepSide("left")} />
+          <SecondaryButton label={right.name} active={!keepLeft} onClick={() => setKeepSide("right")} />
+        </div>
+
+        {/* 교체하기 */}
+        <PrimaryButton label="교체하기" onClick={handleReplaceClick} />
+      </InnerSelect>
+    );
+  }
+
+  // ===================== STEP 2: 교체 완료 =====================
+  return (
+    <InnerDone>
+      <div className="mb-6 mt-4 text-center">
+        <p className="text-[20px] font-semibold text-gray-900">비교 상품이 교체되었습니다.</p>
+        <p className="mt-1 text-[14px] text-gray-500">바로 확인해 보시겠어요?</p>
+      </div>
+
+      <PrimaryButton label="바로가기" onClick={handleGoCompare} />
+    </InnerDone>
+  );
+};
+
+export default ReplaceModal;
