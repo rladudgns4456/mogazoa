@@ -1,4 +1,4 @@
-import ItemTab, { TabType } from "@/components/profile/ItemTab";
+import ItemTab, { TabType } from "@/components/Profile/ItemTab";
 import ItemCard from "@/components/ItemCard";
 import { Product } from "@/types/product";
 
