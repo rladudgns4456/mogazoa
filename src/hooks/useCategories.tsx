@@ -39,7 +39,7 @@ export function useCategories() {
     isError,
   } = useQuery<CategoryApiResponse[]>({
     queryKey: ["categories"],
-    queryFn: fetchCategories, // ✅ 함수 이름 맞추기
+    queryFn: fetchCategories,
   });
 
   // get한 카테고리 값과 아이콘 합친 배열 만들기
@@ -49,7 +49,7 @@ export function useCategories() {
     return response.map((item, index) => ({
       id: item.id,
       label: item.name,
-      icon: ICON_ARR[index]?.icon ?? null, // ✅ 인덱스 안전하게
+      icon: ICON_ARR[index]?.icon ?? null,
     }));
   }, [response]);
 
