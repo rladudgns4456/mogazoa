@@ -1,10 +1,11 @@
 "use client";
-
+import "swiper/css";
+import "swiper/css/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/router";
 import Banner from "@/components/banner";
 import cn from "clsx";
-import { CategoryList, CategoryItem } from "@/components/Category";
+import CategoryTab from "@/components/categoryTab";
 import ReviewerRanking from "@/components/review/ReviewerRanking";
 import ItemCard from "@/components/ItemCard";
 import { useCategories } from "@/hooks/useCategories";
@@ -38,7 +39,7 @@ const toProduct = (raw: ProductListItemFromApi): Product => ({
   reviewCount: raw.reviewCount,
   favoriteCount: raw.favoriteCount,
   categoryId: raw.categoryId,
-  userId: raw.writerId, // writerId -> userId 매핑
+  userId: raw.writerId,
   createdAt: raw.createdAt,
   updatedAt: raw.updatedAt,
   isFavorite: false,
@@ -49,20 +50,6 @@ const toProduct = (raw: ProductListItemFromApi): Product => ({
 });
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE ?? "";
-
-const CATEGORY_ICON_MAP: Record<string, string> = {
-  음악: "ic_music",
-  "영화/드라마": "ic_movie",
-  "가구/인테리어": "ic_furniture",
-  "강의/책": "ic_book",
-  호텔: "ic_hotel",
-  식당: "ic_noodle",
-  전자기기: "ic_computer",
-  화장품: "ic_brush",
-  // 나머지 카테고리 이름들 있으면 여기 계속 추가
-  앱: "ic_box",
-  "의류/잡화": "ic_box", // 아이콘 따로 있으면 나중에 바꿔주면 됨
-};
 
 type OrderType = "recent" | "rating" | "reviewCount";
 
@@ -76,28 +63,8 @@ export default function MainPage() {
   const { combinedCategory, isLoading, isError } = useCategories();
   const [selectedCategoryId, setSelectedCategoryId] = useState<number | null>(null);
 
-  const categoryItems: CategoryItem[] = useMemo(() => {
-    if (!combinedCategory) return [];
-
-    return combinedCategory.map((cat: any) => {
-      const label = cat.label ?? cat.name; // API 쪽에서 name으로 올 수도 있으니
-      const iconKey = CATEGORY_ICON_MAP[label] ?? "ic_box"; // 매핑 없으면 기본 아이콘
-
-      return {
-        id: String(cat.id),
-        label,
-        icon: iconKey,
-      };
-    }) as CategoryItem[];
-  }, [combinedCategory]);
-
-  const handleSelectCategory = useCallback((id: string) => {
-    setSelectedCategoryId(prev => {
-      const numericId = Number(id);
-      return prev === numericId ? null : numericId; // 다시 누르면 해제
-    });
-
-    // 카테고리 바뀔 때 스크롤 상단으로
+  const handleSelectCategory = useCallback((id: number) => {
+    setSelectedCategoryId(prev => (prev === id ? null : id)); // 다시 누르면 해제
     window.scrollTo({ top: 0, behavior: "smooth" });
   }, []);
 
@@ -181,7 +148,7 @@ export default function MainPage() {
         if (!hotRes.ok) throw new Error("지금 핫한 상품 조회 실패");
         const hotData: ProductListResponse = await hotRes.json();
 
-        const hot = (hotData.list ?? []).slice(0, 6).map(toProduct); // <- Product 타입으로 변환
+        const hot = (hotData.list ?? []).slice(0, 6).map(toProduct);
         setHotProducts(hot);
 
         // 2) 별점 순 Top 6
@@ -199,11 +166,9 @@ export default function MainPage() {
       }
     };
 
-    // 필터가 없을 때만 Top 6 요청
     if (!hasFilter) {
       void fetchTopProducts();
     } else {
-      // 필터가 생기면 Top 섹션 비워두기
       setHotProducts([]);
       setTopRatedProducts([]);
     }
@@ -218,7 +183,6 @@ export default function MainPage() {
   const [isLoadingList, setIsLoadingList] = useState(false);
   const [listError, setListError] = useState<string | null>(null);
 
-  // 필터(카테고리/검색어/정렬)가 바뀌면 리스트 초기화 후 첫 페이지 다시 로딩
   useEffect(() => {
     if (!API_BASE || !hasFilter) {
       setProducts([]);
@@ -270,7 +234,6 @@ export default function MainPage() {
     };
   }, [API_BASE, hasFilter, order, selectedCategoryId, keyword]);
 
-  // 추가 페이지 로딩
   const loadMore = useCallback(async () => {
     if (!API_BASE || !hasFilter || !hasMore || isLoadingList || cursor == null) return;
 
@@ -301,7 +264,6 @@ export default function MainPage() {
     }
   }, [API_BASE, hasFilter, hasMore, isLoadingList, cursor, order, selectedCategoryId, keyword]);
 
-  // 무한 스크롤용 sentinel
   const sentinelRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
@@ -329,7 +291,6 @@ export default function MainPage() {
     };
   }, [hasFilter, loadMore, products.length]);
 
-  // 필터 상태에 따른 제목 텍스트
   const filterTitle = useMemo(() => {
     if (!hasFilter) return "";
 
@@ -370,30 +331,23 @@ export default function MainPage() {
           <div className="flex w-full max-w-[972px] flex-col gap-3">
             <h2 className="text-14-bold text-gray-900">카테고리</h2>
 
-            <div className="rounded-20 bg-gray-100 px-16 py-12">
-              {isLoading && <p className="text-12-regular text-gray-500">카테고리를 불러오는 중입니다…</p>}
+            {isLoading && <p className="mt-8 text-12-regular text-gray-500">카테고리를 불러오는 중입니다…</p>}
 
-              {isError && <p className="text-12-regular text-error">카테고리를 불러오지 못했어요.</p>}
+            {isError && <p className="mt-8 text-12-regular text-error">카테고리를 불러오지 못했어요.</p>}
 
-              {!isLoading && !isError && categoryItems.length > 0 && (
-                <CategoryList
-                  items={categoryItems}
-                  layout="grid"
-                  columns={10}
-                  withDividers={false}
-                  size="lg"
-                  iconPlacement="left"
-                  selectable
-                  selectedId={selectedCategoryId !== null ? String(selectedCategoryId) : null}
-                  onSelect={handleSelectCategory}
-                  variant="pill"
+            {!isLoading && !isError && (
+              <div className="mt-8">
+                <CategoryTab
+                  isHome
+                  url="category" // 실제 라우팅 구조에 맞게 필요하면 수정
+                  onHandleLoad={handleSelectCategory}
                 />
-              )}
-            </div>
+              </div>
+            )}
           </div>
         </section>
 
-        {/* 2. 리뷰어 랭킹 섹션 (카테고리 바로 아래, 가운데 943px) */}
+        {/* 2. 리뷰어 랭킹 섹션 */}
         <section className="mb-32 flex justify-center">
           <div className="w-full max-w-[943px]">
             {isLoadingReviewers && (
@@ -406,10 +360,9 @@ export default function MainPage() {
           </div>
         </section>
 
-        {/* 3. 상품 섹션 (이제 단일 컬럼) */}
+        {/* 3. 상품 섹션 */}
         <main className="min-w-0">
           {hasFilter ? (
-            /* 필터 적용된 경우 */
             <section className="mb-32">
               <div className="mb-8 flex flex-col justify-between gap-4 md:flex-row md:items-center">
                 <h2 className="text-16-bold text-gray-900">{filterTitle}</h2>
@@ -447,9 +400,7 @@ export default function MainPage() {
             <>
               {/* 지금 핫한 상품 Best */}
               <section className="mb-40 flex justify-center">
-                {/* 피그마 전체 프레임: width 940px, vertical, gap 20px */}
                 <div className="flex w-full max-w-[940px] flex-col gap-5">
-                  {/* 타이틀 */}
                   <div className="flex items-baseline justify-between">
                     <h2 className="flex items-baseline gap-2">
                       <span className="text-16-bold text-gray-900">지금 핫한 상품</span>
@@ -457,18 +408,18 @@ export default function MainPage() {
                     </h2>
                   </div>
 
-                  {/* 로딩 / 에러 */}
                   {isLoadingTopProducts && (
                     <p className="py-24 text-12-regular text-gray-500">상품을 불러오는 중입니다…</p>
                   )}
 
                   {topProductsError && <p className="py-24 text-12-regular text-error">{topProductsError}</p>}
 
-                  {/* 카드 그리드: 3열, gap 20px */}
                   {!isLoadingTopProducts && !topProductsError && hotProducts.length > 0 && (
                     <div className="grid justify-between gap-5 md:grid-cols-3">
                       {hotProducts.map((product, index) => (
-                        <ItemCard key={product.id} product={product} showRank rank={index + 1} />
+                        <div key={product.id} className="relative">
+                          <ItemCard product={product} showRank rank={index + 1} />
+                        </div>
                       ))}
                     </div>
                   )}
@@ -481,18 +432,13 @@ export default function MainPage() {
 
               {/* 별점이 높은 상품 */}
               <section className="mb-40 flex justify-center">
-                {/* 전체 프레임: width 940px, vertical, gap 20px */}
                 <div className="flex w-full max-w-[940px] flex-col gap-5">
-                  {/* 타이틀 */}
                   <div className="flex items-center justify-between">
                     <h2 className="text-16-bold text-gray-900">별점이 높은 상품</h2>
-                    {/* 필요하면 페이지 인디케이터 등 추가 가능 */}
                   </div>
 
-                  {/* 내용 영역 */}
                   {!isLoadingTopProducts && !topProductsError && topRatedProducts.length > 0 && (
                     <div className="flex items-center justify-between gap-5">
-                      {/* LEFT 버튼 */}
                       <button
                         type="button"
                         onClick={() => canPrevRating && setRatingPage(p => p - 1)}
@@ -506,14 +452,12 @@ export default function MainPage() {
                         <span className="text-[20px] font-extrabold leading-none tracking-[-2px]">&lt;</span>
                       </button>
 
-                      {/* 카드 영역 */}
                       <div className="grid flex-1 grid-cols-3 justify-between gap-5">
                         {currentRatingSlice.map(product => (
                           <ItemCard key={product.id} product={product} />
                         ))}
                       </div>
 
-                      {/* RIGHT 버튼 */}
                       <button
                         type="button"
                         onClick={() => canNextRating && setRatingPage(p => p + 1)}
@@ -529,7 +473,6 @@ export default function MainPage() {
                     </div>
                   )}
 
-                  {/* 로딩 / 에러 / 빈 상태 */}
                   {isLoadingTopProducts && (
                     <p className="py-24 text-12-regular text-gray-500">상품을 불러오는 중입니다…</p>
                   )}
