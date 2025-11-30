@@ -76,6 +76,8 @@ export default function UserProfilePage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["userProfile", userId] });
       queryClient.invalidateQueries({ queryKey: ["myProfile"] });
+      queryClient.invalidateQueries({ queryKey: ["followers", userId] });
+      queryClient.invalidateQueries({ queryKey: ["followees", userId] });
     },
   });
 
@@ -102,6 +104,8 @@ export default function UserProfilePage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["userProfile", userId] });
       queryClient.invalidateQueries({ queryKey: ["myProfile"] });
+      queryClient.invalidateQueries({ queryKey: ["followers", userId] });
+      queryClient.invalidateQueries({ queryKey: ["followees", userId] });
     },
   });
 

@@ -2,10 +2,12 @@ import { useState } from "react";
 import { useQueryClient, useMutation } from "@tanstack/react-query";
 import ModalContainer from "@/components/modal/modalBase/ModalContainer";
 import { useModal } from "@/components/modal/modalBase";
+import { useToast, Toast } from "@/components/toast";
 import Button from "@/components/Button";
 import { User } from "@/types/user";
 import { updateMyProfile } from "@/api/users";
 import { uploadImage } from "@/api/images";
+import { compressImage, sanitizeFileName, fileToDataURL } from "@/utils/imageUtils";
 import cn from "clsx";
 import Image from "next/image";
 import DefaultProfileImage from "@/assets/images/not_card.svg";
@@ -23,6 +25,7 @@ interface ProfileEditModalProps {
 export default function ProfileEditModal({ user }: ProfileEditModalProps) {
   const { closeModal } = useModal();
   const queryClient = useQueryClient();
+  const { openToast } = useToast();
 
   const [nickname, setNickname] = useState(user.nickname);
   const [description, setDescription] = useState(user.description || "");
@@ -30,117 +33,41 @@ export default function ProfileEditModal({ user }: ProfileEditModalProps) {
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [isUploadingImage, setIsUploadingImage] = useState(false);
 
-  // 이미지 압축 및 리사이즈 함수
-  const compressImage = async (file: File, maxSizeMB: number = 0.1, maxWidth: number = 400): Promise<File> => {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.readAsDataURL(file);
-      reader.onload = event => {
-        const img = new window.Image();
-        img.src = event.target?.result as string;
-        img.onload = () => {
-          const canvas = document.createElement("canvas");
-          let width = img.width;
-          let height = img.height;
-
-          // 비율 유지하면서 리사이즈
-          if (width > maxWidth) {
-            height = (height * maxWidth) / width;
-            width = maxWidth;
-          }
-
-          canvas.width = width;
-          canvas.height = height;
-
-          const ctx = canvas.getContext("2d");
-          ctx?.drawImage(img, 0, 0, width, height);
-
-          // 원본 파일 타입 유지 (PNG 투명도 지원)
-          const mimeType = file.type || "image/jpeg";
-          const isJPEG = mimeType === "image/jpeg" || mimeType === "image/jpg";
-
-          // 품질을 조절하면서 용량 체크
-          let quality = 0.7;
-          const compress = () => {
-            canvas.toBlob(
-              blob => {
-                if (!blob) {
-                  reject(new Error("이미지 압축 실패"));
-                  return;
-                }
-
-                const sizeInMB = blob.size / 1024 / 1024;
-
-                // 용량이 목표보다 크고 품질을 더 낮출 수 있으면 재압축
-                if (sizeInMB > maxSizeMB && quality > 0.1) {
-                  quality -= 0.1;
-                  compress();
-                  return;
-                }
-
-                // File 객체로 변환
-                const compressedFile = new File([blob], file.name, {
-                  type: mimeType,
-                  lastModified: Date.now(),
-                });
-
-                resolve(compressedFile);
-              },
-              mimeType,
-              isJPEG ? quality : undefined, // PNG는 quality 없음
-            );
-          };
-
-          compress();
-        };
-        img.onerror = () => reject(new Error("이미지 로드 실패"));
-      };
-      reader.onerror = () => reject(new Error("파일 읽기 실패"));
-    });
-  };
-
-  // 이미지 업로드 핸들러
+  // 이미지 선택 및 압축
   const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      try {
-        // 파일명에서 특수문자 제거 (안전한 파일명으로 변경)
-        const safeFileName = file.name
-          .replace(/[^a-zA-Z0-9.\-_]/g, "_") // 영문, 숫자, ., -, _ 외 모두 _로 치환
-          .replace(/_{2,}/g, "_"); // 연속된 _는 하나로
+    if (!file) return;
 
-        // 안전한 파일명으로 새 File 객체 생성
-        const safeFile = new File([file], safeFileName, { type: file.type });
+    try {
+      // 1. 파일명 안전하게 변경
+      const safeFileName = sanitizeFileName(file.name);
+      const safeFile = new File([file], safeFileName, { type: file.type });
 
-        // 이미지 압축 (100KB, 400px로 더 강하게 압축)
-        const compressedFile = await compressImage(safeFile, 0.1, 400);
-        setImageFile(compressedFile);
+      // 2. 이미지 압축
+      const compressedFile = await compressImage(safeFile, 0.1, 400);
+      setImageFile(compressedFile);
 
-        const reader = new FileReader();
-        reader.onloadend = () => {
-          setPreviewImage(reader.result as string);
-        };
-        reader.readAsDataURL(compressedFile);
-      } catch (error) {
-        console.error("이미지 처리 오류:", error);
-        alert("이미지 처리 중 오류가 발생했습니다.");
-      }
+      // 3. 미리보기 생성
+      const dataURL = await fileToDataURL(compressedFile);
+      setPreviewImage(dataURL);
+    } catch (error) {
+      alert("이미지 처리 중 오류가 발생했습니다.");
     }
   };
 
   // 프로필 수정 mutation
   const editMutation = useMutation({
-    mutationFn: async (data: { nickname: string; description?: string; image?: string }) => {
-      return updateMyProfile(data);
-    },
+    mutationFn: updateMyProfile,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["myProfile"] });
-      setIsUploadingImage(false);
+      openToast(<Toast label="프로필이 수정되었습니다." />);
       closeModal();
     },
     onError: (error: any) => {
-      setIsUploadingImage(false);
       alert(error.response?.data?.message || "프로필 수정에 실패했습니다.");
+    },
+    onSettled: () => {
+      setIsUploadingImage(false);
     },
   });
 
@@ -153,32 +80,23 @@ export default function ProfileEditModal({ user }: ProfileEditModalProps) {
     setIsUploadingImage(true);
 
     try {
-      // 기본 데이터
       const updateData: { nickname: string; description?: string; image?: string } = {
         nickname,
       };
 
-      // description이 있을 때만 추가
       if (description.trim()) {
         updateData.description = description;
       }
 
-      // 이미지가 변경된 경우 업로드
+      // 이미지 업로드
       if (imageFile) {
-        try {
-          const imageUrl = await uploadImage(imageFile);
-          console.log("업로드된 이미지 URL:", imageUrl);
-          updateData.image = imageUrl;
-        } catch (error) {
-          console.error("이미지 업로드 실패:", error);
-          alert("이미지 업로드에 실패했습니다.");
-          setIsUploadingImage(false);
-          return;
-        }
+        const imageUrl = await uploadImage(imageFile);
+        updateData.image = imageUrl;
       }
 
       editMutation.mutate(updateData);
     } catch (error) {
+      alert("이미지 업로드에 실패했습니다.");
       setIsUploadingImage(false);
     }
   };
