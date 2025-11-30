@@ -25,6 +25,8 @@ export default function FollowerModal({ userId, type }: FollowerModalProps) {
   const { data } = useQuery({
     queryKey: [type, userId],
     queryFn: () => (type === "followers" ? getFollowers(userId) : getFollowees(userId)),
+    refetchOnMount: "always", // 모달이 열릴 때마다 최신 데이터 가져오기
+    staleTime: 0, // 항상 fresh하지 않은 상태로 간주
   });
 
   // API 응답에서 실제 사용자 객체만 추출

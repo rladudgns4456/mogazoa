@@ -92,7 +92,7 @@ export default function ProfileCard({
             className={cn(
               "col-start-1 col-end-3 row-start-3 row-end-4 mt-24",
               "md:col-start-2 md:col-end-3 md:row-start-2 md:row-end-3 md:mt-0",
-              "text-16-regular text-gray-700",
+              "py-12 text-16-regular text-gray-700",
             )}
           >
             {description}

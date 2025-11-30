@@ -1,13 +1,13 @@
 import { useAuth } from "@/components/login/AuthContext";
-import ProfileCard from "@/components/Profile";
-import ProfileProductTabs from "@/components/Profile/ProfileProductTabs";
+import ProfileCard from "@/components/profile";
+import ProfileProductTabs from "@/components/profile/ProfileProductTabs";
 import { ProfileSkeleton } from "@/components/skeleton";
 import { getUserProfile, getMyProfile, followUser, unfollowUser } from "@/api/users";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/router";
 import { useState, useEffect } from "react";
 import { User } from "@/types/user";
-import { TabType } from "@/components/Profile/ItemTab";
+import { TabType } from "@/components/profile/ItemTab";
 import { useProfileProducts } from "@/hooks/useProfileProducts";
 import { useFollowModal } from "@/hooks/useFollowModal";
 
@@ -76,6 +76,8 @@ export default function UserProfilePage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["userProfile", userId] });
       queryClient.invalidateQueries({ queryKey: ["myProfile"] });
+      queryClient.invalidateQueries({ queryKey: ["followers", userId] });
+      queryClient.invalidateQueries({ queryKey: ["followees", userId] });
     },
   });
 
@@ -102,6 +104,8 @@ export default function UserProfilePage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["userProfile", userId] });
       queryClient.invalidateQueries({ queryKey: ["myProfile"] });
+      queryClient.invalidateQueries({ queryKey: ["followers", userId] });
+      queryClient.invalidateQueries({ queryKey: ["followees", userId] });
     },
   });
 

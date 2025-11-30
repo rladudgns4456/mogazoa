@@ -31,6 +31,16 @@ export const getMyProfile = async (): Promise<User> => {
   return response.data;
 };
 
+// 내 프로필 수정
+export const updateMyProfile = async (data: {
+  nickname?: string;
+  description?: string;
+  image?: string;
+}): Promise<User> => {
+  const response = await axiosInstance.patch("/users/me", data);
+  return response.data;
+};
+
 // 팔로우하기
 export const followUser = async (userId: number): Promise<void> => {
   await axiosInstance.post(`/follow`, { userId });
