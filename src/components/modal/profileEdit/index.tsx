@@ -130,7 +130,7 @@ export default function ProfileEditModal({ user }: ProfileEditModalProps) {
 
         {/* 닉네임 입력 */}
         <div className="mb-20">
-          <label className="mb-8 block text-14-medium text-gray-900">닉네임</label>
+          <label className="mb-12 block text-12-bold text-gray-900 md:text-14-bold">닉네임</label>
           <input
             type="text"
             value={nickname}
@@ -147,7 +147,7 @@ export default function ProfileEditModal({ user }: ProfileEditModalProps) {
 
         {/* 자기소개 입력 */}
         <div className="mb-32">
-          <label className="mb-8 block text-14-medium text-gray-900">자기소개</label>
+          <label className="mb-12 block text-12-bold text-gray-900 md:text-14-bold">자기소개</label>
           <div className="relative">
             <textarea
               value={description}
