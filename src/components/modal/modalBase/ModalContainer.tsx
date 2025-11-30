@@ -2,7 +2,7 @@
 // relative 요소에 padding을 사용해 주세요.
 
 import { cn } from "@/utils/cn";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, forwardRef, useImperativeHandle } from "react";
 import { useModal } from "@/components/modal/modalBase/modalProvider";
 import { useHeight } from "@/hooks/useHeight";
 import Button from "../../Button";
@@ -56,6 +56,7 @@ export default function ModalContainer({ children, styleClass }: ModalProps) {
     <div
       className={cn("absolute -top-1000 left-1/2 z-10 flex -translate-x-1/2 justify-center", isTopPosition)}
       onClick={e => e.stopPropagation()}
+      onMouseUp={e => e.stopPropagation()}
       ref={modalRef}
     >
       <div

@@ -1,14 +1,17 @@
 import { ChangeEvent, useState } from "react";
+import { cn } from "@/utils/cn";
 
 interface TextAreaProps {
   placeholder?: string;
   value: string;
   onChange: (value: string) => void;
+  styleClass?: string;
+  onBlur?: (e:React.FocusEvent) => void;
 }
 
 const MaxLength = 300;
 
-export default function TextArea({ placeholder, onChange, value }: TextAreaProps) {
+export default function TextArea({ placeholder, onChange, onBlur, value, styleClass }: TextAreaProps) {
   const [focus, setFocus] = useState(false);
 
   const handleChange = (e: ChangeEvent<HTMLTextAreaElement>) => {
@@ -21,17 +24,25 @@ export default function TextArea({ placeholder, onChange, value }: TextAreaProps
   };
 
   return (
-    <div className={`relative w-full h-full border rounded-8 ${getBorderColor()}`}>
+    <div className={`relative h-full w-full rounded-8 border ${getBorderColor()}`}>
       <textarea
         placeholder={placeholder}
-        className="w-full h-full resize-none p-20 text-16-regular rounded-8 placeholder:text-gray-600 outline-none"
+        className={cn(
+          "h-full w-full resize-none rounded-8 p-20 text-16-regular outline-none placeholder:text-gray-600",
+          styleClass,
+        )}
         maxLength={MaxLength}
         onChange={handleChange}
         value={value}
         onFocus={() => setFocus(true)}
-        onBlur={() => setFocus(false)}
+        onBlur={(e) => {
+          setFocus(false);
+          if (onBlur) {
+            onBlur(e); 
+          }
+        }}
       ></textarea>
-      <div className="absolute text-gray-600 text-14-regular bottom-20 right-20">
+      <div className="absolute bottom-20 right-20 text-14-regular text-gray-600">
         {value.length}/{MaxLength}
       </div>
     </div>
