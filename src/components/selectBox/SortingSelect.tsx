@@ -4,12 +4,12 @@ import { SelectProps } from "./type";
 const SORTING = [
   { id: 1, label: "최신순", value: "createdAt" },
   { id: 2, label: "별점높은순", value: "ranking" },
-  { id: 3, label: "별점낮은순", value: "ranking" },
+  { id: 3, label: "별점낮은순", value: "rankingDown" },
   { id: 4, label: "좋아요순", value: "favoriteCount" },
 ];
 
 interface BoxProps extends SelectProps {
-  onClick: (value: string) => void;
+  onClick: (e:string) => void;
 }
 
 const style = {
@@ -32,7 +32,7 @@ export default function SortingSelect({ placeHolder, onClick }: BoxProps) {
       placeHolder={placeHolder}
       items={SORTING}
       styleClass={style}
-      onReadId={onHandleSorting}
+      onReadId={(e)=>onHandleSorting(e)}
       initialValue={1}
     />
   );

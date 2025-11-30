@@ -73,7 +73,11 @@ const Statistics = ({ rating, reviewCount, favoriteCount, categoryMetric }: Stat
                 같은 카테고리의 제품들보다
                 <br />
                 <span className={cn(diff > 0 ? "text-primary-500" : "text-gray-900")}>
-                  {stat.isRating ? formatDiff(parseFloat(diff.toFixed(1))) : formatDiff(diff)}
+                  {stat.isRating
+                    ? formatDiff(parseFloat(diff.toFixed(1)))
+                    : diff > 0.5
+                      ? formatDiff(parseFloat(diff.toFixed(0)))
+                      : formatDiff(parseFloat(diff.toFixed(0)))}
                   {stat.isRating ? "점" : "개"}
                 </span>{" "}
                 더 {stat.isRating ? (diff > 0 ? "높아요!" : "낮아요!") : diff > 0 ? "많아요!" : "적어요!"}
