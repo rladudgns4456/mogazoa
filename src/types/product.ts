@@ -20,6 +20,7 @@ export interface Product {
   favoriteCount: number;
   categoryId: number;
   userId: number;
+  categoryMetric?: CategoryMetric;
   createdAt: string;
   updatedAt: string;
   category?: {
@@ -28,7 +29,6 @@ export interface Product {
   };
   isFavorite?: boolean;
 }
-
 
 // 상품 목록 응답
 export interface ProductListResponse {

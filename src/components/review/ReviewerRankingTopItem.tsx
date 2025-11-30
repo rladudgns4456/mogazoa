@@ -1,9 +1,13 @@
+"use client";
+
 import { Reviewer, ReviewerRankingItemProps } from "@/types/review";
 import { formatNumber } from "@/utils/formatNumber";
 import RankBadge from "./RankBadge";
 import cn from "clsx";
 import Link from "next/link";
 import Image from "next/image";
+import DefaultProfileImage from "@/assets/images/not_card.svg";
+import { isValidImageUrl } from "@/utils/validateImageUrl";
 
 // 1~3등 리뷰어 컴포넌트
 export default function ReviewerRankingTopItem({ reviewer, rank }: ReviewerRankingItemProps) {
@@ -17,13 +21,19 @@ export default function ReviewerRankingTopItem({ reviewer, rank }: ReviewerRanki
             rank === 1 ? "h-64 w-64 md:h-100 md:w-100" : "h-56 w-56 md:h-84 md:w-84",
           )}
         >
-          <Image
-            src={reviewer.image}
-            alt={`${reviewer.nickname} 프로필`}
-            width={rank === 1 ? 100 : 84}
-            height={rank === 1 ? 100 : 84}
-            className={cn("h-full w-full object-cover")}
-          />
+          {isValidImageUrl(reviewer.image) ? (
+            <Image
+              src={reviewer.image!}
+              alt={`${reviewer.nickname} 프로필`}
+              width={rank === 1 ? 100 : 84}
+              height={rank === 1 ? 100 : 84}
+              className={cn("h-full w-full object-cover")}
+            />
+          ) : (
+            <div className={cn("flex h-full w-full items-center justify-center bg-gray-100")}>
+              <DefaultProfileImage className={cn("h-full w-full opacity-60")} />
+            </div>
+          )}
         </div>
         {/* 등수 뱃지 */}
         <RankBadge rank={rank as 1 | 2 | 3} />
@@ -41,7 +51,7 @@ export default function ReviewerRankingTopItem({ reviewer, rank }: ReviewerRanki
         </p>
         <div
           className={cn(
-            "text-11-regular flex items-center justify-center gap-6 text-gray-500",
+            "flex items-center justify-center gap-6 text-11-regular text-gray-500",
             "md:gap-16 md:text-14-regular",
           )}
         >

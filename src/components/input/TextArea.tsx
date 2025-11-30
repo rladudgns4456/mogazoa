@@ -27,10 +27,12 @@ export default function TextArea({ placeholder, onChange, onBlur, value, styleCl
     <div className={`relative h-full w-full rounded-8 border ${getBorderColor()}`}>
       <textarea
         placeholder={placeholder}
+
         className={cn(
           "h-full w-full resize-none rounded-8 p-20 text-16-regular outline-none placeholder:text-gray-600",
           styleClass,
         )}
+        className="h-full w-full resize-none rounded-8 p-20 text-16-regular outline-none placeholder:text-gray-600"
         maxLength={MaxLength}
         onChange={handleChange}
         value={value}

@@ -6,7 +6,10 @@ import Image from "next/image";
 import { Review } from "@/types/review";
 import { ThumbButton } from "@/components/thumbs";
 import StarRating from "./StarRating";
-import { useToast, Toast } from "@/components/toast";
+import { useAuth } from "@/components/login/AuthContext";
+import { isValidImageUrl } from "@/utils/validateImageUrl";
+import { useToast } from "@/components/toast";
+import { Toast } from "@/components/toast";
 import cn from "clsx";
 
 interface ReviewCardProps {
@@ -47,12 +50,16 @@ interface ReviewCardProps {
 
 export default function ReviewCard({ review, onLike, showActions = false, onEdit, onDelete }: ReviewCardProps) {
   const { id, user, rating, content, reviewImages, createdAt } = review;
+  const { user: authUser } = useAuth();
   const { openToast } = useToast();
 
   // 로컬 상태로 좋아요 관리 (낙관적 업데이트)
   const [isLiked, setIsLiked] = useState(review.isLiked);
   const [likeCount, setLikeCount] = useState(review.likeCount);
   const [loadedImages, setLoadedImages] = useState(new Set<number>());
+
+  // 본인 리뷰 여부 확인
+  const isOwnReview = authUser?.id === user.id;
 
   // 날짜 포맷팅 (YYYY-MM-DD) - memoization
   const formattedDate = useMemo(() => createdAt.split("T")[0], [createdAt]);
@@ -94,20 +101,22 @@ export default function ReviewCard({ review, onLike, showActions = false, onEdit
 
       {reviewImages.length > 0 && (
         <div className={cn("mb-12 flex gap-12")}>
-          {reviewImages.map(img => (
-            <div key={img.id} className={cn("relative size-64 overflow-hidden rounded-8 md:size-100")}>
-              {!loadedImages.has(img.id) && <div className={cn("absolute inset-0 animate-pulse bg-gray-300")} />}
-              <Image
-                src={img.source}
-                alt="리뷰 이미지"
-                fill
-                className={cn("object-cover", {
-                  "opacity-0": !loadedImages.has(img.id),
-                })}
-                onLoad={() => setLoadedImages(prev => new Set(prev).add(img.id))}
-              />
-            </div>
-          ))}
+          {reviewImages
+            .filter(img => isValidImageUrl(img.source))
+            .map(img => (
+              <div key={img.id} className={cn("relative size-64 overflow-hidden rounded-8 md:size-100")}>
+                {!loadedImages.has(img.id) && <div className={cn("absolute inset-0 animate-pulse bg-gray-300")} />}
+                <Image
+                  src={img.source}
+                  alt="리뷰 이미지"
+                  fill
+                  className={cn("object-cover", {
+                    "opacity-0": !loadedImages.has(img.id),
+                  })}
+                  onLoad={() => setLoadedImages(prev => new Set(prev).add(img.id))}
+                />
+              </div>
+            ))}
         </div>
       )}
 
@@ -148,6 +157,7 @@ export default function ReviewCard({ review, onLike, showActions = false, onEdit
             count={likeCount}
             variant={isLiked ? "dark" : "light"}
             onClick={handleClickLike}
+            disabled={isOwnReview}
           />
         </div>
       </div>
