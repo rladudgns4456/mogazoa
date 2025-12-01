@@ -18,6 +18,7 @@ interface ReviewCardProps {
   showActions?: boolean; // 수정/삭제 버튼 표시 여부 (본인 리뷰일 때 true)
   onEdit?: (reviewId: number) => void; // 수정 버튼 클릭 시 호출되는 콜백
   onDelete?: (reviewId: number) => void; // 삭제 버튼 클릭 시 호출되는 콜백
+  value?: number;
 }
 
 /**
