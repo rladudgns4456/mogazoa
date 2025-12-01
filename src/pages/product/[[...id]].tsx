@@ -60,6 +60,7 @@ export default function ProductDetailCard({
   const queryClient = useQueryClient();
   const { openModal, closeModal } = useModal();
   const { openToast } = useToast();
+  const params = useParams();
 
   //유저 확인
   const { user } = useAuth();
@@ -202,7 +203,7 @@ export default function ProductDetailCard({
   };
 
   //url 복사
-  const params = useParams();
+
   const id = params.id; // id는 string | undefined
 
   const copyToClipboard = async (text: string) => {
