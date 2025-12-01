@@ -97,8 +97,8 @@ export default function ProductDetailCard({
   };
 
   //상품 비교
-  const onCompareProduct = productId => {
-    router.push("/compare");
+  const onCompareProduct = (productId: number) => {
+    router.push(`/compare?productId=${productId}`);
   };
 
   //리뷰 가져오기
@@ -166,6 +166,7 @@ export default function ProductDetailCard({
         editReview &&
           openModal(
             <EditReview
+              currentPath={String(productId)}
               productId={productId}
               id={id}
               image={items.image}
@@ -228,7 +229,7 @@ export default function ProductDetailCard({
       <section className="pb-53 pt-0">
         <h2 className="-inset-4m-1 h-0 w-0 overflow-hidden text-1">상품상세 정보</h2>
         <DetailCard
-          productId={productId}
+          currentPath={String(productId)}
           userId={userId}
           writerId={items?.writerId}
           id={items?.id}
@@ -295,7 +296,7 @@ export default function ProductDetailCard({
             ) : (
               <EmptyReviewCard />
             )}
-            {currentIndex < reviewData?.list.length && (
+            {currentIndex < (reviewData?.list?.length ?? 0) && (
               <div ref={loadRef} style={{ padding: "10px", textAlign: "center" }}>
                 데이터 로드 중...
               </div>

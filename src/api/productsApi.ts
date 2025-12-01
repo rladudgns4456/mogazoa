@@ -2,7 +2,7 @@ import axiosInstance from "@/api/AxiosInstance";
 import { useQuery, QueryClient, dehydrate, useMutation } from "@tanstack/react-query";
 import { Products } from "@/types/product";
 
-interface ProductsProps extends Products {
+export interface ProductsProps extends Products {
   isError: boolean;
 }
 
@@ -18,7 +18,7 @@ export async function getProductItem(id: number) {
   return response.data;
 }
 
-export function useProductItem(productId:number) {
+export function useProductItem(productId: number) {
   return useQuery({
     queryKey: ["products", productId],
     queryFn: () => getProductItem(productId),
@@ -41,4 +41,3 @@ export async function deleteProduct(productId: number): Promise<ProductsProps> {
   const response = await axiosInstance.delete(`/products/${productId}`);
   return response.data;
 }
-

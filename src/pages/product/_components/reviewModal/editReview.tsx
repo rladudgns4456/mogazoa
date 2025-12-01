@@ -13,6 +13,7 @@ import { Review } from "@/types/review";
 
 interface ModalProps {
   currentPath: string | string[] | undefined;
+  productId: number;
   id: number;
   image: string;
   name: string;
@@ -32,12 +33,12 @@ export default function EditReview({ currentPath, id, image, name, item, rating 
   const queryClient = useQueryClient();
 
   //리뷰 작성
-  const [textValue, setTextValue] = useState<string>(item.content);
+  const [textValue, setTextValue] = useState<string>(item?.content ?? "");
   const [isTextAlert, setIsTextAlert] = useState<AlertState>({ alert: false, content: "" });
   const [isFormCheck, setIsFormCheck] = useState<boolean>(false);
 
   //별점
-  const [ratingValue, setRatingValue] = useState<number>(item.rating);
+  const [ratingValue, setRatingValue] = useState<number>(item?.rating ?? rating ?? 0);
   const [isRatingAlert, setIsRatingAlert] = useState<AlertState>({ alert: false, content: "" });
 
   //이미지 업로드
@@ -136,7 +137,7 @@ export default function EditReview({ currentPath, id, image, name, item, rating 
       images: imageUrls,
       content: textValue,
       rating: ratingValue,
-    };
+    } as any;
     createReviewMutate(newReview, {
       onSuccess: () => {
         queryClient.prefetchQuery({

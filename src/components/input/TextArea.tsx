@@ -6,7 +6,7 @@ interface TextAreaProps {
   value: string;
   onChange: (value: string) => void;
   styleClass?: string;
-  onBlur?: (e:React.FocusEvent) => void;
+  onBlur?: (e: React.FocusEvent<HTMLTextAreaElement>) => void;
 }
 
 const MaxLength = 300;
@@ -27,23 +27,19 @@ export default function TextArea({ placeholder, onChange, onBlur, value, styleCl
     <div className={`relative h-full w-full rounded-8 border ${getBorderColor()}`}>
       <textarea
         placeholder={placeholder}
-
         className={cn(
           "h-full w-full resize-none rounded-8 p-20 text-16-regular outline-none placeholder:text-gray-600",
           styleClass,
         )}
-        className="h-full w-full resize-none rounded-8 p-20 text-16-regular outline-none placeholder:text-gray-600"
         maxLength={MaxLength}
         onChange={handleChange}
         value={value}
         onFocus={() => setFocus(true)}
-        onBlur={(e) => {
+        onBlur={e => {
           setFocus(false);
-          if (onBlur) {
-            onBlur(e); 
-          }
+          onBlur?.(e);
         }}
-      ></textarea>
+      />
       <div className="absolute bottom-20 right-20 text-14-regular text-gray-600">
         {value.length}/{MaxLength}
       </div>

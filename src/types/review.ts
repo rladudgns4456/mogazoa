@@ -94,5 +94,3 @@ export interface ReviewEdit {
   content: string;
   rating: number;
 }
-
-

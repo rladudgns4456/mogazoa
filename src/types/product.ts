@@ -36,8 +36,12 @@ export interface ProductListResponse {
   nextCursor: number | null;
 }
 
-export interface DetailCard {
-  currentPath: string | string[] | undefined;
+/**
+ * DetailCard 컴포넌트의 props 타입
+ * (컴포넌트 이름과 겹치지 않도록 Props 붙여줌)
+ */
+export interface DetailCardProps {
+  currentPath?: string | string[]; // 필요하면 넘기고, 아니면 생략 가능하게
   userId: number | null;
   writerId: number;
   id: number;
@@ -54,8 +58,8 @@ export interface DetailCard {
   onSave: (id: number) => void;
   onShare: () => void;
   onUrlCopy: () => void;
-  onDelete: (e:number) => void;
-  onCompare: (e:number) => void;
+  onDelete: (config: string) => void;
+  onCompare: (id: number) => void;
 }
 
 export interface NotSuccessful {
@@ -112,29 +116,25 @@ export interface ProductCategory {
 }
 
 export interface Reviews {
-  nextCursor: 0;
-  list: [
-    {
-      user: {
-        image: string;
-        nickname: string;
-        id: number;
-      };
-      reviewImages: [
-        {
-          source: string;
-          id: number;
-        },
-      ];
-      productId: number;
-      userId: number;
-      updatedAt: string;
-      createdAt: string;
-      isLiked: true;
-      likeCount: number;
-      content: string;
-      rating: number;
+  nextCursor: number;
+  list: {
+    user: {
+      image: string;
+      nickname: string;
       id: number;
-    },
-  ];
+    };
+    reviewImages: {
+      source: string;
+      id: number;
+    }[];
+    productId: number;
+    userId: number;
+    updatedAt: string;
+    createdAt: string;
+    isLiked: boolean;
+    likeCount: number;
+    content: string;
+    rating: number;
+    id: number;
+  }[];
 }
