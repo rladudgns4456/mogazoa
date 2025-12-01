@@ -1,4 +1,4 @@
-export default function useSorting(value: string) {
+export default function sorting(value: string) {
   let order = "";
   switch (value) {
     case "createdAt":

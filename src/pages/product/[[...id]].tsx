@@ -1,6 +1,6 @@
 "use client";
 
-import { QueryClient, dehydrate, useQueryClient } from "@tanstack/react-query";
+import { QueryClient, dehydrate, useQueryClient, useMutation } from "@tanstack/react-query";
 import { useRouter } from "next/router";
 import { useParams } from "next/navigation";
 import { useAuth } from "@/components/login/AuthContext";
@@ -9,11 +9,12 @@ import { useEffect, useState, useRef } from "react";
 
 //api
 import { useDeleteReview, useGetReview } from "@/api/ReviewApi";
-import { postProductFavorite, deleteProductFavorite } from "@/api/productsApi";
+import { postProductFavorite, deleteProductFavorite, ProductsProps } from "@/api/productsApi";
 import { getProductItem } from "@/api/productsApi";
 //type
 import { Review } from "@/types/review";
 import { ProductDetail } from "@/types/product";
+
 //컴포넌트
 import Image from "next/image";
 import DetailCard from "@/components/detailCard";
@@ -24,7 +25,7 @@ import EmptyReviewCard from "@/components/review/EmptyReviewCard";
 import { SortingSelect } from "@/components/selectBox";
 import { useModal } from "@/components/modal/modalBase";
 import { ConfigModal } from "@/components/modal";
-import useSorting from "@/hooks/useSorting";
+import sorting from "@/utils/sorting";
 import EditReview from "./_components/reviewModal/editReview";
 import { Toast, useToast } from "@/components/toast";
 //이미지
@@ -38,11 +39,12 @@ const SHOW_MAX = 2;
 export async function getServerSideProps(context: GetServerSidePropsContext) {
   const queryClient = new QueryClient();
   const currentPath = context.params?.id;
-  const productData = await getProductItem(Number(currentPath));
+  const productId = Number(currentPath);
+  const productData = await getProductItem(productId);
 
   return {
     props: {
-      currentPath,
+      productId,
       productData,
       dehydratedState: dehydrate(queryClient),
     },
@@ -51,7 +53,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
 
 //ProductDetailCard
 export default function ProductDetailCard({
-  currentPath,
+  productId,
   productData,
 }: InferGetServerSidePropsType<typeof getServerSideProps>) {
   const router = useRouter();
@@ -72,9 +74,35 @@ export default function ProductDetailCard({
   //상품 정보
   const items: ProductDetail = productData;
 
+  //상품 삭제
+  const deleteProduct = useMutation<string, Error, number>({
+    onMutate: async () => {
+      await queryClient.cancelQueries({ queryKey: ["products", productId] });
+      const previousData = queryClient.getQueryData<ProductsProps>(["products", productId]);
+      return { previousData };
+    },
+    onError: () => {
+      openToast(<Toast label="상품 삭제를 실패했습니다." error />);
+    },
+    onSuccess: () => {
+      router.replace("/");
+    },
+  });
+
+  const onHandleDeleteProduct = (config: string) => {
+    if (config === "true") {
+      deleteProduct.mutate(productId);
+    }
+  };
+
+  //상품 비교
+  const onCompareProduct = productId => {
+    router.push("/compare");
+  };
+
   //리뷰 가져오기
   const [order, setOrder] = useState("recent");
-  const { data: reviewData, isLoading: reviewLoading, isError: reviewError } = useGetReview(Number(currentPath), order);
+  const { data: reviewData, isLoading: reviewLoading, isError: reviewError } = useGetReview(productId, order);
   const reviews = reviewData?.list;
 
   // 리뷰 삭제 함수 호출
@@ -84,7 +112,7 @@ export default function ProductDetailCard({
   };
 
   const onHandleSorting = (value: string) => {
-    const order = useSorting(value);
+    const order = sorting(value);
     setOrder(order);
   };
 
@@ -137,7 +165,7 @@ export default function ProductDetailCard({
         editReview &&
           openModal(
             <EditReview
-              currentPath={currentPath}
+              productId={productId}
               id={id}
               image={items.image}
               name={items.name}
@@ -160,28 +188,22 @@ export default function ProductDetailCard({
   }; //컴포넌트 수정 후 다시
 
   //찜 하기
-  const onHandleSave = async (currentPath: number) => {
+  const onHandleSave = async (productId: number) => {
     if (items.isFavorite)
       try {
-        await deleteProductFavorite(currentPath);
+        await deleteProductFavorite(productId);
       } catch (error) {
         openToast(<Toast errorMessage="이미 찜한 상품입니다." error />);
       }
     else if (!items.isFavorite && items.favoriteCount === 1) {
       console.log("a");
-      await postProductFavorite(currentPath);
+      await postProductFavorite(productId);
     }
   };
 
-  //상품 삭제
-  const onDeleteProduct = () => {};
-  //상품 비교
-  const onCompareProduct = (productId: number) => {
-    router.push("/compare");
-  };
-
   //url 복사
-  const params = useParams() as { id: string };
+  const params = useParams();
+  const id = params.id; // id는 string | undefined
 
   const copyToClipboard = async (text: string) => {
     try {
@@ -205,7 +227,7 @@ export default function ProductDetailCard({
       <section className="pb-53 pt-0">
         <h2 className="-inset-4m-1 h-0 w-0 overflow-hidden text-1">상품상세 정보</h2>
         <DetailCard
-          currentPath={currentPath}
+          productId={productId}
           userId={userId}
           writerId={items?.writerId}
           id={items?.id}
@@ -219,7 +241,7 @@ export default function ProductDetailCard({
           onSave={onHandleSave}
           onShare={onHandleShare}
           onUrlCopy={onHandleUrlCopy}
-          onDelete={onDeleteProduct}
+          onDelete={onHandleDeleteProduct}
           onCompare={onCompareProduct}
         />
       </section>
