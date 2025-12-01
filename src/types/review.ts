@@ -1,3 +1,8 @@
+// 상품 아이디
+export interface ProductId {
+  productId: number;
+}
+
 // 리뷰 이미지 타입
 export interface ReviewImage {
   id: number;
@@ -46,3 +51,48 @@ export interface ReviewerRankingItemProps {
 export interface ReviewerRankingProps {
   reviewers: Reviewer[];
 }
+
+//리뷰 포스트
+export interface PostReviewData extends ProductId {
+  images: string[];
+  content: string;
+  rating: number;
+}
+
+//이미지
+export interface ImageUrl {
+  url: string;
+}
+
+export interface Like {
+  user: {
+    image: string;
+    nickname: string;
+    id: number;
+  };
+  reviewImages: ReviewImage[];
+  productId: number;
+  userId: number;
+  updatedAt: string;
+  createdAt: string;
+  isLiked: true;
+  likeCount: number;
+  content: string;
+  rating: number;
+  id: number;
+}
+
+// 다음 리뷰
+export interface ReviewListCard {
+  list: Review[];
+  nextCursor: number;
+}
+
+//리뷰 가져오기
+export interface ReviewEdit {
+  images?: string[];
+  content: string;
+  rating: number;
+}
+
+

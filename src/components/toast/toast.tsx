@@ -4,7 +4,7 @@ import { useToast } from "@/components/toast";
 import Ic_Close from "@/assets/svgr/ic_close.svg";
 
 interface LabelProps {
-  label: string;
+  label?: string;
   error?: boolean;
   errorMessage?: string;
   closedTime?: number;

@@ -23,6 +23,7 @@
     "next": "16.0.1",
     "react": "19.2.0",
     "react-dom": "19.2.0",
+    "react-intersection-observer": "^10.0.0",
     "react-responsive": "^10.0.1",
     "swiper": "^12.0.3",
     "t": "^0.5.1",

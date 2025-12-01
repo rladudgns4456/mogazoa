@@ -1,14 +1,16 @@
 import { useAuth } from "@/components/login/AuthContext";
-import ProfileCard from "@/components/Profile";
-import ProfileProductTabs from "@/components/Profile/ProfileProductTabs";
+import ProfileCard from "@/components/profile";
+import ProfileProductTabs from "@/components/profile/ProfileProductTabs";
 import { ProfileSkeleton } from "@/components/skeleton";
 import { getMyProfile } from "@/api/users";
 import { useQuery } from "@tanstack/react-query";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
-import { TabType } from "@/components/Profile/ItemTab";
+import { TabType } from "@/components/profile/ItemTab";
 import { useProfileProducts } from "@/hooks/useProfileProducts";
 import { useFollowModal } from "@/hooks/useFollowModal";
+import { useModal } from "@/components/modal/modalBase";
+import ProfileEditModal from "@/components/modal/profileEdit";
 
 /**
  * 내 프로필 페이지
@@ -19,6 +21,7 @@ export default function MyProfilePage() {
   const { isAuthenticated, logout } = useAuth();
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<TabType>("reviews");
+  const { openModal } = useModal();
 
   // 로그인 체크
   useEffect(() => {
@@ -46,9 +49,11 @@ export default function MyProfilePage() {
     router.push("/");
   };
 
-  // 프로필 편집 (추후 구현)
+  // 프로필 편집
   const handleEdit = () => {
-    console.log("프로필 편집");
+    if (user) {
+      openModal(<ProfileEditModal user={user} />);
+    }
   };
 
   if (!isAuthenticated || isLoading || !user) {

@@ -17,14 +17,11 @@ interface FollowerItemProps {
  * - 프로필 사진과 닉네임 표시
  */
 export default function FollowerItem({ follower, onClick }: FollowerItemProps) {
-  const { id, nickname, image } = follower;
+  const { nickname, image } = follower;
 
   const handleClick = (e: React.MouseEvent) => {
-    e.preventDefault(); // Link 기본 동작 방지
-    console.log("클릭한 팔로워 정보:", follower);
-    if (onClick) {
-      onClick();
-    }
+    e.preventDefault();
+    onClick?.();
   };
 
   return (
@@ -37,10 +34,10 @@ export default function FollowerItem({ follower, onClick }: FollowerItemProps) {
     >
       <div className={cn("relative size-48 flex-shrink-0 overflow-hidden rounded-full", "md:size-52")}>
         {isValidImageUrl(image) ? (
-          <Image src={image!} alt={`${nickname} 프로필`} fill className={cn("object-cover")} />
+          <Image src={image!} alt={`${nickname} 프로필`} fill className="object-cover" />
         ) : (
           <div className={cn("flex h-full w-full items-center justify-center bg-gray-100")}>
-            <DefaultProfileImage className={cn("h-full w-full opacity-60")} />
+            <DefaultProfileImage className="h-full w-full opacity-60" />
           </div>
         )}
       </div>

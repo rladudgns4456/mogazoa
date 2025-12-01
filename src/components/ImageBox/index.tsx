@@ -1,5 +1,4 @@
 import { cn } from "@/utils/cn";
-import { profile } from "console";
 import Image from "next/image";
 
 const baseImg = {
