@@ -8,7 +8,7 @@ import "@/styles/globals.css";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import type { AppProps } from "next/app";
-import AddProductFloatingButton from "@/components/product/addProductFloatingButton";
+import AddProductFloatingButton from "@/components/product/AddProductFloatingButton";
 
 const queryClient = getQueryClient();
 

@@ -1,7 +1,29 @@
 // src/api/products.ts
+import Cookies from "js-cookie";
 import { Product } from "@/types/product";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE ?? "";
+
+/* ------------------------------------------------------------------
+ *  인증 헤더 공통 함수
+ * ------------------------------------------------------------------ */
+
+function getAuthHeaders(): Record<string, string> {
+  // SSR 환경에서는 localStorage / 쿠키 없음
+  if (typeof window === "undefined") return {};
+
+  // AuthContext 에서 Cookies.set("accessToken", token) 사용 중
+  const token = Cookies.get("accessToken");
+  if (!token) return {};
+
+  return {
+    Authorization: `Bearer ${token}`,
+  };
+}
+
+/* ------------------------------------------------------------------
+ *  API 타입들
+ * ------------------------------------------------------------------ */
 
 type ProductListItemFromApi = {
   id: number;
@@ -21,18 +43,10 @@ type ProductListResponse = {
   list: ProductListItemFromApi[];
 };
 
-function getAuthHeaders(): HeadersInit {
-  if (typeof window === "undefined") return {};
+/* ------------------------------------------------------------------
+ *  응답 → Product 타입 변환
+ * ------------------------------------------------------------------ */
 
-  const token = localStorage.getItem("accessToken");
-  if (!token) return {};
-
-  return {
-    Authorization: `Bearer ${token}`,
-  };
-}
-
-// API 응답
 const toProduct = (raw: ProductListItemFromApi): Product => ({
   id: raw.id,
   name: raw.name,
@@ -52,20 +66,26 @@ const toProduct = (raw: ProductListItemFromApi): Product => ({
   },
 });
 
-// 이미지 업로드
+/* ------------------------------------------------------------------
+ *  이미지 업로드  POST /images/upload
+ * ------------------------------------------------------------------ */
+
 export async function uploadProductImage(file: File): Promise<string> {
   const formData = new FormData();
   formData.append("image", file);
 
+  const headers: HeadersInit = {
+    ...getAuthHeaders(),
+  };
+
   const res = await fetch(`${API_BASE}/images/upload`, {
     method: "POST",
+    headers,
     body: formData,
-    headers: {
-      ...getAuthHeaders(), // 🔐 토큰 추가
-    },
   });
 
   if (!res.ok) {
+    console.error("이미지 업로드 실패:", await res.text());
     throw new Error("이미지 업로드에 실패했습니다.");
   }
 
@@ -73,7 +93,10 @@ export async function uploadProductImage(file: File): Promise<string> {
   return data.url;
 }
 
-// 상품 생성
+/* ------------------------------------------------------------------
+ *  상품 생성  POST /products
+ * ------------------------------------------------------------------ */
+
 export type CreateProductPayload = {
   categoryId: number;
   image: string;
@@ -82,27 +105,29 @@ export type CreateProductPayload = {
 };
 
 export async function createProduct(payload: CreateProductPayload): Promise<Product> {
+  const headers: HeadersInit = {
+    "Content-Type": "application/json",
+    ...getAuthHeaders(), // Authorization 포함
+  };
+
   const res = await fetch(`${API_BASE}/products`, {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      ...getAuthHeaders(), // 🔐 토큰 추가
-    },
+    headers,
     body: JSON.stringify(payload),
   });
 
   if (!res.ok) {
+    console.error("상품 등록 실패:", await res.text());
     throw new Error("상품 등록에 실패했습니다.");
   }
 
-  const data = await res.json();
-  // data 형태가 리스트 아이템과 동일하다고 가정
+  const data: ProductListItemFromApi = await res.json();
   return toProduct(data);
 }
 
 /* ------------------------------------------------------------------
  *  상품 이름으로 검색
- *  GET /{teamId}/products?keyword=...&order=recent
+ *  GET /products?keyword=...&order=recent
  * ------------------------------------------------------------------ */
 
 export async function searchProductsByName(keyword: string): Promise<Product[]> {
@@ -110,11 +135,10 @@ export async function searchProductsByName(keyword: string): Promise<Product[]> 
   params.set("keyword", keyword);
   params.set("order", "recent");
 
-  const res = await fetch(`${API_BASE}/products?${params.toString()}`, {
-    // 여기에도 credentials 넣지 않기
-  });
+  const res = await fetch(`${API_BASE}/products?${params.toString()}`);
 
   if (!res.ok) {
+    console.error("상품 검색 실패:", await res.text());
     throw new Error("상품 검색에 실패했습니다.");
   }
 
@@ -127,7 +151,9 @@ export async function searchProductsByName(keyword: string): Promise<Product[]> 
  * ------------------------------------------------------------------ */
 
 export async function checkDuplicateProductName(name: string): Promise<boolean> {
-  const results = await searchProductsByName(name.trim());
-  // 완전 같은 이름이 있는지만 체크
-  return results.some(p => p.name === name.trim());
+  const trimmed = name.trim();
+  if (!trimmed) return false;
+
+  const results = await searchProductsByName(trimmed);
+  return results.some(p => p.name === trimmed);
 }
