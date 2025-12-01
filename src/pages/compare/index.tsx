@@ -1,4 +1,5 @@
 "use client";
+
 import CompareTable, { CompareRow, Pill, ValueCell } from "@/components/table/CompareTable";
 import { useModal } from "@/components/modal/modalBase/modalProvider";
 import ModalContainer from "@/components/modal/modalBase/ModalContainer";
@@ -69,11 +70,20 @@ function getThumb(src: ProductApiResponse): string | null {
 // ==========================================================
 
 // 상품 단건 조회 (항상 최신 데이터 기준)
-async function fetchProductById(id: number): Promise<ProductSummary> {
+// 404가 나면 null을 반환해서 슬롯만 비우도록 처리
+async function fetchProductById(id: number): Promise<ProductSummary | null> {
   const url = `${API_BASE}/products/${id}`;
   const res = await fetch(url);
 
-  if (!res.ok) throw new Error("상품 조회 실패");
+  if (res.status === 404) {
+    console.warn("상품을 찾을 수 없습니다. id:", id);
+    return null;
+  }
+
+  if (!res.ok) {
+    console.error("상품 조회 실패", res.status, res.statusText);
+    throw new Error("상품 조회 실패");
+  }
 
   const data: ProductApiResponse = await res.json();
 
@@ -150,22 +160,25 @@ export default function ComparePage() {
     const raw = window.localStorage.getItem(STORAGE_KEY);
     if (!raw) return;
 
-    try {
-      const parsed = JSON.parse(raw) as { leftId: number | null; rightId: number | null };
+    (async () => {
+      try {
+        const parsed = JSON.parse(raw) as { leftId: number | null; rightId: number | null };
 
-      (async () => {
-        const left = parsed.leftId ? await fetchProductById(parsed.leftId) : null;
-        const right = parsed.rightId ? await fetchProductById(parsed.rightId) : null;
+        const [left, right] = await Promise.all([
+          parsed.leftId ? fetchProductById(parsed.leftId) : Promise.resolve(null),
+          parsed.rightId ? fetchProductById(parsed.rightId) : Promise.resolve(null),
+        ]);
 
         setSelected({ left, right });
         setKeyword({
           left: "",
           right: "",
         });
-      })();
-    } catch {
-      window.localStorage.removeItem(STORAGE_KEY);
-    }
+      } catch (e) {
+        console.error("저장된 비교 상품 복원 실패:", e);
+        window.localStorage.removeItem(STORAGE_KEY);
+      }
+    })();
   }, []);
 
   // ----------------------------------------------------------
@@ -253,7 +266,7 @@ export default function ComparePage() {
     });
 
     setKeyword(prev => ({ ...prev, [sideToReplace]: "" }));
-    // 여기서는 모달을 닫지 않음 (모달 내부에서 완료 단계로 전환 후, 사용자가 닫기/바로가기 선택)
+    // 모달 닫기는 모달 내부에서 처리
   };
 
   // ----------------------------------------------------------
@@ -303,11 +316,19 @@ export default function ComparePage() {
         fetchProductById(selected.right.id),
       ]);
 
+      // 둘 중 하나라도 없어졌으면 안내 후 선택 상태만 갱신
+      if (!freshLeft || !freshRight) {
+        alert("일부 상품 정보를 찾을 수 없습니다. 다시 선택해 주세요.");
+        setSelected({ left: freshLeft, right: freshRight });
+        return;
+      }
+
       setSelected({ left: freshLeft, right: freshRight });
 
       const result = compareProducts(freshLeft, freshRight);
       setCompareData(result);
-    } catch {
+    } catch (e) {
+      console.error(e);
       alert("상품 정보를 불러오는 데 실패했습니다.");
     } finally {
       setIsComparing(false);

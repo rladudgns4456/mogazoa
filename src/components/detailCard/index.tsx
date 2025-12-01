@@ -5,14 +5,14 @@ import { cn } from "@/utils/cn";
 import { useModal } from "../modal/modalBase";
 
 //api
-import { postProductFavorite,deleteProduct } from "@/api/productsApi";
+import { postProductFavorite, deleteProduct } from "@/api/productsApi";
 import Button from "../Button";
 import Image from "next/image";
 import { Skeleton } from "../skeleton";
 import { CreateReview } from "@/pages/product/_components/reviewModal";
 import LoginAlert from "../modal/loginAlert";
 import { useToast, Toast } from "@/components/toast";
-import { DetailCard } from "@/types/product";
+import type { DetailCardProps } from "@/types/product";
 
 import Ic_Share from "@/assets/icons/ic_share.svg";
 import Ic_Save from "@/assets/icons/ic_save.svg";
@@ -37,7 +37,7 @@ export default function DetailCard({
   onSave,
   onDelete,
   onCompare,
-}: DetailCard) {
+}: DetailCardProps) {
   const { openModal } = useModal();
   const { openToast } = useToast();
 
@@ -85,14 +85,13 @@ export default function DetailCard({
   };
 
   //등록 제품 삭제
-const onHandleDelete = async (productId: number) => {
-
-  try {
-    await deleteProduct(productId);   
-  } catch (error) { }
-};
+  const onHandleDelete = async (productId: number) => {
+    try {
+      await deleteProduct(productId);
+    } catch (error) {}
+  };
   //편집 모달
-  const onHandleEdit=()=>{}
+  const onHandleEdit = () => {};
 
   if (isError) {
     return (

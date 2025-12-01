@@ -130,13 +130,21 @@ export default function CreateReview({ currentPath, id, image, name, category }:
     }
     const imageUrls = await createUrl(uploadImage);
 
-    const newReview = {
+    type CreateReviewPayload = {
+      productId: number;
+      images: string[];
+      content: string;
+      rating: number;
+    };
+
+    const newReview: CreateReviewPayload = {
       productId: id,
-      images: imageUrls as string[],
+      images: imageUrls,
       content: textValue,
       rating: ratingValue,
     };
-    createReviewMutate(newReview, {
+
+    createReviewMutate(newReview as any, {
       onSuccess: () => {
         queryClient.prefetchQuery({
           queryKey: ["products", currentPath],

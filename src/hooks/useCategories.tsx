@@ -2,7 +2,6 @@ import React, { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { fetchCategories, type CategoryApiResponse } from "@/api/categories";
 
-
 import Ic_music from "@/assets/svgr/ic_music.svg?react";
 import Ic_movies from "@/assets/svgr/ic_movies.svg?react";
 import Ic_lecture from "@/assets/svgr/ic_lecture.svg?react";

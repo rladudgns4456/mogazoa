@@ -1,6 +1,6 @@
 import axiosInstance from "./AxiosInstance";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import {ReviewListCard} from "../types/review" 
+import { Like, ReviewListCard } from "../types/review";
 // import { Like, ReviewListCard } from "../types/product";
 
 // 리뷰 정렬 함수
@@ -90,11 +90,11 @@ export const useDeleteReview = () => {
   const deleteReviewMutation = useMutation({
     mutationFn: (reviewId: number) => axiosInstance.delete(`/reviews/${reviewId}`),
     onSuccess: (_, reviewId) => {
-      queryClient.invalidateQueries({ queryKey: ['reviews'] });
-       console.log('리뷰 삭제 성공!');
+      queryClient.invalidateQueries({ queryKey: ["reviews"] });
+      console.log("리뷰 삭제 성공!");
     },
-    onError: (error) => {
-      console.error('리뷰 삭제 중 오류 발생:', error);
+    onError: error => {
+      console.error("리뷰 삭제 중 오류 발생:", error);
     },
   });
 
@@ -102,8 +102,6 @@ export const useDeleteReview = () => {
     deleteReview: deleteReviewMutation.mutate,
   };
 };
-
-
 
 //리뷰 좋아요
 export const LikeReview = async (reviewId: number): Promise<Like> => {

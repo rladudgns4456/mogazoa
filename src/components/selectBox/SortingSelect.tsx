@@ -9,7 +9,7 @@ const SORTING = [
 ];
 
 interface BoxProps extends SelectProps {
-  onClick: (e:string) => void;
+  onClick: (e: string) => void;
 }
 
 const style = {
@@ -32,7 +32,7 @@ export default function SortingSelect({ placeHolder, onClick }: BoxProps) {
       placeHolder={placeHolder}
       items={SORTING}
       styleClass={style}
-      onReadId={(e)=>onHandleSorting(e)}
+      onReadId={e => onHandleSorting(e)}
       initialValue={1}
     />
   );

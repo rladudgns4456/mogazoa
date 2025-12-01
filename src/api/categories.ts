@@ -1,4 +1,3 @@
-// src/api/categories.ts
 import axiosInstance from "./AxiosInstance";
 
 export type CategoryApiResponse = {
