@@ -84,23 +84,26 @@ export const deleteReview = async (reviewId: number): Promise<ReviewListCard> =>
   const response = await axiosInstance.delete(`/reviews/${reviewId}`);
   return response.data;
 };
+export const useDeleteReview = () => {
+  const queryClient = useQueryClient();
 
-// 삭제 뮤테이션 설정
-// export const deleteMutation = useMutation({
-//   mutationFn: deleteReview, // 삭제 요청 함수
-//   onSuccess: () => { 
-//     const queryClient = useQueryClient();
-//     // 삭제 성공 시 리뷰 목록 다시 불러오기
-//     queryClient.refetchQueries({ queryKey: ["reviews"] });
-//     // 성공 메시지 토스트 띄우기
-//     // openToast(<Toast label="리뷰가 성공적으로 삭제되었습니다." />);
-//   },
-//   onError: error => {
-//     console.error("삭제 실패:", error);
-//     // 실패 시 에러 메시지 토스트 띄우기 (필요시 활성화)
-//     // openToast(<Toast message="리뷰 삭제에 실패했습니다." type="error" />);
-//   },
-// });
+  const deleteReviewMutation = useMutation({
+    mutationFn: (reviewId: number) => axiosInstance.delete(`/reviews/${reviewId}`),
+    onSuccess: (_, reviewId) => {
+      queryClient.invalidateQueries({ queryKey: ['reviews'] });
+       console.log('리뷰 삭제 성공!');
+    },
+    onError: (error) => {
+      console.error('리뷰 삭제 중 오류 발생:', error);
+    },
+  });
+
+  return {
+    deleteReview: deleteReviewMutation.mutate,
+  };
+};
+
+
 
 //리뷰 좋아요
 export const LikeReview = async (reviewId: number): Promise<Like> => {
