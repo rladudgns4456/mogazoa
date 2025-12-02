@@ -64,6 +64,8 @@ export interface ImageUrl {
   url: string;
 }
 
+
+//좋아요
 export interface Like {
   user: {
     image: string;
@@ -88,9 +90,53 @@ export interface ReviewListCard {
   nextCursor: number;
 }
 
-//리뷰 가져오기
-export interface ReviewEdit {
-  images?: string[];
+//리뷰 생성
+export interface ReviewForm {
+  productId: number;
+  images?: File[];
   content: string;
   rating: number;
+}
+
+//리뷰 모달
+export interface ModalProps {
+  productId: number;
+  id: number;
+  image: string;
+  name: string;
+  category?: {
+    id: number;
+    name: string;
+  };
+}
+
+export interface AlertState {
+  alert: boolean;
+  content: string;
+}
+
+export interface PrevImageId {
+  id: number;
+}
+export interface PrevImageUrl {
+  source: string;
+}
+
+export interface ReviewEdit {
+  productId: number;
+  id: number;
+  image: string;
+  name: string;
+  item?: {
+    content: string;
+    rating: string;
+    reviewImages: [
+      {
+        id: number;
+      },
+      {
+        source: string;
+      },
+    ];
+  };
 }

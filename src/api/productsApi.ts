@@ -37,7 +37,28 @@ export async function deleteProductFavorite(productId: number): Promise<Products
   return response.data;
 }
 //제품 삭제
-export async function deleteProduct(productId: number): Promise<ProductsProps> {
+export const deleteProduct = async (productId: number): Promise<void> => {
   const response = await axiosInstance.delete(`/products/${productId}`);
   return response.data;
+};
+
+interface editProduct {
+  productId: number;
+  initCategoryId: number;
+  initImage: string;
+  productName: string;
+  initDescription: string;
 }
+
+//제품 수정
+export const editProduct = async (data: {
+  productId: number;
+  categoryId: number;
+  image?: string;
+  description: string;
+  name: string;
+}): Promise<editProduct> => {
+  const { productId, ...rest } = data;
+  const response = await axiosInstance.patch(`/products/${productId}`, rest);
+  return response.data;
+};

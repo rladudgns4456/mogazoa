@@ -26,6 +26,7 @@ export default function CategoryTab({ isHome, url, onHandleLoad }: TabPops) {
   const [isEnd, setIsEnd] = useState(true);
   const [isSwiperMounted, setIsSwiperMounted] = useState(false);
   const router = useRouter();
+  const productId = router.query;
   const { combinedCategory, isLoading, isError } = useCategories();
 
   const onSwiper = (swiper: SwiperClass) => {

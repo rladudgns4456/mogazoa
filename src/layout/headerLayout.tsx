@@ -4,23 +4,11 @@ import Input from "@/components/input/Input";
 import { useAuth } from "@/components/login/AuthContext";
 import Logo from "@/components/logo";
 import { useResponsive } from "@/hooks/useReponsive";
+import { useCategories } from "@/hooks/useCategories";
 import { cn } from "@/utils/cn";
 import Link from "next/link";
 import { useRouter } from "next/router";
 import { Activity, ReactNode, useEffect, useRef, useState } from "react";
-
-const CATEGORIES_LIST = [
-  "음악",
-  "영화/드라마",
-  "강의/책",
-  "호텔",
-  "가구/인테리어",
-  "식당",
-  "전자기기",
-  "화장품",
-  "의류/악세서리",
-  "앱",
-] as const;
 
 export default function HeaderLayout({ children }: { children: ReactNode }) {
   const [searchValue, setSearchValue] = useState("");
@@ -29,6 +17,7 @@ export default function HeaderLayout({ children }: { children: ReactNode }) {
   const { isAuthenticated, logout } = useAuth();
   const { isMobile } = useResponsive();
   const router = useRouter();
+  const { combinedCategory } = useCategories();
 
   const ActiveList = router.query.category;
 
@@ -40,19 +29,48 @@ export default function HeaderLayout({ children }: { children: ReactNode }) {
     router.push("/");
   };
 
+  // 카테고리 클릭 핸들러
+  const handleCategoryClick = (categoryId: number) => {
+    const query = { ...router.query };
+
+    // 같은 카테고리 클릭 시 토글
+    if (Number(query.category) === categoryId) {
+      delete query.category;
+    } else {
+      query.category = String(categoryId);
+    }
+
+    router.push(
+      {
+        pathname: "/",
+        query,
+      },
+      undefined,
+      { shallow: true },
+    );
+  };
+
   // ✅ URL 쿼리 keyword와 검색 input 값 동기화
   useEffect(() => {
     const keyword = typeof router.query.keyword === "string" ? router.query.keyword : "";
     setSearchValue(keyword);
   }, [router.query.keyword]);
 
+  // 라우트 변경 시 사이드 탭 자동 닫기
   useEffect(() => {
-    if (isMobile) {
-      if (isSearch || isMenu) {
-        setIsSearch(false);
-        setIsMenu(false);
-      }
-    }
+    const handleRouteChange = () => {
+      setIsMenu(false);
+      setIsSearch(false);
+    };
+
+    router.events.on("routeChangeComplete", handleRouteChange);
+
+    return () => {
+      router.events.off("routeChangeComplete", handleRouteChange);
+    };
+  }, [router.events]);
+
+  useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (isSearch && searchRef.current && !searchRef.current.contains(event.target as Node)) {
         setIsSearch(false);
@@ -69,7 +87,7 @@ export default function HeaderLayout({ children }: { children: ReactNode }) {
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
-  }, [isSearch, isMenu, isMobile]);
+  }, [isSearch, isMenu]);
 
   const handleSearchOpenClick = () => {
     setIsSearch(prev => !prev);
@@ -204,12 +222,17 @@ export default function HeaderLayout({ children }: { children: ReactNode }) {
             <div className="absolute left-0 top-0 h-full w-180 bg-white px-10 py-10" ref={asideRef}>
               <p className="pb-20 pl-20 pt-45 text-14-regular">카테고리</p>
               <ul className="flex flex-col gap-4">
-                {CATEGORIES_LIST.map((list, i) => (
+                {combinedCategory.map(category => (
                   <li
-                    key={i}
-                    className={cn(sideBarBasic, Number(ActiveList) === i ? activeCategory : null, hoverCategory)}
+                    key={category.id}
+                    className={cn(
+                      sideBarBasic,
+                      Number(ActiveList) === category.id ? activeCategory : null,
+                      hoverCategory,
+                    )}
+                    onClick={() => handleCategoryClick(category.id)}
                   >
-                    {list}
+                    {category.label}
                   </li>
                 ))}
               </ul>
@@ -228,9 +251,18 @@ export default function HeaderLayout({ children }: { children: ReactNode }) {
                     </li>
                   </ul>
                 ) : (
-                  <button onClick={handleLogoutClick} className={sideBarBasic}>
-                    로그아웃
-                  </button>
+                  <ul className="flex flex-col gap-10">
+                    <li>
+                      <Link className={sideBarBasic} href={"/mypage"}>
+                        내 프로필
+                      </Link>
+                    </li>
+                    <li>
+                      <button onClick={handleLogoutClick} className={sideBarBasic}>
+                        로그아웃
+                      </button>
+                    </li>
+                  </ul>
                 )}
               </div>
             </div>

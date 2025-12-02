@@ -10,6 +10,8 @@ import { User } from "@/types/user";
 import { TabType } from "@/components/profile/ItemTab";
 import { useProfileProducts } from "@/hooks/useProfileProducts";
 import { useFollowModal } from "@/hooks/useFollowModal";
+import { useModal } from "@/components/modal/modalBase";
+import LoginAlert from "@/components/modal/loginAlert";
 
 /**
  * 다른 사용자 프로필 페이지
@@ -22,6 +24,7 @@ export default function UserProfilePage() {
   const router = useRouter();
   const { id } = router.query;
   const queryClient = useQueryClient();
+  const { openModal } = useModal();
   const [activeTab, setActiveTab] = useState<TabType>("reviews");
 
   const userId = typeof id === "string" ? parseInt(id, 10) : null;
@@ -108,11 +111,10 @@ export default function UserProfilePage() {
       queryClient.invalidateQueries({ queryKey: ["followees", userId] });
     },
   });
-
   // 팔로우/언팔로우 토글
   const handleFollowToggle = () => {
     if (!isAuthenticated) {
-      router.push("/login");
+      openModal(<LoginAlert />);
       return;
     }
 
