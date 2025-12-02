@@ -36,12 +36,14 @@ export interface ProductListResponse {
   nextCursor: number | null;
 }
 
+
 /**
  * DetailCard 컴포넌트의 props 타입
  * (컴포넌트 이름과 겹치지 않도록 Props 붙여줌)
  */
 export interface DetailCardProps {
   currentPath?: string | string[]; // 필요하면 넘기고, 아니면 생략 가능하게
+  productId: number;
   userId: number | null;
   writerId: number;
   id: number;

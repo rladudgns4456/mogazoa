@@ -16,7 +16,7 @@ export default function AddProductFloatingButton() {
 
   const handleOpen = () => {
     openModal(
-      <ModalContainer styleClass="w-[644px] rounded-20">
+      <ModalContainer styleClass="w-320 sm:w-420  md:w-644 rounded-20 px-20 md:px-40 pb-32 pt-32">
         <AddProductModal />
       </ModalContainer>,
     );
