@@ -1,11 +1,8 @@
 "use client";
 
 import CompareTable, { CompareRow, Pill, ValueCell } from "@/components/table/CompareTable";
-import { useModal } from "@/components/modal/modalBase/modalProvider";
-import ModalContainer from "@/components/modal/modalBase/ModalContainer";
 import React, { useEffect, useState, useCallback } from "react";
 import Button from "@/components/Button";
-import ReplaceModal from "@/components/compare/ReplaceModal";
 import { compareProducts, ProductSummary, MetricKey, CompareResult, MetricResult } from "@/utils/compareUtils";
 
 type CompareSide = "left" | "right";
@@ -131,8 +128,6 @@ async function searchProductsApi(keyword: string): Promise<ProductSummary[]> {
 // ComparePage 컴포넌트
 // ==========================================================
 export default function ComparePage() {
-  const { openModal } = useModal();
-
   const [selected, setSelected] = useState<{ left: ProductSummary | null; right: ProductSummary | null }>({
     left: null,
     right: null,
@@ -199,52 +194,9 @@ export default function ComparePage() {
   }, []);
 
   // ----------------------------------------------------------
-  // 비교 교체 모달 열기 (modalBase 사용)
-  // ----------------------------------------------------------
-
-  const openReplaceModal = (side: CompareSide, newProduct: ProductSummary) => {
-    if (!selected.left || !selected.right) return;
-
-    openModal(
-      <ModalContainer
-        styleClass="
-        w-[500px]
-        rounded-[20px]
-        border-[#EFF0F3]
-        shadow-[0_4px_30px_rgba(92,104,177,0.05)]
-      "
-      >
-        <ReplaceModal
-          triggerSide={side}
-          left={selected.left}
-          right={selected.right}
-          newProduct={newProduct}
-          onConfirmReplace={keepSide => {
-            const sideToReplace: CompareSide = keepSide === "left" ? "right" : "left";
-
-            setSelected(prev => {
-              const next = { ...prev, [sideToReplace]: newProduct };
-              persistIds(next);
-              return next;
-            });
-
-            setKeyword(prev => ({ ...prev, [sideToReplace]: "" }));
-          }}
-        />
-      </ModalContainer>,
-    );
-  };
-
-  // ----------------------------------------------------------
-  // 상품 선택 & 교체
+  // 상품 선택 & 교체 (모달 없이 해당 칸만 교체)
   // ----------------------------------------------------------
   const handleSelectProduct = (side: CompareSide, product: ProductSummary) => {
-    if (selected.left && selected.right) {
-      openReplaceModal(side, product);
-      setSearchResult(prev => ({ ...prev, [side]: [] }));
-      return;
-    }
-
     setSelected(prev => {
       const next = { ...prev, [side]: product };
       persistIds(next);
@@ -343,9 +295,6 @@ export default function ComparePage() {
               onClear={() => handleClear("left")}
               overallWinner={compareData?.overall ?? null}
               metricResults={compareData?.results ?? null}
-              onClickReplace={
-                selected.left && selected.right ? () => openReplaceModal("left", selected.left!) : undefined
-              }
             />
           </div>
 
@@ -366,9 +315,6 @@ export default function ComparePage() {
               onClear={() => handleClear("right")}
               overallWinner={compareData?.overall ?? null}
               metricResults={compareData?.results ?? null}
-              onClickReplace={
-                selected.left && selected.right ? () => openReplaceModal("right", selected.right!) : undefined
-              }
             />
           </div>
         </div>
@@ -412,7 +358,6 @@ type ProductSlotProps = {
   onClear: () => void;
   overallWinner?: "left" | "right" | "draw" | null;
   metricResults?: MetricResult[] | null;
-  onClickReplace?: () => void;
 };
 
 function ProductSlot({
@@ -425,7 +370,6 @@ function ProductSlot({
   onClear,
   overallWinner,
   metricResults,
-  onClickReplace,
 }: ProductSlotProps) {
   const isLeft = side === "left";
   const defaultCardImage = isLeft ? ASSET_PATHS.DEFAULT_A : ASSET_PATHS.DEFAULT_B;
@@ -442,7 +386,7 @@ function ProductSlot({
     ((overallWinner === "left" && isLeft) || (overallWinner === "right" && !isLeft));
 
   return (
-    <div className="relative mx-auto flex w-full max-w-[500px] flex-col items-center gap-8">
+    <div className="w full relative mx-auto flex max-w-[500px] flex-col items-center gap-8">
       {/* 1. 상단 A/B 배지 + 실제 상품 이미지 + 이게조아 뱃지 */}
       <div className="relative flex flex-col items-center">
         <div className={`${badgeSizeClass} overflow-hidden bg-gray-200`}>
@@ -466,7 +410,7 @@ function ProductSlot({
       <div className="relative flex w-full justify-center">
         {product ? (
           <div className="flex h-50 w-full max-w-300 items-center rounded-full bg-[#2F323A] px-20 text-14-medium text-white shadow-sm">
-            <button type="button" className="flex flex-1 items-center justify-start" onClick={onClickReplace}>
+            <button type="button" className="flex flex-1 items-center justify-start">
               <span className="mr-3 truncate leading-[20px]">{product.name}</span>
             </button>
             <button
