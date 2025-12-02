@@ -15,7 +15,7 @@ interface ReplaceModalProps {
   newProduct: ProductSummary;
   onConfirmReplace: (keepSide: CompareSide) => void;
 }
-// 공통 레이아웃
+
 const InnerSelect: React.FC<{ children: React.ReactNode }> = ({ children }) => (
   <div className="flex h-[453px] w-full flex-col items-center px-10 pb-9 pt-8">{children}</div>
 );
@@ -31,14 +31,14 @@ const ReplaceModal: React.FC<ReplaceModalProps> = ({ triggerSide, left, right, n
   const [step, setStep] = useState<Step>("select");
   const [keepSide, setKeepSide] = useState<CompareSide>("left");
 
-  // 모달 열릴 때 기본 선택값 세팅
   useEffect(() => {
+    // 새로 연 경우엔 “트리거한 쪽과 반대편 상품을 기본으로 유지”하도록
     setStep("select");
     setKeepSide(triggerSide === "left" ? "right" : "left");
   }, [triggerSide]);
 
   const handleReplaceClick = () => {
-    onConfirmReplace(keepSide);
+    onConfirmReplace(keepSide); // 실제 교체는 여기서만 발생
     setStep("done");
   };
 
@@ -47,11 +47,12 @@ const ReplaceModal: React.FC<ReplaceModalProps> = ({ triggerSide, left, right, n
     closeModal();
   };
 
-  if (!left || !right) return null;
+  const handleCloseOnly = () => {
+    // 비교 화면으로 이동하지 않고, 단순히 모달만 닫기
+    closeModal();
+  };
 
-  const Inner: React.FC<{ children: React.ReactNode }> = ({ children }) => (
-    <div className="flex h-[453px] w-full flex-col items-center gap-20 px-10 pb-9 pt-8">{children}</div>
-  );
+  if (!left || !right) return null;
 
   const SecondaryButton: React.FC<{
     active?: boolean;
@@ -89,19 +90,16 @@ const ReplaceModal: React.FC<ReplaceModalProps> = ({ triggerSide, left, right, n
 
     return (
       <InnerSelect>
-        {/* 제목 */}
         <div className="mb-8 text-center">
           <p className="text-[20px] font-medium leading-[24px] text-[#000000]">{`'${newProduct.name}'`}</p>
           <p className="mt-2 text-[14px] leading-[20px] text-[#555A64]">어떤 상품과 비교할까요?</p>
         </div>
 
-        {/* 상품 버튼 */}
         <div className="mb-10 flex w-full flex-col items-center gap-20">
           <SecondaryButton label={left.name} active={keepLeft} onClick={() => setKeepSide("left")} />
           <SecondaryButton label={right.name} active={!keepLeft} onClick={() => setKeepSide("right")} />
         </div>
 
-        {/* 교체하기 */}
         <PrimaryButton label="교체하기" onClick={handleReplaceClick} />
       </InnerSelect>
     );
@@ -115,7 +113,18 @@ const ReplaceModal: React.FC<ReplaceModalProps> = ({ triggerSide, left, right, n
         <p className="mt-1 text-[14px] text-gray-500">바로 확인해 보시겠어요?</p>
       </div>
 
-      <PrimaryButton label="바로가기" onClick={handleGoCompare} />
+      {/* 선택지 두 개: 나중에 / 바로가기 */}
+      <div className="mt-4 flex w-full max-w-[420px] flex-col gap-3">
+        <button
+          type="button"
+          onClick={handleCloseOnly}
+          className="flex h-[56px] w-full items-center justify-center rounded-[1000px] border border-[#DBDCE1] text-[14px] text-gray-500"
+        >
+          나중에 볼게요
+        </button>
+
+        <PrimaryButton label="비교 화면 바로가기" onClick={handleGoCompare} />
+      </div>
     </InnerDone>
   );
 };

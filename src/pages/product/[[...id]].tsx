@@ -35,6 +35,8 @@ import title2 from "@/assets/images/review.png";
 //한페이지 목록
 const SHOW_MAX = 2;
 
+const COMPARE_STORAGE_KEY = "mogazoa:compare-products";
+
 //getServerSideProps
 export async function getServerSideProps(context: GetServerSidePropsContext) {
   const queryClient = new QueryClient();
@@ -98,7 +100,18 @@ export default function ProductDetailCard({
 
   //상품 비교
   const onCompareProduct = (productId: number) => {
-    router.push(`/compare?productId=${productId}`);
+    if (typeof window !== "undefined") {
+      window.localStorage.setItem(
+        COMPARE_STORAGE_KEY,
+        JSON.stringify({
+          leftId: productId,
+          rightId: null,
+        }),
+      );
+    }
+
+    // 굳이 productId 쿼리는 안 넘겨도 됨 (넘겨도 상관은 없음)
+    router.push("/compare");
   };
 
   //리뷰 가져오기
