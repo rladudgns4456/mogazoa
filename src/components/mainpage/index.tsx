@@ -378,11 +378,11 @@ export default function MainPage() {
         </section>
 
         {/* 3. 상품 섹션 */}
-        <main className="min-w-0">
+        <main className="mx-auto min-w-0 max-w-940">
           {hasFilter ? (
             <section className="mb-32">
-              <div className="mb-8 flex flex-col justify-between gap-4 md:flex-row md:items-center">
-                <h2 className="text-16-bold text-gray-900">{filterTitle}</h2>
+              <div className="mb-20 flex flex-col justify-between gap-4 md:flex-row md:items-center">
+                <h2 className="header4-bold text-gray-900">{filterTitle}</h2>
                 <div className="flex items-center gap-8">
                   <span className="text-12-medium text-gray-600">정렬</span>
                   <select
@@ -406,6 +406,10 @@ export default function MainPage() {
                 ))}
               </div>
 
+              {!isLoadingList && !listError && products.length === 0 && (
+                <p className="py-24 text-center text-16-regular text-gray-500">해당 상품이 없습니다.</p>
+              )}
+
               <div className="mt-16 flex flex-col items-center justify-center gap-8">
                 {isLoadingList && <p className="text-12-regular text-gray-500">상품을 불러오는 중입니다…</p>}
                 {!hasMore && products.length > 0 && (
@@ -418,11 +422,11 @@ export default function MainPage() {
             <>
               {/* 지금 핫한 상품 Best */}
               <section className="mb-40 flex justify-center">
-                <div className="flex w-full max-w-[940px] flex-col gap-5">
+                <div className="flex w-full max-w-[940px] flex-col gap-20">
                   <div className="flex items-baseline justify-between">
                     <h2 className="flex items-baseline gap-2">
-                      <span className="text-16-bold text-gray-900">지금 핫한 상품</span>
-                      <span className="text-16-bold text-primary-500">Best</span>
+                      <span className="header4-bold text-gray-900">지금 핫한 상품</span>
+                      <span className="header4-bold text-primary-500">Best</span>
                     </h2>
                   </div>
 
@@ -433,7 +437,7 @@ export default function MainPage() {
                   {topProductsError && <p className="py-24 text-12-regular text-error">{topProductsError}</p>}
 
                   {!isLoadingTopProducts && !topProductsError && hotProducts.length > 0 && (
-                    <div className="grid grid-cols-2 justify-between gap-5 lg:grid-cols-3">
+                    <div className="grid grid-cols-2 justify-between gap-10 md:gap-20 lg:grid-cols-3">
                       {hotProducts.map((product, index) => (
                         <div key={product.id} className="relative">
                           <ItemCard product={product} showRank rank={index + 1} />
@@ -450,14 +454,14 @@ export default function MainPage() {
 
               {/* 별점이 높은 상품 */}
               <section className="mb-40 flex justify-center">
-                <div className="flex w-full max-w-[940px] flex-col gap-5">
+                <div className="flex w-full max-w-[940px] flex-col gap-20">
                   <div className="flex items-center justify-between">
-                    <h2 className="text-16-bold text-gray-900">별점이 높은 상품</h2>
+                    <h2 className="header4-bold text-gray-900">별점이 높은 상품</h2>
                   </div>
 
                   {!isLoadingTopProducts && !topProductsError && topRatedProducts.length > 0 && (
                     // 🔥 핫한 상품과 동일하게: 2열(grid-cols-2), lg에서 3열
-                    <div className="grid grid-cols-2 justify-between gap-5 lg:grid-cols-3">
+                    <div className="grid grid-cols-2 justify-between gap-10 md:gap-20 lg:grid-cols-3">
                       {topRatedProducts.map(product => (
                         <div key={product.id} className="relative">
                           <ItemCard product={product} />

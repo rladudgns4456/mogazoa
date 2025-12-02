@@ -83,7 +83,7 @@ export default function ItemCard({ product, rank, showRank = false }: ItemCardPr
           {/* 별점 */}
           <div className={cn("flex items-center gap-4")}>
             <span className={cn("text-yellow-400")}>★</span>
-            <span className={cn("text-gray-700")}>{rating.toFixed(1)}</span>
+            <span className={cn("text-gray-700")}>{rating === 0 ? "0" : rating.toFixed(1)}</span>
           </div>
         </div>
       </div>
