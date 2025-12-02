@@ -3,10 +3,13 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/router";
-import { uploadProductImage, createProduct, checkDuplicateProductName, searchProductsByName } from "@/api/products";
+import { uploadProductImage, checkDuplicateProductName, searchProductsByName } from "@/api/products";
+import { useModal } from "../modal/modalBase";
+import { editProduct } from "@/api/productsApi";
 import { Product } from "@/types/product";
 import { cn } from "@/utils/cn";
 import { useCategories, type CategoryType } from "@/hooks/useCategories";
+import { useQueryClient, useMutation } from "@tanstack/react-query";
 
 const NAME_MAX = 20;
 const DESCRIPTION_MAX = 500;
@@ -16,8 +19,24 @@ interface CategoryOption {
   label: string;
 }
 
-export default function AddProductModal() {
+interface EditProps {
+  productId: number;
+  initImage: string;
+  productName: string;
+  initDescription: string;
+  initCategoryId: number;
+}
+
+export default function EditProductModal({
+  productId,
+  initCategoryId,
+  initImage,
+  productName,
+  initDescription,
+}: EditProps) {
   const router = useRouter();
+  const queryClient = useQueryClient();
+  const { closeModal } = useModal();
 
   // 입력값 상태
   const [name, setName] = useState("");
@@ -53,6 +72,16 @@ export default function AddProductModal() {
       label: cat.label,
     }));
   }, [combinedCategory]);
+
+  //초기 데이터
+
+  const initName = productName; // 현재 상품명과 동일할 경우는 에러 아님 처리용
+  useEffect(() => {
+    setCategoryId(initCategoryId);
+    setName(productName);
+    setDescription(initDescription);
+    setImagePreview(initImage);
+  }, []);
 
   // 상품 이름
   const handleChangeName = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -90,9 +119,12 @@ export default function AddProductModal() {
     }
 
     try {
-      const isDup = await checkDuplicateProductName(trimmed);
-      if (isDup) {
-        setNameError("이미 등록된 상품입니다.");
+      if (trimmed !== initName) {
+        //편집하고 있는 상품명 제외
+        const isDup = await checkDuplicateProductName(trimmed);
+        if (isDup) {
+          setNameError("이미 등록된 상품입니다.");
+        }
       }
     } catch (error) {
       console.error(error);
@@ -163,10 +195,12 @@ export default function AddProductModal() {
       ok = false;
     } else {
       try {
-        const dup = await checkDuplicateProductName(trimmedName);
-        if (dup) {
-          setNameError("이미 등록된 상품입니다.");
-          ok = false;
+        if (trimmedName !== initName) {
+          const dup = await checkDuplicateProductName(trimmedName);
+          if (dup) {
+            setNameError("이미 등록된 상품입니다.");
+            ok = false;
+          }
         }
       } catch (error) {
         console.error(error);
@@ -178,7 +212,8 @@ export default function AddProductModal() {
       ok = false;
     }
 
-    if (!imageFile) {
+    //미리보기 이미지가 없을 경우
+    if (!imagePreview) {
       setImageError("대표 이미지를 추가해주세요.");
       ok = false;
     }
@@ -194,6 +229,16 @@ export default function AddProductModal() {
     return ok;
   };
 
+  const editProductMutation = useMutation({
+    mutationFn: editProduct,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["products", productId] });
+    },
+    onError: (error: any) => {
+      alert(error.response?.data?.message || "수정에 실패했습니다.");
+    },
+  });
+
   // 제출
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -208,27 +253,30 @@ export default function AddProductModal() {
       // 1) 이미지 업로드 → url 획득
       const imageUrl = await uploadProductImage(imageFile);
 
-      // 2) 상품 생성
-      const product = await createProduct({
-        categoryId,
+      // 2) 상품 수정 요청
+      await editProductMutation.mutateAsync({
+        productId: productId, // 이 부분이 필요합니다.
+        categoryId: categoryId,
         image: imageUrl,
         description: description.trim(),
         name: name.trim(),
       });
 
       // 3) 상세 페이지로 이동
-      router.push(`/product/${product.id}`);
+      router.push(`/product/${productId}`);
     } catch (error) {
       console.error(error);
     } finally {
       setIsSubmitting(false);
     }
+
+    closeModal();
   };
 
   return (
     <form onSubmit={handleSubmit} className="relative flex w-full flex-col gap-24">
       {/* 제목 */}
-      <h2 className="mb-8 text-18-bold text-gray-900">상품 추가</h2>
+      <h2 className="mb-8 text-18-bold text-gray-900">상품 수정</h2>
 
       {/* 대표 이미지 */}
       <section className="flex flex-col gap-8">
@@ -346,7 +394,7 @@ export default function AddProductModal() {
               : "bg-primary-500 text-white hover:bg-primary-600",
           )}
         >
-          {isSubmitting ? "등록 중..." : "추가하기"}
+          {isSubmitting ? "등록 중..." : "수정하기"}
         </button>
       </div>
     </form>
