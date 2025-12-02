@@ -30,10 +30,10 @@ export default function ItemCard({ product, rank, showRank = false }: ItemCardPr
   return (
     <Link href={`/product/${id}`} className={cn("block overflow-hidden")}>
       {/* 이미지 영역 */}
-      <div className={cn("relative aspect-square w-full overflow-hidden rounded-8")}>
+      <div className={cn("relative aspect-square w-full overflow-hidden rounded-12")}>
         {/* 스켈레톤 로딩 UI */}
         {isLoading && (
-          <div className={cn("absolute inset-0 overflow-hidden rounded-8 bg-gray-300")}>
+          <div className={cn("absolute inset-0 overflow-hidden rounded-12 bg-gray-300")}>
             <div
               className={cn(
                 "via-white/20 absolute inset-0 animate-shimmer bg-gradient-to-r from-transparent to-transparent",
@@ -49,7 +49,7 @@ export default function ItemCard({ product, rank, showRank = false }: ItemCardPr
             fill
             sizes="100vw"
             className={cn(
-              "rounded-8 object-cover transition-transform duration-300",
+              "rounded-12 object-cover transition-transform duration-300",
               isLoading && "opacity-0",
               "hover:scale-105",
             )}
