@@ -63,10 +63,46 @@ export default function MainPage() {
   const { combinedCategory, isLoading, isError } = useCategories();
   const [selectedCategoryId, setSelectedCategoryId] = useState<number | null>(null);
 
-  const handleSelectCategory = useCallback((id: number) => {
-    setSelectedCategoryId(prev => (prev === id ? null : id)); // 다시 누르면 해제
-    window.scrollTo({ top: 0, behavior: "smooth" });
-  }, []);
+  // ✅ URL 쿼리(category) -> selectedCategoryId 초기화 & 동기화
+  useEffect(() => {
+    const cat = router.query.category;
+    if (typeof cat === "string" && cat !== "") {
+      const id = Number(cat);
+      setSelectedCategoryId(Number.isNaN(id) ? null : id);
+    } else {
+      setSelectedCategoryId(null);
+    }
+  }, [router.query.category]);
+
+  const handleSelectCategory = useCallback(
+    (id: number) => {
+      setSelectedCategoryId(prev => {
+        const next = prev === id ? null : id;
+
+        // ✅ URL 쿼리도 함께 업데이트 (홈에서 카테고리만 바뀌도록)
+        const query = { ...router.query };
+        if (next == null) {
+          delete query.category;
+        } else {
+          query.category = String(next);
+        }
+
+        router.push(
+          {
+            pathname: router.pathname,
+            query,
+          },
+          undefined,
+          { shallow: true },
+        );
+
+        return next;
+      });
+
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    },
+    [router],
+  );
 
   const selectedCategoryName = useMemo(() => {
     if (!combinedCategory || selectedCategoryId == null) return "";
@@ -329,19 +365,13 @@ export default function MainPage() {
         {/* 1. 카테고리 섹션 */}
         <section className="mb-24 flex justify-center">
           <div className="flex w-full max-w-[972px] flex-col gap-3">
-            <h2 className="text-14-bold text-gray-900">카테고리</h2>
-
             {isLoading && <p className="mt-8 text-12-regular text-gray-500">카테고리를 불러오는 중입니다…</p>}
 
             {isError && <p className="mt-8 text-12-regular text-error">카테고리를 불러오지 못했어요.</p>}
 
             {!isLoading && !isError && (
               <div className="mt-8">
-                <CategoryTab
-                  isHome
-                  url="category" // 실제 라우팅 구조에 맞게 필요하면 수정
-                  onHandleLoad={handleSelectCategory}
-                />
+                <CategoryTab isHome url="category" onHandleLoad={handleSelectCategory} />
               </div>
             )}
           </div>
@@ -382,7 +412,8 @@ export default function MainPage() {
 
               {listError && <p className="py-24 text-12-regular text-error">{listError}</p>}
 
-              <div className="grid gap-24 md:grid-cols-3">
+              {/* 기본 2열, lg 이상에서 3열 */}
+              <div className="grid grid-cols-2 gap-24 lg:grid-cols-3">
                 {products.map(product => (
                   <ItemCard key={product.id} product={product} />
                 ))}
@@ -415,7 +446,7 @@ export default function MainPage() {
                   {topProductsError && <p className="py-24 text-12-regular text-error">{topProductsError}</p>}
 
                   {!isLoadingTopProducts && !topProductsError && hotProducts.length > 0 && (
-                    <div className="grid justify-between gap-5 md:grid-cols-3">
+                    <div className="grid grid-cols-2 justify-between gap-5 lg:grid-cols-3">
                       {hotProducts.map((product, index) => (
                         <div key={product.id} className="relative">
                           <ItemCard product={product} showRank rank={index + 1} />
@@ -452,7 +483,7 @@ export default function MainPage() {
                         <span className="text-[20px] font-extrabold leading-none tracking-[-2px]">&lt;</span>
                       </button>
 
-                      <div className="grid flex-1 grid-cols-3 justify-between gap-5">
+                      <div className="grid flex-1 grid-cols-2 justify-between gap-5 lg:grid-cols-3">
                         {currentRatingSlice.map(product => (
                           <ItemCard key={product.id} product={product} />
                         ))}
