@@ -9,24 +9,9 @@ import TextArea from "@/components/input/TextArea";
 import ReviewImageUpLoad from "./reviewImageUpload";
 import { useCreateReview, useImageUrlGet } from "@/api/ReviewApi";
 import { getProductItem } from "@/api/productsApi";
+import { ModalProps, AlertState } from "@/types/review";
 
-interface ModalProps {
-  currentPath: string | string[] | undefined;
-  id: number;
-  image: string;
-  name: string;
-  category?: {
-    id: number;
-    name: string;
-  };
-}
-
-interface AlertState {
-  alert: boolean;
-  content: string;
-}
-
-export default function CreateReview({ currentPath, id, image, name, category }: ModalProps) {
+export default function CreateReview({ productId, id, image, name, category }: ModalProps) {
   const { closeModal } = useModal();
   const queryClient = useQueryClient();
 
@@ -147,8 +132,8 @@ export default function CreateReview({ currentPath, id, image, name, category }:
     createReviewMutate(newReview as any, {
       onSuccess: () => {
         queryClient.prefetchQuery({
-          queryKey: ["products", currentPath],
-          queryFn: () => getProductItem(Number(currentPath)),
+          queryKey: ["products", productId],
+          queryFn: () => getProductItem(Number(productId)),
         });
         closeModal();
       },

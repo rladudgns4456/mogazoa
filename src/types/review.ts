@@ -64,24 +64,28 @@ export interface ImageUrl {
   url: string;
 }
 
-
 //좋아요
 export interface Like {
-  user: {
-    image: string;
-    nickname: string;
-    id: number;
-  };
-  reviewImages: ReviewImage[];
-  productId: number;
-  userId: number;
-  updatedAt: string;
-  createdAt: string;
-  isLiked: true;
-  likeCount: number;
-  content: string;
-  rating: number;
   id: number;
+  rating: number;
+  content: string;
+  likeCount: number;
+  createdAt: string;
+  updatedAt: string;
+  userId: number;
+  productId: number;
+  user: {
+    id: number;
+    nickname: string;
+    image: string;
+  };
+  reviewImages: [
+    {
+      id: number;
+      source: string;
+    },
+  ];
+  isLiked: boolean;
 }
 
 // 다음 리뷰
@@ -123,20 +127,60 @@ export interface PrevImageUrl {
 }
 
 export interface ReviewEdit {
-  productId: number;
+  images: [
+    {
+      id:number;
+    },
+    {
+      source: string;
+    },
+  ];
+  content: string;
+  rating:number;
+}
+
+// export interface ReviewEdit {
+//   user: {
+//     image: string;
+//     nickname: string;
+//     id: number;
+//   };
+//   reviewImages: [
+//     {
+//       source: string;
+//       id: number;
+//     },
+//   ];
+//   productId: number;
+//   userId: number;
+//   updatedAt: string;
+//   createdAt: string;
+//   isLiked: true;
+//   likeCount: number;
+//   content: string;
+//   rating: number;
+//   id: number;
+// }
+
+export interface ReviewDelete {
   id: number;
-  image: string;
-  name: string;
-  item?: {
-    content: string;
-    rating: string;
-    reviewImages: [
-      {
-        id: number;
-      },
-      {
-        source: string;
-      },
-    ];
+  rating: number;
+  content: string;
+  likeCount: number;
+  createdAt: string;
+  updatedAt: string;
+  userId: number;
+  productId: number;
+  user: {
+    id: number;
+    nickname: string;
+    image: string;
   };
+  reviewImages: [
+    {
+      id: number;
+      source: string;
+    },
+  ];
+  isLiked: false;
 }

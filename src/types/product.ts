@@ -36,7 +36,6 @@ export interface ProductListResponse {
   nextCursor: number | null;
 }
 
-
 /**
  * DetailCard 컴포넌트의 props 타입
  * (컴포넌트 이름과 겹치지 않도록 Props 붙여줌)
@@ -53,6 +52,7 @@ export interface DetailCardProps {
     id: number;
     name: string;
   };
+  categoryId: number|undefined;
   description: string;
   isLoading: boolean;
   isError: boolean;

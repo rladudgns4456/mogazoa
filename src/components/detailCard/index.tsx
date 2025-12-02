@@ -2,10 +2,10 @@
 
 import { useEffect, useState } from "react";
 import { cn } from "@/utils/cn";
-import { useModal } from "../modal/modalBase";
+import { ModalContainer, useModal } from "../modal/modalBase";
 
 //api
-import { postProductFavorite, deleteProduct } from "@/api/productsApi";
+import { deleteProduct } from "@/api/productsApi";
 import Button from "../Button";
 import Image from "next/image";
 import { Skeleton } from "../skeleton";
@@ -19,15 +19,18 @@ import Ic_Save from "@/assets/icons/ic_save.svg";
 import Ic_UnSave from "@/assets/icons/ic_unsave.svg";
 import Ic_Comment from "@/assets/icons/ic_kakao.svg";
 import Ic_Edit from "@/assets/icons/ic_edit.svg";
+import { ConfigModal } from "../../components/modal";
+import EditProductModal from "../product/EditProductmodal";
 
 export default function DetailCard({
-  currentPath,
+  productId,
   userId,
   writerId,
   id,
   image,
   name,
   category,
+  categoryId,
   description,
   isLoading,
   isError,
@@ -40,22 +43,15 @@ export default function DetailCard({
 }: DetailCardProps) {
   const { openModal } = useModal();
   const { openToast } = useToast();
-
-  // 로그인요청
-  // const onHandelLoginRequest = (e) => {
-  //   if (!userId) {
-  //     e.preventDefault()
-  //     openModal(<LoginAlert />);
-  //     return
-  //   }
-  // };
-
   //찜
   const [isSave, setIsSave] = useState<boolean>(isFavorite);
 
   //찜하기
   const onFavorite = async (id: number) => {
-    // onHandelLoginRequest();
+    if (!userId) {
+      openModal(<LoginAlert />);
+      return;
+    }
     if (userId === writerId) {
       openToast(<Toast errorMessage="내가 올린 상품은 찜할 수 없어요." error={true} />);
     } else if (userId !== writerId) {
@@ -78,20 +74,32 @@ export default function DetailCard({
   //리뷰 모달 열기
   const onHandleReviewModalOpen = () => {
     if (userId) {
-      openModal(<CreateReview currentPath={currentPath} id={id} image={image} name={name} category={category} />);
+      openModal(<CreateReview productId={productId} id={id} image={image} name={name} category={category} />);
     } else {
       openModal(<LoginAlert />);
     }
   };
 
-  //등록 제품 삭제
   const onHandleDelete = async (productId: number) => {
     try {
       await deleteProduct(productId);
     } catch (error) {}
   };
+
   //편집 모달
-  const onHandleEdit = () => {};
+  const onHandleEdit = () => {
+    openModal(
+      <ModalContainer styleClass="w-320 sm:w-420  md:w-644 rounded-20 px-20 md:px-40 pb-32 pt-32">
+        <EditProductModal
+          productId={id}
+          productName={name}
+          initImage={image}
+          initCategoryId={categoryId}
+          initDescription={description}
+        />
+      </ModalContainer>,
+    );
+  };
 
   if (isError) {
     return (
@@ -171,6 +179,10 @@ export default function DetailCard({
             styleClass="w-full md:w-[72%] sm:max-w-360 md:max-w-none lg:max-w-280"
             type="button"
             onClick={e => {
+              if (!userId) {
+                openModal(<LoginAlert />);
+                return;
+              }
               onCompare(id);
             }}
           >
@@ -181,7 +193,7 @@ export default function DetailCard({
               variant="secondary"
               styleClass="w-full md:w-[38%] sm:max-w-248  md:max-w-none lg:max-w-200"
               type="button"
-              onClick={() => onHandleDelete(id)}
+              onClick={() => openModal(<ConfigModal label="정말 삭제 하시겠습니까?" onConfig={onDelete} />)}
             >
               삭제하기
             </Button>
@@ -204,6 +216,7 @@ export default function DetailCard({
           type="button"
           styleClass="absolute top-292 md:top-406 right-54 lg:top-52 lg:-right-44"
           onClick={onHandleEdit}
+          aria-label="상품편집 모달 열기"
         >
           <Ic_Edit />
         </Button>
