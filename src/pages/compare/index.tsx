@@ -255,20 +255,6 @@ export default function ComparePage() {
     setSearchResult(prev => ({ ...prev, [side]: [] }));
   };
 
-  // 모달에서 "어느 상품을 유지할지" 확정했을 때 호출됨
-  const handleConfirmReplace = (sideToKeep: CompareSide, newProduct: ProductSummary) => {
-    const sideToReplace: CompareSide = sideToKeep === "left" ? "right" : "left";
-
-    setSelected(prev => {
-      const next = { ...prev, [sideToReplace]: newProduct };
-      persistIds(next);
-      return next;
-    });
-
-    setKeyword(prev => ({ ...prev, [sideToReplace]: "" }));
-    // 모달 닫기는 모달 내부에서 처리
-  };
-
   // ----------------------------------------------------------
   // 선택 해제
   // ----------------------------------------------------------

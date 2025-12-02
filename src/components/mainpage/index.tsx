@@ -4,7 +4,6 @@ import "swiper/css/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/router";
 import Banner from "@/components/banner";
-import cn from "clsx";
 import CategoryTab from "@/components/categoryTab";
 import ReviewerRanking from "@/components/review/ReviewerRanking";
 import ItemCard from "@/components/ItemCard";
@@ -55,7 +54,6 @@ type OrderType = "recent" | "rating" | "reviewCount";
 
 export default function MainPage() {
   const router = useRouter();
-  const [ratingPage, setRatingPage] = useState(0);
 
   // =========================
   // 1) 카테고리
@@ -345,17 +343,6 @@ export default function MainPage() {
     return "";
   }, [hasFilter, keyword, selectedCategoryId, selectedCategoryName]);
 
-  const RATING_PER_PAGE = 3;
-  const totalRatingPages = topRatedProducts.length === 0 ? 1 : Math.ceil(topRatedProducts.length / RATING_PER_PAGE);
-
-  const currentRatingSlice = topRatedProducts.slice(
-    ratingPage * RATING_PER_PAGE,
-    ratingPage * RATING_PER_PAGE + RATING_PER_PAGE,
-  );
-
-  const canPrevRating = ratingPage > 0;
-  const canNextRating = ratingPage < totalRatingPages - 1;
-
   return (
     <div className="min-h-screen bg-gray-100">
       {/* 헤더 바로 아래 전체 폭 배너 */}
@@ -469,38 +456,13 @@ export default function MainPage() {
                   </div>
 
                   {!isLoadingTopProducts && !topProductsError && topRatedProducts.length > 0 && (
-                    <div className="flex items-center justify-between gap-5">
-                      <button
-                        type="button"
-                        onClick={() => canPrevRating && setRatingPage(p => p - 1)}
-                        disabled={!canPrevRating}
-                        className={cn(
-                          "flex h-40 w-40 items-center justify-center rounded-full border bg-white text-gray-500",
-                          "border-gray-300",
-                          "disabled:cursor-default disabled:opacity-40",
-                        )}
-                      >
-                        <span className="text-[20px] font-extrabold leading-none tracking-[-2px]">&lt;</span>
-                      </button>
-
-                      <div className="grid flex-1 grid-cols-2 justify-between gap-5 lg:grid-cols-3">
-                        {currentRatingSlice.map(product => (
-                          <ItemCard key={product.id} product={product} />
-                        ))}
-                      </div>
-
-                      <button
-                        type="button"
-                        onClick={() => canNextRating && setRatingPage(p => p + 1)}
-                        disabled={!canNextRating}
-                        className={cn(
-                          "flex h-40 w-40 items-center justify-center rounded-full border bg-white text-gray-500",
-                          "border-gray-300",
-                          "disabled:cursor-default disabled:opacity-40",
-                        )}
-                      >
-                        <span className="text-[20px] font-extrabold leading-none tracking-[-2px]">&gt;</span>
-                      </button>
+                    // 🔥 핫한 상품과 동일하게: 2열(grid-cols-2), lg에서 3열
+                    <div className="grid grid-cols-2 justify-between gap-5 lg:grid-cols-3">
+                      {topRatedProducts.map(product => (
+                        <div key={product.id} className="relative">
+                          <ItemCard product={product} />
+                        </div>
+                      ))}
                     </div>
                   )}
 
