@@ -66,7 +66,7 @@ export default function ModalContainer({ children, styleClass }: ModalProps) {
           isVisible ? "mt-0 opacity-100" : "mt-100 opacity-0",
         )}
       >
-        <div className="relative">
+        <div className="relative ">
           {children}
           <Button
             variant="onlyIcon"

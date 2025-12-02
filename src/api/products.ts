@@ -98,6 +98,7 @@ export async function uploadProductImage(file: File): Promise<string> {
  * ------------------------------------------------------------------ */
 
 export type CreateProductPayload = {
+  productId:number;
   categoryId: number;
   image: string;
   description: string;
@@ -157,3 +158,4 @@ export async function checkDuplicateProductName(name: string): Promise<boolean> 
   const results = await searchProductsByName(trimmed);
   return results.some(p => p.name === trimmed);
 }
+
