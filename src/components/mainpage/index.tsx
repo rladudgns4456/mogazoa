@@ -348,10 +348,11 @@ export default function MainPage() {
       {/* 헤더 바로 아래 전체 폭 배너 */}
       <Banner />
 
-      <div className="mx-auto w-full max-w-6xl px-16 py-24">
+      <div className="mx-auto w-full max-w-972 px-16 py-30 md:py-35 lg:px-0">
         {/* 1. 카테고리 섹션 */}
-        <section className="mb-24 flex justify-center">
-          <div className="flex w-full max-w-[972px] flex-col gap-3">
+        <section className="mx-auto mb-24 hidden lg:block">
+          <h2 className="header4-bold">카테고리</h2>
+          <div className="flex w-full max-w-[972px] flex-col justify-center gap-3">
             {isLoading && <p className="mt-8 text-12-regular text-gray-500">카테고리를 불러오는 중입니다…</p>}
 
             {isError && <p className="mt-8 text-12-regular text-error">카테고리를 불러오지 못했어요.</p>}
@@ -456,7 +457,9 @@ export default function MainPage() {
               <section className="mb-40 flex justify-center">
                 <div className="flex w-full max-w-[940px] flex-col gap-20">
                   <div className="flex items-center justify-between">
-                    <h2 className="header4-bold text-gray-900">별점이 높은 상품</h2>
+                    <h2 className="header4-bold text-gray-900">
+                      별점이 높은 상품 <span className="text-yellow-400">★</span>
+                    </h2>
                   </div>
 
                   {!isLoadingTopProducts && !topProductsError && topRatedProducts.length > 0 && (
