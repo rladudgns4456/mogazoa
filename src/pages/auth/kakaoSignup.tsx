@@ -7,6 +7,7 @@ import { useEffect } from "react";
 export default function KakaoCallbackPage() {
   const router = useRouter();
   const { setAuth } = useAuth();
+  const redirectUri = `${window.location.origin}/auth/kakaoSignup`;
 
   useEffect(() => {
     if (!router.isReady) return;
@@ -24,7 +25,7 @@ export default function KakaoCallbackPage() {
       try {
         const res = await SnsSignup("kakao", {
           nickname,
-          redirectUri: "http://localhost:3000/auth/kakaoSignup",
+          redirectUri: redirectUri,
           token: code,
         });
 
