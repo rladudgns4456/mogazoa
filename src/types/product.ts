@@ -38,23 +38,30 @@ export interface ProductListResponse {
 
 /**
  * DetailCard 컴포넌트의 props 타입
- * (컴포넌트 이름과 겹치지 않도록 Props 붙여줌)
  */
 export interface DetailCardProps {
+  // 상세 페이지 경로(리뷰 모달에서 사용)
   currentPath?: string;
-  userId?: number | null;
-  writerId?: number | null;
-  id?: number;
 
-  image?: string;
-  name?: string;
+  // 필수 식별자들
+  productId: number;
+  userId: number | null;
+  writerId: number | null;
+  id: number;
+
+  // 상품 정보
+  image: string;
+  name: string;
   category?: { id?: number; name: string } | string;
-  description?: string;
+  categoryId?: number;
+  description: string;
 
-  isLoading?: boolean;
-  isError?: boolean;
-  isFavorite?: boolean;
+  // 상태
+  isLoading: boolean;
+  isError: boolean;
+  isFavorite: boolean;
 
+  // 액션 콜백들
   onShare?: () => void;
   onUrlCopy?: () => void;
   onSave?: (id: number) => Promise<void> | void;
@@ -82,7 +89,7 @@ export interface Products {
   isFavorite: boolean;
 }
 
-//가져오기
+// 가져오기
 export interface ProductDetail extends NotSuccessful, Products {
   description: string;
   category?: {
@@ -96,7 +103,7 @@ export interface ProductDetail extends NotSuccessful, Products {
   };
 }
 
-//수정
+// 수정
 export interface ProductPatchProps {
   message: string;
   details: {
@@ -107,7 +114,7 @@ export interface ProductPatchProps {
   };
 }
 
-//해당 카테고리
+// 해당 카테고리
 export interface ProductCategory {
   category: {
     id: number;

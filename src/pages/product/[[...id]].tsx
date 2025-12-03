@@ -11,12 +11,11 @@ import { useEffect, useState, useRef } from "react";
 import LoginAlert from "@/components/modal/loginAlert";
 
 // api
-import { useDeleteReview, useGetReview } from "@/api/ReviewApi";
-import { postProductFavorite, deleteProductFavorite, ProductsProps, getProductItem } from "@/api/productsApi";
+import { useDeleteReview, useGetReview, postLikeReview, deleteLikeReview } from "@/api/ReviewApi";
+import { postProductFavorite, ProductsProps, useProductItem, deleteProduct } from "@/api/productsApi";
 
 // type
-import { Review } from "@/types/review";
-import { ProductDetail } from "@/types/product";
+import { Like, Review } from "@/types/review";
 import type { ProductSummary } from "@/utils/compareUtils";
 
 // 컴포넌트
@@ -42,6 +41,7 @@ import title2 from "@/assets/images/review.png";
 // 한 페이지 목록
 const SHOW_MAX = 2;
 
+// 비교상품 저장 로컬스토리지 키
 const COMPARE_STORAGE_KEY = "mogazoa:compare-products";
 
 // getServerSideProps
@@ -49,12 +49,10 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
   const queryClient = new QueryClient();
   const currentPath = context.params?.id;
   const productId = Number(currentPath);
-  const productData = await getProductItem(productId);
 
   return {
     props: {
       productId,
-      productData,
       dehydratedState: dehydrate(queryClient),
     },
   };
@@ -63,7 +61,6 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
 // ProductDetailCard
 export default function ProductDetailCard({
   productId,
-  productData,
 }: InferGetServerSidePropsType<typeof getServerSideProps>) {
   const router = useRouter();
   const queryClient = useQueryClient();
@@ -82,28 +79,33 @@ export default function ProductDetailCard({
     }
   }, [user]);
 
-  // 상품 정보
-  const items: ProductDetail = productData;
+  // ========= 상품 정보 =========
+  const {
+    data: productData,
+    isLoading: productLoading,
+    isError: productError,
+  } = useProductItem(productId);
+  const items = productData;
 
-  // 상품 삭제
-  const deleteProduct = useMutation<string, Error, number>({
+  // ========= 상품 삭제 =========
+  const deleteProductMutation = useMutation({
+    mutationFn: deleteProduct,
     onMutate: async () => {
       await queryClient.cancelQueries({ queryKey: ["products", productId] });
       const previousData = queryClient.getQueryData<ProductsProps>(["products", productId]);
       return { previousData };
     },
     onError: () => {
-      openToast(<Toast label="상품 삭제를 실패했습니다." error />);
+      openToast(<Toast errorMessage="상품 삭제를 실패했습니다." error />);
     },
     onSuccess: () => {
       router.replace("/");
     },
   });
 
-  const onHandleDeleteProduct = (config: string) => {
-    if (config === "true") {
-      deleteProduct.mutate(productId);
-    }
+  // DetailCard 쪽에서 productId를 넘겨주면 여기서 delete 호출
+  const handleDeleteProduct = (targetProductId: number) => {
+    deleteProductMutation.mutate(targetProductId);
   };
 
   // ================================
@@ -173,7 +175,8 @@ export default function ProductDetailCard({
       return;
     }
 
-    if (filledCount === 2 && leftId && rightId) {
+    // 2개 꽉 차 있을 때 ReplaceModal
+    if (filledCount === 2 && leftId && rightId && items) {
       const leftSummary: ProductSummary = {
         id: leftId,
         name: "비교 상품 1",
@@ -204,11 +207,11 @@ export default function ProductDetailCard({
       openModal(
         <ModalContainer
           styleClass="
-        w-[500px]
-        rounded-[20px]
-        border-[#EFF0F3]
-        shadow-[0_4px_30px_rgba(92,104,177,0.05)]
-      "
+            w-[500px]
+            rounded-[20px]
+            border-[#EFF0F3]
+            shadow-[0_4px_30px_rgba(92,104,177,0.05)]
+          "
         >
           <ReplaceModal
             triggerSide="right"
@@ -244,15 +247,47 @@ export default function ProductDetailCard({
   const { data: reviewData, isLoading: reviewLoading, isError: reviewError } = useGetReview(productId, order);
   const reviews = reviewData?.list;
 
+  // 좋아요 관련
+  const [isReviewId, setIsReviewId] = useState<number>(0);
+
+  const reviewLikeMutation = useMutation({
+    mutationFn: postLikeReview,
+    onMutate: async () => {
+      await queryClient.cancelQueries({ queryKey: ["reviews", isReviewId] });
+      const previousData = queryClient.getQueryData<Like>(["reviews", isReviewId]);
+      return { previousData };
+    },
+  });
+
+  const deleteLikeMutation = useMutation({
+    mutationFn: deleteLikeReview,
+    onMutate: async () => {
+      await queryClient.cancelQueries({ queryKey: ["reviews", isReviewId] });
+      const previousData = queryClient.getQueryData<Like>(["reviews", isReviewId]);
+      return { previousData };
+    },
+  });
+
+  // 리뷰 좋아요 (토글)
+  const onHandleLike = (reviewId: number, liked: boolean) => {
+    setIsReviewId(reviewId);
+    if (liked) {
+      deleteLikeMutation.mutate(reviewId);
+    } else {
+      reviewLikeMutation.mutate(reviewId);
+    }
+  };
+
   // 리뷰 삭제
   const { deleteReview } = useDeleteReview();
   const onHandleDelete = (reviewId: number) => {
     deleteReview(reviewId);
   };
 
+  // 리뷰 정렬
   const onHandleSorting = (value: string) => {
-    const order = sorting(value);
-    setOrder(order);
+    const sortedOrder = sorting(value);
+    setOrder(sortedOrder);
   };
 
   // 무한 스크롤
@@ -263,6 +298,7 @@ export default function ProductDetailCard({
   useEffect(() => {
     if (reviewData) {
       setVisibleItems(reviewData.list.slice(0, SHOW_MAX));
+      setCurrentIndex(SHOW_MAX);
     }
   }, [reviewData]);
 
@@ -291,12 +327,9 @@ export default function ProductDetailCard({
     };
   }, [currentIndex, reviews]);
 
-  if (reviewLoading) return <div>로딩 중...</div>;
-  if (reviewError) return <div>오류 발생</div>;
-
   // 리뷰 수정
   const onReviewEdit = (id: number) => {
-    if (!reviews) return;
+    if (!reviews || !items) return;
 
     const editReview = reviews.find(r => r.id === id);
     if (!editReview) return;
@@ -315,22 +348,12 @@ export default function ProductDetailCard({
     );
   };
 
-  // 리뷰 좋아요 (TODO)
-  const onLikeClick = (reviewId: number) => {
-    // LikeReview(reviewId);
-    // setReviewLike(prev => !prev);
-  };
-
-  // 찜 하기
+  // 찜 하기 (API는 post 하나로 토글된다고 가정)
   const onHandleSave = async (targetProductId: number) => {
-    if (items.isFavorite) {
-      try {
-        await deleteProductFavorite(targetProductId);
-      } catch (error) {
-        openToast(<Toast errorMessage="이미 찜한 상품입니다." error />);
-      }
-    } else if (!items.isFavorite && items.favoriteCount === 1) {
+    try {
       await postProductFavorite(targetProductId);
+    } catch (error) {
+      openToast(<Toast errorMessage="이미 찜한 상품입니다." error />);
     }
   };
 
@@ -358,24 +381,29 @@ export default function ProductDetailCard({
     <>
       <section className="pb-53 pt-0">
         <h2 className="-inset-4m-1 h-0 w-0 overflow-hidden text-1">상품상세 정보</h2>
-        <DetailCard
-          currentPath={String(productId)}
-          userId={userId}
-          writerId={items?.writerId}
-          id={items?.id}
-          image={items?.image}
-          name={items?.name}
-          category={items?.category}
-          description={items?.description}
-          isLoading={productData.productLoading}
-          isError={productData.productError}
-          isFavorite={items?.isFavorite}
-          onSave={onHandleSave}
-          onShare={onHandleShare}
-          onUrlCopy={onHandleUrlCopy}
-          onDelete={id => onHandleDeleteProduct(String(id))}
-          onCompare={onCompareProduct}
-        />
+        {items && (
+          <DetailCard
+            currentPath={String(productId)}
+            productId={productId}
+            userId={userId}
+            writerId={items.writerId}
+            id={items.id}
+            image={items.image}
+            name={items.name}
+            category={items.category}
+            categoryId={items.category?.id}
+            description={items.description}
+            isLoading={productLoading}
+            isError={productError}
+            isFavorite={items.isFavorite}
+            onSave={onHandleSave}
+            onShare={onHandleShare}
+            onUrlCopy={onHandleUrlCopy}
+            onDelete={handleDeleteProduct}
+            onCompare={onCompareProduct}
+          />
+        )}
+        {!items && productLoading && <Skeleton />}
       </section>
 
       <div className="md:pb38 bg-gray-100 pb-78 pt-28 md:pt-53 lg:pb-135 lg:pt-53">
@@ -388,10 +416,10 @@ export default function ProductDetailCard({
             </div>
             {items && (
               <Statistics
-                rating={items?.rating}
-                reviewCount={items?.reviewCount}
-                favoriteCount={items?.favoriteCount}
-                categoryMetric={items?.categoryMetric}
+                rating={items.rating}
+                reviewCount={items.reviewCount}
+                favoriteCount={items.favoriteCount}
+                categoryMetric={items.categoryMetric}
               />
             )}
           </div>
@@ -408,7 +436,7 @@ export default function ProductDetailCard({
 
             {reviewLoading ? (
               <Skeleton />
-            ) : reviews ? (
+            ) : reviews && reviews.length > 0 ? (
               <ul className="flex flex-col gap-y-16">
                 {visibleItems.map((review, i) => (
                   <li key={i}>
@@ -416,7 +444,7 @@ export default function ProductDetailCard({
                       review={review}
                       onDelete={onHandleDelete}
                       onEdit={onReviewEdit}
-                      onLike={onLikeClick}
+                      onLike={onHandleLike}
                       showActions={review.user.id === userId}
                     />
                   </li>
