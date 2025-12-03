@@ -5,15 +5,18 @@ import { cn } from "@/utils/cn";
 import { Swiper, SwiperSlide } from "swiper/react";
 import { Toast } from "@/components/toast";
 import { Review } from "@/types/review";
+import { useCreateReview, useImageUrlGet } from "@/api/ReviewApi";
 import IcAddImage from "@/assets/icons/ic_add_img.svg";
 import IcClose from "@/assets/svgr/ic_close.svg";
 import Image from "next/image";
 
 import "swiper/css";
+import { Preview } from "storybook/internal/preview-api";
 
 interface UploadImgProps {
   productId: number;
-  onFilesChange?: (files: File[]) => void;
+  // onFilesChange?: (files: File[]) => void;
+  onFilesChange?: (e: File[]) => void;
   editPreview?: (e: number) => void;
   item?: Review;
 }
@@ -21,18 +24,26 @@ interface UploadImgProps {
 const MAX_UPLOAD = 3; //첨부 이미지 최대 갯수
 let remain = MAX_UPLOAD;
 
-export default function ReviewImageUpLoad({ productId, onFilesChange, item, editPreview }: UploadImgProps) {
-  const [isSwiperMounted, setIsSwiperMounted] = useState(false); //슬라이드
-  const fileRef = useRef<HTMLInputElement>(null); //업로드 이미지
-  const fileChangeRef = useRef<HTMLInputElement>(null); //교체 이미지
+export default function ReviewImageUpLoad({ productId, onFilesChange, editPreview, item }: UploadImgProps) {
+  const { mutate: useImageUrl } = useImageUrlGet();
+  //슬라이드
+  const [isSwiperMounted, setIsSwiperMounted] = useState(false);
+  //업로드 박스
+  const fileRef = useRef<HTMLInputElement>(null);
+  //미리보기 박스
+  const fileChangeRef = useRef<HTMLInputElement>(null);
 
+  //기존 이미지 id /url 배열
   const imageIdArr: number[] = item?.reviewImages?.map(item => item.id) || [];
-  const prevPreviews: string[] = item?.reviewImages?.map(item => item.source) || []; //기존이미지 배열
+  const prevImage: string[] = item?.reviewImages?.map(item => item.source) || [];
 
-  const [imageId, setImageId] = useState<number[]>(imageIdArr);
-  const [previews, setPreviews] = useState<string[]>(prevPreviews);
+  // const [imageId, setImageId] = useState<number[]>(imageIdArr);
+  //미리보기 상태
+  const [previews, setPreviews] = useState<string[]>(prevImage);
+
+  //이미지 추가 박스 상태
   const [files, setFiles] = useState<File[]>([]);
-  const [editReturn, setEditReturn] = useState<(string | number)[]>(imageIdArr);
+  const [imageUrls, setImageUrls] = useState<string[]>(previews); // 리턴할 배열 id+url
 
   const { openToast, closeToast } = useToast();
 
@@ -47,9 +58,9 @@ export default function ReviewImageUpLoad({ productId, onFilesChange, item, edit
     const newPreviews = selectedFiles.map(file => URL.createObjectURL(file));
     const selectedImage = e.target?.files;
 
+    //용량 체크
     if (selectedImage) {
       if (selectedImage?.[0].size > 5 * 1024 * 1024) {
-        console.log("a");
         openToast(<Toast label="최대 용량은 5MB입니다." />);
         setFiles(prev => prev.slice(0, -files.length));
         return;
@@ -69,7 +80,7 @@ export default function ReviewImageUpLoad({ productId, onFilesChange, item, edit
   };
 
   // 첨부 이미지 교체
-  const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
+  const handleChange = async (e: ChangeEvent<HTMLInputElement>) => {
     const selectedImage = e.target?.files;
     if (e.target.files) {
       const selectedFiles = e.target.files ? Array.from(e.target.files) : [];
@@ -91,17 +102,19 @@ export default function ReviewImageUpLoad({ productId, onFilesChange, item, edit
       if (index !== undefined) {
         newFiles[Number(index)] = selectedFiles[0];
         setFiles(newFiles);
-        onFilesChange?.(newFiles);
+        // onFilesChange?.(newFiles); //
       }
     }
     if (selectedImage) {
       if (selectedImage?.[0].size > 5 * 1024 * 1024) {
-        console.log("a");
         openToast(<Toast label="최대 용량은 5MB입니다." />);
         setFiles(prev => prev.slice(0, -files.length));
         return;
       }
     }
+    const imageUrls = await createUrl(files);
+    console.log(files);
+    onFilesChange?.(imageUrls);
   };
 
   //삭제
@@ -111,7 +124,7 @@ export default function ReviewImageUpLoad({ productId, onFilesChange, item, edit
 
     setFiles(newFiles);
     setPreviews(newPreviews);
-    onFilesChange?.(newFiles);
+    // onFilesChange?.(newFiles);
   };
 
   //이미지 배열 길이 체크 - 수정시 필요
@@ -121,10 +134,46 @@ export default function ReviewImageUpLoad({ productId, onFilesChange, item, edit
     }
   }, [previews]);
 
+  //첨부 이미지 배열
+  // const changeImage = ([...file]) => {
+  //   setUploadImage([...file]);
+  // };
+
+  //이미지 주소 만들기
+  const createUrl = async (files: File[]) => {
+    const urls = await new Promise(resolve => {
+      useImageUrl(files, {
+        onSuccess: data => {
+          resolve(data as string[]); // 업로드된 파일 정보 배열
+        },
+        onError: error => {
+          openToast(<Toast errorMessage="이미지 등록에 실패했습니다." error />);
+        },
+      });
+    });
+    return urls as string[];
+  };
+
+  // const imageUrls = await createUrl(files);
   // 부모로 전달
   useEffect(() => {
+    const arr1 = previews;
+    const arr2 = prevImage;
+    const arr3 = imageIdArr;
+    const loop = Math.max(arr1.length, arr2.length, arr3.length);
+    let newArr: string[] = [];
+
+    for (let i = 0; i < loop; i++) {
+      if (arr1[i] === arr2[2]) {
+        newArr.push(String(arr3[i]));
+      } else {
+        newArr.push(arr1[i]);
+      }
+    }
     onFilesChange?.(files);
-  }, [files]);
+    console.log(files);
+    setImageUrls(newArr);
+  }, [previews]);
 
   useEffect(() => {
     setIsSwiperMounted(true);

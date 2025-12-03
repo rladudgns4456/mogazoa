@@ -1,6 +1,4 @@
-"use client";
-
-import { QueryClient, dehydrate, useQueryClient, useMutation } from "@tanstack/react-query";
+import { QueryClient, useQuery, dehydrate, useQueryClient, useMutation } from "@tanstack/react-query";
 import { useRouter } from "next/router";
 import { useParams } from "next/navigation";
 import { useAuth } from "@/components/login/AuthContext";
@@ -11,12 +9,18 @@ import { useEffect, useState, useRef } from "react";
 import LoginAlert from "@/components/modal/loginAlert";
 
 // api
-import { useDeleteReview, useGetReview } from "@/api/ReviewApi";
-import { postProductFavorite, deleteProductFavorite, ProductsProps, getProductItem } from "@/api/productsApi";
-
+import { useDeleteReview, useGetReview, postLikeReview, deleteLikeReview, LikeReview } from "@/api/ReviewApi";
+import {
+  deleteProductFavorite,
+  postProductFavorite,
+  ProductsProps,
+  useProductItem,
+  getProductItem,
+} from "@/api/productsApi";
+import { deleteProduct } from "@/api/productsApi";
 // type
-import { Review } from "@/types/review";
-import { ProductDetail } from "@/types/product";
+import { Review, Like } from "@/types/review";
+
 import type { ProductSummary } from "@/utils/compareUtils";
 
 // 컴포넌트
@@ -42,6 +46,8 @@ import title2 from "@/assets/images/review.png";
 // 한 페이지 목록
 const SHOW_MAX = 2;
 
+//비교상품 저장 로컬스토리 키
+const STORAGE_KEY = "mogazoa:compare-products";
 const COMPARE_STORAGE_KEY = "mogazoa:compare-products";
 
 // getServerSideProps
@@ -49,22 +55,23 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
   const queryClient = new QueryClient();
   const currentPath = context.params?.id;
   const productId = Number(currentPath);
-  const productData = await getProductItem(productId);
 
   return {
     props: {
       productId,
-      productData,
       dehydratedState: dehydrate(queryClient),
     },
   };
 }
 
-// ProductDetailCard
-export default function ProductDetailCard({
-  productId,
-  productData,
-}: InferGetServerSidePropsType<typeof getServerSideProps>) {
+interface ReviewItem {
+  id: number;
+  isLiked: boolean;
+}
+
+type ReviewListType = ReviewItem[];
+
+export default function ProductDetailCard({ productId }: InferGetServerSidePropsType<typeof getServerSideProps>) {
   const router = useRouter();
   const queryClient = useQueryClient();
   const { openModal, closeModal } = useModal();
@@ -72,6 +79,7 @@ export default function ProductDetailCard({
   const params = useParams();
 
   // 유저 확인
+  //=====유저 확인
   const { user } = useAuth();
   const [userId, setIsUser] = useState<number | null>(null);
 
@@ -83,17 +91,65 @@ export default function ProductDetailCard({
   }, [user]);
 
   // 상품 정보
-  const items: ProductDetail = productData;
+  // const items: ProductDetail = productData;
+  //=====상품 정보
+  const { data: productData, isLoading: productLoading, isError: productError } = useProductItem(productId);
+  const items = productData;
+
+  //====리뷰 가져오기
+  const [order, setOrder] = useState("recent");
+  const { data: reviewData, isLoading: reviewLoading, isError: reviewError } = useGetReview(productId, order);
+  const reviews = reviewData?.list;
+
+  console.log(reviews);
 
   // 상품 삭제
-  const deleteProduct = useMutation<string, Error, number>({
+  // const deleteProduct = useMutation<string, Error, number>({
+  // 리스트 상태관리
+  const [reviewList, setReviewList] = useState<ReviewListType | null>(null);
+  const [lReviewList, setLReviewList] = useState<ReviewListType>([]);
+  const [isReviewId, setIsReviewId] = useState<number>(0);
+
+  const reviewLikeMutation = useMutation({
+    mutationFn: postLikeReview,
+    onMutate: async () => {
+      await queryClient.cancelQueries({ queryKey: ["reviews", isReviewId] });
+      const previousData = queryClient.getQueryData<Like>(["reviews", isReviewId]);
+      return { previousData };
+    },
+  });
+
+  const deleteLikeMutation = useMutation({
+    mutationFn: deleteLikeReview,
+    onMutate: async () => {
+      await queryClient.cancelQueries({ queryKey: ["reviews", isReviewId] });
+      const previousData = queryClient.getQueryData<Like>(["reviews", isReviewId]);
+      return { previousData };
+    },
+  });
+
+  useEffect(() => {
+    if (reviewData) {
+      setLReviewList([reviewData]);
+    }
+  }, [reviewData]);
+
+  // 좋아요 처리 함수
+  const onHandleLike = (reviewId: number) => {
+    reviewLikeMutation.mutate(reviewId);
+    setIsReviewId(reviewId);
+  };
+
+  //====상품 삭제
+  const deleteProductMutation = useMutation({
+    mutationFn: deleteProduct,
     onMutate: async () => {
       await queryClient.cancelQueries({ queryKey: ["products", productId] });
       const previousData = queryClient.getQueryData<ProductsProps>(["products", productId]);
       return { previousData };
     },
     onError: () => {
-      openToast(<Toast label="상품 삭제를 실패했습니다." error />);
+      openToast(<Toast errorMessage="상품 삭제를 실패했습니다." error />);
     },
     onSuccess: () => {
       router.replace("/");
@@ -102,7 +158,7 @@ export default function ProductDetailCard({
 
   const onHandleDeleteProduct = (config: string) => {
     if (config === "true") {
-      deleteProduct.mutate(productId);
+      deleteProductMutation.mutate(productId);
     }
   };
 
@@ -237,25 +293,56 @@ export default function ProductDetailCard({
     }
   };
 
-  // ================================
-  // 리뷰 가져오기
-  // ================================
-  const [order, setOrder] = useState("recent");
-  const { data: reviewData, isLoading: reviewLoading, isError: reviewError } = useGetReview(productId, order);
-  const reviews = reviewData?.list;
+  // //====상품 비교
+  // const onLinkCompare = () => {
+  //   router.push("/compare");
+  // };
 
-  // 리뷰 삭제
+  // const onCompareProduct = () => {
+  //   if (typeof window === "undefined") return;
+  //   const storageKey = "mogazoa:compare-products";
+  //   // 객체 불러오기
+  //   const myFavorite = localStorage.getItem(storageKey);
+  //   let existingData = myFavorite ? JSON.parse(myFavorite) : { leftId: null, rightId: null };
+
+  //   // 기존에 저장된 상품 ID 배열 생성
+  //   let productIds = [];
+  //   if (existingData.leftId) productIds.push(existingData.leftId);
+  //   if (existingData.rightId) productIds.push(existingData.rightId);
+
+  //   if (!productIds.includes(productId)) {
+  //     if (!existingData.leftId) {
+  //       existingData.leftId = productId;
+  //     } else if (!existingData.rightId) {
+  //       existingData.rightId = productId;
+  //     } else {
+  //       existingData.rightId = productId;
+  //     }
+
+  //     // 업데이트된 데이터를 로컬스토리지에 저장
+  //     localStorage.setItem(storageKey, JSON.stringify(existingData));
+
+  //     openToast(<Toast label="비교상품으로 추가 되었습니다." />);
+  //   }
+  //   const count = [existingData.leftId, existingData.rightId].filter(Boolean).length;
+  //   if (count > 1) {
+  //     openModal(<ConfigModal label={`상품을 비교할 수 있어요. \n 바로 비교 하시겠어요?`} onConfig={onLinkCompare} />);
+  //   }
+  // };
+
+  //==== 리뷰 삭제 함수 호출
   const { deleteReview } = useDeleteReview();
   const onHandleDelete = (reviewId: number) => {
     deleteReview(reviewId);
   };
 
+  //==== 리뷰 정렬
   const onHandleSorting = (value: string) => {
     const order = sorting(value);
     setOrder(order);
   };
 
-  // 무한 스크롤
+  //====무한 스크롤
   const [visibleItems, setVisibleItems] = useState<Review[]>([]);
   const [currentIndex, setCurrentIndex] = useState(SHOW_MAX);
   const loadRef = useRef<HTMLDivElement | null>(null);
@@ -298,27 +385,43 @@ export default function ProductDetailCard({
   const onReviewEdit = (id: number) => {
     if (!reviews) return;
 
-    const editReview = reviews.find(r => r.id === id);
-    if (!editReview) return;
+    // const editReview = reviews.find(r => r.id === id);
+    // if (!editReview) return;
 
-    openModal(
-      <EditReview
-        currentPath={String(productId)}
-        productId={productId}
-        id={id}
-        image={items.image}
-        name={items.name}
-        item={editReview}
-        content={items.description}
-        rating={editReview.rating}
-      />,
-    );
+    // openModal(
+    //   <EditReview
+    //     currentPath={String(productId)}
+    //     productId={productId}
+    //     id={id}
+    //     image={items.image}
+    //     name={items.name}
+    //     item={editReview}
+    //     content={items.description}
+    //     rating={editReview.rating}
+    //   />,
+    // );
+    if (reviews) {
+      const editReview = reviews.find(reviews => reviews.id === id);
+      {
+        editReview &&
+          openModal(
+            <EditReview
+              id={id}
+              image={items.image}
+              name={items.name}
+              item={editReview}
+              content={items.description}
+              rating={editReview.rating}
+            />,
+          );
+      }
+    }
   };
 
   // 리뷰 좋아요 (TODO)
   const onLikeClick = (reviewId: number) => {
-    // LikeReview(reviewId);
-    // setReviewLike(prev => !prev);
+    LikeReview(reviewId);
+    setReviewLike(prev => !prev);
   };
 
   // 찜 하기
@@ -331,12 +434,19 @@ export default function ProductDetailCard({
       }
     } else if (!items.isFavorite && items.favoriteCount === 1) {
       await postProductFavorite(targetProductId);
+      //찜 하기
+      const onHandleSave = async (productId: number) => {
+        try {
+          await postProductFavorite(productId);
+        } catch (error) {
+          openToast(<Toast errorMessage="이미 찜한 상품입니다." error />);
+        }
+      };
     }
   };
 
   // url 복사
   const id = params.id; // string | undefined
-
   const copyToClipboard = async (text: string) => {
     try {
       await navigator.clipboard.writeText(text);
@@ -359,16 +469,17 @@ export default function ProductDetailCard({
       <section className="pb-53 pt-0">
         <h2 className="-inset-4m-1 h-0 w-0 overflow-hidden text-1">상품상세 정보</h2>
         <DetailCard
-          currentPath={String(productId)}
+          productId={productId}
           userId={userId}
           writerId={items?.writerId}
           id={items?.id}
           image={items?.image}
           name={items?.name}
           category={items?.category}
+          categoryId={items?.category?.id}
           description={items?.description}
-          isLoading={productData.productLoading}
-          isError={productData.productError}
+          isLoading={productData?.productLoading}
+          isError={productData?.productError}
           isFavorite={items?.isFavorite}
           onSave={onHandleSave}
           onShare={onHandleShare}
@@ -410,7 +521,7 @@ export default function ProductDetailCard({
               <Skeleton />
             ) : reviews ? (
               <ul className="flex flex-col gap-y-16">
-                {visibleItems.map((review, i) => (
+                {/* {visibleItems.map((review, i) => (
                   <li key={i}>
                     <ReviewCard
                       review={review}
@@ -420,7 +531,20 @@ export default function ProductDetailCard({
                       showActions={review.user.id === userId}
                     />
                   </li>
-                ))}
+                ))} */}
+                {reviews?.map((items, i) => {
+                  return (
+                    <li key={i}>
+                      <ReviewCard
+                        review={items}
+                        onDelete={onHandleDelete}
+                        onEdit={onReviewEdit}
+                        onLike={onHandleLike}
+                        showActions={items.user.id === userId}
+                      />
+                    </li>
+                  );
+                })}
               </ul>
             ) : (
               <EmptyReviewCard />

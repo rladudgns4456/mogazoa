@@ -2,7 +2,7 @@
 
 import { getStarIcon } from "@/assets/icons/star/icons";
 import cn from "clsx";
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState} from "react";
 
 // StarRating 컴포넌트 별점 0~5점
 
@@ -31,8 +31,7 @@ export default function StarRating({
   useEffect(() => {
     if (value) {
       const button = document.querySelectorAll(`#starRating button`);
-      console.log(value);
-      if (button.length > 0) {
+         if (button.length > 0) {
         setTimeout(() => {
           for (let i = 0; i < value; i++) {
             (button[i] as HTMLElement).focus();
@@ -110,7 +109,7 @@ export default function StarRating({
               onClick={e => handleClick(e, star)}
               onFocus={e => handleFocus(e, star)}
               onMouseEnter={e => handleMouseEnter(e, star)}
-              // disabled={disabled}
+              disabled={disabled}
               className={cn("flex-shrink-0 transition-transform", "cursor-pointer hover:scale-110 active:scale-95")}
               aria-label={`${star}점`}
             >

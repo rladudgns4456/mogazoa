@@ -5,32 +5,30 @@ import ImageBox from "@/components/ImageBox";
 import StarRating from "@/components/review/StarRating";
 import { ModalContainer } from "@/components/modal/modalBase";
 import { useModal } from "@/components/modal/modalBase";
+import { Toast, useToast } from "@/components/toast";
 import TextArea from "@/components/input/TextArea";
 import ReviewImageUpLoad from "./reviewImageUpload";
-import { useCreateReview, useImageUrlGet } from "@/api/ReviewApi";
-import { getProductItem } from "@/api/productsApi";
-import { Review } from "@/types/review";
+import { useCreateReview, useImageUrlGet, useEditReview } from "@/api/ReviewApi";
+import { ReviewEdit, AlertState } from "@/types/review";
 
-interface ModalProps {
-  currentPath: string | string[] | undefined;
-  productId: number;
-  id: number;
-  image: string;
-  name: string;
-  item?: Review;
-  images?: string[];
-  content: string;
-  rating?: number;
-}
-
-interface AlertState {
-  alert: boolean;
-  content: string;
-}
-
-export default function EditReview({ currentPath, id, image, name, item, rating }: ModalProps) {
+export default function EditReview({ productId, id, image, name, item, rating }: ReviewEdit) {
   const { closeModal } = useModal();
+  const { openToast } = useToast();
   const queryClient = useQueryClient();
+
+  //기존 내용
+  const [prevContent, setPrevContent] = useState({
+    content: item?.content ?? "",
+    rating: item?.rating ?? 0,
+  });
+
+  let prevImageCount: number = item?.reviewImages.length ?? 0;
+  const [countChang, setCountChang] = useState<number>(item?.reviewImages.length ?? 0);
+
+  // 기존 이미지 id
+  const prevImageId = item?.reviewImages[0];
+  // 기존 이미지 url
+  const prevImageUrl = item?.reviewImages[1];
 
   //리뷰 작성
   const [textValue, setTextValue] = useState<string>(item?.content ?? "");
@@ -44,6 +42,9 @@ export default function EditReview({ currentPath, id, image, name, item, rating 
   //이미지 업로드
   const [uploadImage, setUploadImage] = useState<File[]>([]);
 
+  //리뷰 수정상태
+  const [isChange, setIsChange] = useState<boolean>(false);
+
   // useCreateReview 훅 호출
   const { mutate: createReviewMutate, isPending } = useCreateReview(); //수정해야함
   const { mutate: useImageUrl } = useImageUrlGet();
@@ -51,6 +52,32 @@ export default function EditReview({ currentPath, id, image, name, item, rating 
   //리뷰 입력
   const handleTextChange = (newValue: string) => {
     setTextValue(newValue);
+  };
+
+  //별정
+  const getHandleRating = (value: number) => {
+    setRatingValue(value);
+    setIsRatingAlert({ alert: true, content: "" });
+  };
+
+  //첨부 이미지 배열
+  const changeImage = ([...file]) => {
+    setUploadImage([...file]);
+  };
+
+  //이미지 주소 만들기
+  const createUrl = async (uploadImage: File[]) => {
+    const urls = await new Promise(resolve => {
+      useImageUrl(uploadImage, {
+        onSuccess: data => {
+          resolve(data as string[]); // 업로드된 파일 정보 배열
+        },
+        onError: error => {
+          openToast(<Toast errorMessage="이미지 등록에 실패했습니다." error />);
+        },
+      });
+    });
+    return urls as string[];
   };
 
   const handleTextAlert = () => {
@@ -84,44 +111,42 @@ export default function EditReview({ currentPath, id, image, name, item, rating 
         });
       }
     }
-    if (textValue.length >= 10) {
-      setIsTextAlert({
-        alert: false,
-        content: "",
-      });
+    if (isChange) {
+      if (textValue.length >= 10) {
+        setIsTextAlert({
+          alert: false,
+          content: "",
+        });
+        setIsFormCheck(true);
+      }
       setIsFormCheck(true);
     }
   }, [textValue]);
 
-  //별정
-  const getHandleRating = (value: number) => {
-    setRatingValue(value);
-    setIsRatingAlert({ alert: true, content: "" });
-  };
-
-  //첨부 이미지 배열
-  const changeImage = ([...file]) => {
-    setUploadImage([...file]);
-  };
+  //수정 체크
   useEffect(() => {
-    changeImage;
-  }, [uploadImage]);
+    if (prevContent.content !== textValue) {
+      setIsFormCheck(true);
+    }
+    if (prevContent.rating !== ratingValue) {
+      setIsFormCheck(true);
+    }
+    if (uploadImage.length > 0) {
+      setIsFormCheck(true);
+    }
+    if (prevImageCount !== countChang) {
+      setIsFormCheck(true);
+    }
+  }, [textValue, ratingValue, uploadImage, countChang]);
 
-  //이미지 주소 만들기
-  const createUrl = async (uploadImage: File[]) => {
-    const urls = await new Promise((resolve, reject) => {
-      useImageUrl(uploadImage, {
-        onSuccess: data => {
-          resolve(data as string[]); // 업로드된 파일 정보 배열
-        },
-        onError: error => {
-          reject(error);
-        },
-      });
-    });
-    return urls as string[];
+  let imageUrls = []; // 리퀘스트 보낼 배열
+
+  //갯수 세기
+  const onCountChang = (count: number) => {
+    setCountChang(count);
   };
 
+  const { mutate: editReviewMutate } = useEditReview();
   //폼 전송
   const onHandleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -130,23 +155,43 @@ export default function EditReview({ currentPath, id, image, name, item, rating 
       setIsRatingAlert({ alert: true, content: "별점으로 상품을 평가해주세요." });
       return;
     }
-    const imageUrls = await createUrl(uploadImage);
 
+    const newImage = await createUrl(uploadImage);
+
+    const newImagesArray = Array.isArray(newImage) ? newImage : [newImage];
+
+    const mixUrls = [...(Array.isArray(prevImageUrl) ? prevImageUrl : []), ...newImagesArray];
+
+    const prevImageIdsArray = Array.isArray(prevImageId) ? prevImageId : [];
+
+    const mixIds = [...prevImageIdsArray];
+
+    const imageUrls = [];
+
+    for (let i = 0; i < mixUrls.length; i++) {
+      // 이전 이미지와 새 이미지가 모두 존재하는지 체크
+      if (prevImageUrl && prevImageUrl[i] && mixUrls[i] === prevImageUrl[i]) {
+        // 이전 이미지와 새 이미지가 같으면 id만 넣기
+        if (prevImageId && prevImageId[i]) {
+          imageUrls.push({ id: prevImageId[i] });
+        }
+      } else {
+        // 새 이미지가 있으면 source만 넣기
+        if (mixUrls[i]) {
+          imageUrls.push({ source: mixUrls[i] });
+        }
+      }
+    }
+    //전송
     const newReview = {
-      productId: id,
       images: imageUrls,
       content: textValue,
       rating: ratingValue,
-    } as any;
-    createReviewMutate(newReview, {
-      onSuccess: () => {
-        queryClient.prefetchQuery({
-          queryKey: ["products", currentPath],
-          queryFn: () => getProductItem(Number(currentPath)),
-        });
-        closeModal();
-      },
-    });
+    };
+
+    // 수정 호출
+    editReviewMutate({ reviewId: id, updatedReview: newReview });
+    closeModal();
   };
 
   return (
@@ -178,17 +223,17 @@ export default function EditReview({ currentPath, id, image, name, item, rating 
             ></TextArea>
             {isTextAlert.alert && <p className="pb-24 pt-5 text-12-regular text-error">{isTextAlert.content}</p>}
           </div>
-          <ReviewImageUpLoad productId={id} onFilesChange={changeImage} edit={true} item={item} />
+          <ReviewImageUpLoad productId={id} onFilesChange={changeImage} editPreview={onCountChang} item={item} />
         </article>
 
         <div className="flex gap-x-10">
           {isPending ? (
             <Button variant="primary" type="button" onClick={e => onHandleSubmit(e)} disabled={isFormCheck}>
-              리뷰를 생성 중입니다.
+              리뷰를 수정 중입니다.
             </Button>
           ) : (
             <Button variant="primary" type="button" onClick={e => onHandleSubmit(e)} disabled={!isFormCheck}>
-              리뷰작성 완료
+              리뷰수정 완료
             </Button>
           )}
         </div>

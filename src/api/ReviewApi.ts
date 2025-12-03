@@ -1,9 +1,10 @@
+//=== 리뷰 관련 API
+
 import axiosInstance from "./AxiosInstance";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Like, ReviewListCard } from "../types/review";
-// import { Like, ReviewListCard } from "../types/product";
+import { ReviewListCard, ReviewForm, ReviewEdit, Like, ReviewDelete } from "../types/review";
 
-// 리뷰 정렬 함수
+//=== 리뷰 리스트 & 정렬
 export async function getReviews(productId: number, order: string): Promise<ReviewListCard> {
   const response = await axiosInstance.get(`/products/${productId}/reviews?order=${order}`);
   return response.data;
@@ -12,13 +13,13 @@ export async function getReviews(productId: number, order: string): Promise<Revi
 export function useGetReview(productId: number, order: string) {
   return useQuery({
     queryKey: ["reviews", productId, order],
-    queryFn: () => getReviews(Number(productId), order),
+    queryFn: () => getReviews(productId, order),
     staleTime: 1000 * 10 * 5,
   });
 }
 
-//리뷰 생성
-export const createReview = async (newReview: ReviewListCard): Promise<ReviewListCard> => {
+//=== 리뷰 생성
+export const createReview = async (newReview: ReviewForm): Promise<ReviewForm> => {
   const response = await axiosInstance.post(`/reviews`, newReview);
   return response.data;
 };
@@ -44,9 +45,29 @@ export const useCreateReview = () => {
 };
 
 // 리뷰 수정 API 함수
-export const updateReview = async (reviewId: number, updatedReview: ReviewListCard): Promise<ReviewListCard> => {
+export const updateReview = async (reviewId: number, updatedReview: ReviewEdit): Promise<ReviewEdit> => {
   const response = await axiosInstance.patch(`/reviews/${reviewId}`, updatedReview);
   return response.data;
+};
+export const useEditReview = () => {
+  const queryClient = useQueryClient();
+
+  const editReviewMutation = useMutation({
+    mutationFn: ({ reviewId, updatedReview }: { reviewId: number; updatedReview: ReviewEdit }) =>
+      updateReview(reviewId, updatedReview),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["reviews"] });
+      console.log("리뷰 수정 성공!");
+    },
+    onError: error => {
+      console.error("리뷰 수정 중 오류 발생:", error);
+    },
+  });
+
+  return {
+    mutate: editReviewMutation.mutate,
+    isPending: editReviewMutation.isLoading,
+  };
 };
 
 //이미지 주소 얻기
@@ -84,9 +105,9 @@ export const deleteReview = async (reviewId: number): Promise<ReviewListCard> =>
   const response = await axiosInstance.delete(`/reviews/${reviewId}`);
   return response.data;
 };
+
 export const useDeleteReview = () => {
   const queryClient = useQueryClient();
-
   const deleteReviewMutation = useMutation({
     mutationFn: (reviewId: number) => axiosInstance.delete(`/reviews/${reviewId}`),
     onSuccess: (_, reviewId) => {
@@ -104,13 +125,13 @@ export const useDeleteReview = () => {
 };
 
 //리뷰 좋아요
-export const LikeReview = async (reviewId: number): Promise<Like> => {
-  const response = await axiosInstance.post(`/reviews/${reviewId}/like`, reviewId);
+export const postLikeReview = async (reviewId: number): Promise<Like> => {
+  const response = await axiosInstance.post(`/reviews/${reviewId}/like`, { reviewId });
   return response.data;
 };
 
 //리뷰 리스트 좋아요 삭제
-// export const deleteLikeReview = async (reviewId: number): Promise<Like> => {
-//   const response = await axiosInstance.delete(`/reviews/${reviewId}/like`, reviewId);
-//   return response.data;
-// };
+export const deleteLikeReview = async (reviewId: number): Promise<ReviewDelete> => {
+  const response = await axiosInstance.delete(`/reviews/${reviewId}/like`);
+  return response.data;
+};
