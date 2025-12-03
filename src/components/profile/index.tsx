@@ -132,7 +132,9 @@ export default function ProfileCard({
         {/* 통계 */}
         <div className={cn("flex items-center justify-evenly border-t pb-38 pt-28 text-center")}>
           <div>
-            <div className={cn("text-18-bold text-gray-900 md:text-24-bold")}>{averageRating.toFixed(1)}</div>
+            <div className={cn("text-18-bold text-gray-900 md:text-24-bold")}>
+              {averageRating === 0 ? "0" : averageRating.toFixed(1)}
+            </div>
             <div className={cn("text-14-regular text-gray-700 md:text-16-regular")}>남긴 별점 평균</div>
           </div>
           <div>

@@ -12,7 +12,7 @@ export default function FloatingButton({ onOpen }: OpenProps) {
         variant="onlyIcon"
         iconType="more"
         type="button"
-        styleClass="fixed z-20 left-auto right-17 bottom-33 sm:right-30 sm:bottom-98 lg:left-[87.5%] lg:bottom-[9.44%] lg:right-auto"
+        styleClass="fixed z-20 bottom-33 right-30 md:bottom-102 lg:right-[calc(50%-940px+390px)] lg:bottom-98"
         onClick={onOpen}
       >
         <Ic_Plus />

@@ -38,30 +38,35 @@ export interface ProductListResponse {
 
 /**
  * DetailCard 컴포넌트의 props 타입
- * (컴포넌트 이름과 겹치지 않도록 Props 붙여줌)
  */
 export interface DetailCardProps {
-  currentPath?: string | string[]; // 필요하면 넘기고, 아니면 생략 가능하게
+  // 상세 페이지 경로(리뷰 모달에서 사용)
+  currentPath?: string;
+
+  // 필수 식별자들
   productId: number;
   userId: number | null;
-  writerId: number;
+  writerId: number | null;
   id: number;
+
+  // 상품 정보
   image: string;
   name: string;
-  category?: {
-    id: number;
-    name: string;
-  };
-  categoryId: number|undefined;
+  category?: { id?: number; name: string } | string;
+  categoryId?: number;
   description: string;
+
+  // 상태
   isLoading: boolean;
   isError: boolean;
   isFavorite: boolean;
-  onSave: (id: number) => void;
-  onShare: () => void;
-  onUrlCopy: () => void;
-  onDelete: (config: string) => void;
-  onCompare: (id: number) => void;
+
+  // 액션 콜백들
+  onShare?: () => void;
+  onUrlCopy?: () => void;
+  onSave?: (id: number) => Promise<void> | void;
+  onDelete?: (id: number) => Promise<void> | void;
+  onCompare?: (id: number) => void;
 }
 
 export interface NotSuccessful {
@@ -84,7 +89,7 @@ export interface Products {
   isFavorite: boolean;
 }
 
-//가져오기
+// 가져오기
 export interface ProductDetail extends NotSuccessful, Products {
   description: string;
   category?: {
@@ -98,7 +103,7 @@ export interface ProductDetail extends NotSuccessful, Products {
   };
 }
 
-//수정
+// 수정
 export interface ProductPatchProps {
   message: string;
   details: {
@@ -109,7 +114,7 @@ export interface ProductPatchProps {
   };
 }
 
-//해당 카테고리
+// 해당 카테고리
 export interface ProductCategory {
   category: {
     id: number;

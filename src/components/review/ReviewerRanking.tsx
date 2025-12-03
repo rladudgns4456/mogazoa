@@ -8,7 +8,7 @@ export default function ReviewerRanking({ reviewers }: ReviewerRankingProps) {
   if (!reviewers || reviewers.length === 0) {
     return (
       <aside className={cn("w-full")}>
-        <h2 className={cn("header4-bold mb-20 ml-18", "md:ml-62 lg:ml-0")}>리뷰어 랭킹</h2>
+        <h2 className={cn("header4-bold mb-20", "lg:ml-0")}>리뷰어 랭킹</h2>
         <p className={cn("py-40 text-center text-14 text-gray-500")}>랭킹 정보가 없습니다.</p>
       </aside>
     );
@@ -19,7 +19,7 @@ export default function ReviewerRanking({ reviewers }: ReviewerRankingProps) {
 
   return (
     <div className={cn("w-full")}>
-      <h2 className={cn("header4-bold mb-20 ml-18", "md:ml-62 lg:ml-0")}>리뷰어 랭킹</h2>
+      <h2 className={cn("header4-bold mb-20", "lg:ml-0")}>리뷰어 랭킹</h2>
       <div
         className={cn(
           "mx-18 flex flex-col items-center justify-evenly gap-32",
