@@ -1,6 +1,7 @@
 "use client";
+//제픔 상세 카드
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { cn } from "@/utils/cn";
 import { ModalContainer, useModal } from "../modal/modalBase";
 
@@ -21,6 +22,11 @@ import Ic_Edit from "@/assets/icons/ic_edit.svg";
 import { ConfigModal } from "../../components/modal";
 import EditProductModal from "../product/EditProductmodal";
 
+interface ReviewItem {
+  id: number;
+  isLiked: boolean;
+}
+
 export default function DetailCard({
   productId,
   userId,
@@ -33,10 +39,10 @@ export default function DetailCard({
   description,
   isLoading = false,
   isError = false,
-  isFavorite = false,
+  isFavorite,
   onShare,
   onUrlCopy,
-  onSave,
+  // onSave,
   onDelete,
   onCompare,
 }: DetailCardProps) {
@@ -44,44 +50,34 @@ export default function DetailCard({
   const { openToast } = useToast();
 
   // 찜 상태
-  const [isSave, setIsSave] = useState<boolean>(!!isFavorite);
+  const [isSave, setIsSave] = useState<boolean>(isFavorite);
 
   // 카테고리 이름 처리 (string | { name } 대응)
   const categoryName = typeof category === "string" ? category : (category?.name ?? "");
 
-  // 찜하기
+  //찜하기
   const onFavorite = async (productId: number) => {
-    if (!onSave) return; // 콜백이 없으면 아무 것도 하지 않음
+    if (!userId) {
+      openModal(<LoginAlert />);
+      return;
+    }
+    if (userId === writerId) {
+      openToast(<Toast errorMessage="내가 올린 상품은 찜할 수 없어요." error={true} />);
+      return;
+    }
 
-    if (userId !== null && writerId !== null && userId === writerId) {
-      //찜
-      const [isSave, setIsSave] = useState<boolean>(isFavorite);
-
-      //찜하기
-      const onFavorite = async (id: number) => {
-        if (!userId) {
-          openModal(<LoginAlert />);
-          return;
-        }
-        if (userId === writerId) {
-          openToast(<Toast errorMessage="내가 올린 상품은 찜할 수 없어요." error={true} />);
-          return;
-        }
-
+    try {
+      if (!isSave) {
         setIsSave(prev => !prev);
-        try {
-          await onSave(productId);
-        } catch (error) {
-          setIsSave(prev => !prev);
-          openToast(<Toast errorMessage={isSave ? "찜 삭제 실패 " : "찜 성공"} error />);
-        }
-      };
+        openToast(<Toast label="찜 성공" closedTime={1500} />);
+      } else {
+        setIsSave(prev => !prev);
+        openToast(<Toast label="찜 삭제" closedTime={1500} />);
+      }
+    } catch (error) {
+      openToast(<Toast errorMessage="찜하기 중 문제가 발생했어요." error={true} />);
     }
   };
-
-  useEffect(() => {
-    setIsSave(!!isFavorite);
-  }, [isFavorite]);
 
   // 리뷰 모달 열기
   const onHandleReviewModalOpen = () => {
@@ -104,17 +100,9 @@ export default function DetailCard({
     }
   };
 
-  // 등록 제품 삭제
-  const onHandleDelete = async (productId: number) => {
-    try {
-      if (onDelete) {
-        await onDelete(productId);
-      } else {
-        await deleteProduct(productId);
-      }
-    } catch (error) {
-      // 필요하면 토스트 띄우기
-    }
+  // // 등록 제품 삭제
+  const onHandleDelete = () => {
+    openModal(<ConfigModal label="정말 삭제 하시겠습니까?" onConfig={onDelete} />);
   };
 
   //편집 모달
@@ -204,7 +192,6 @@ export default function DetailCard({
           >
             <Ic_Comment />
           </Button>
-
           <Button
             variant="onlyIcon"
             iconType="etc"
@@ -238,7 +225,7 @@ export default function DetailCard({
               variant="secondary"
               styleClass="w-full md:w-[38%] sm:max-w-248  md:max-w-none lg:max-w-200"
               type="button"
-              onClick={() => openModal(<ConfigModal label="정말 삭제 하시겠습니까?" onConfig={onDelete} />)}
+              onClick={onHandleDelete}
             >
               삭제하기
             </Button>

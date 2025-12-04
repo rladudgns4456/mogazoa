@@ -24,7 +24,7 @@ interface EditProps {
   initImage: string;
   productName: string;
   initDescription: string;
-  initCategoryId: number;
+  initCategoryId?: number;
 }
 
 export default function EditProductModal({

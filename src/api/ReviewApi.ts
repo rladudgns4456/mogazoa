@@ -1,11 +1,51 @@
 //=== 리뷰 관련 API
 
 import axiosInstance from "./AxiosInstance";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient, useInfiniteQuery } from "@tanstack/react-query";
 import { ReviewListCard, ReviewForm, ReviewEdit, Like, ReviewDelete } from "../types/review";
+import axios from "axios";
 
+//=== 리뷰 리스트
+export async function getReviews(productId: number): Promise<ReviewListCard> {
+  const response = await axiosInstance.get(`/products/${productId}/reviews`);
+  return response.data;
+}
+
+export function useGetReviewList(productId: number, order: string) {
+  return useQuery({
+    queryKey: ["reviews", productId, order],
+    queryFn: () => getReviewsOrder(productId, order),
+    staleTime: 1000 * 10 * 5,
+  });
+}
+
+//=== 리뷰 페이지
+export async function getReviewScroll(productId: number, page: number): Promise<ReviewListCard> {
+  const response = await axiosInstance.get(`/products/${productId}/reviews?cursor=${page}`);
+  return response.data;
+}
+
+// fetchPosts 함수
+export async function fetchPosts(
+  productId: number,
+  pageParam: number = 0,
+): Promise<{ reviews: ReviewListCard[]; nextCursor?: number }> {
+  const response = await axiosInstance.get(`/products/${productId}/reviews?cursor=${pageParam}`);
+  await new Promise(resolve => setTimeout(resolve, 500));
+  return response.data;
+}
+
+// usePosts 훅 수정
+export function usePosts(productId: number) {
+  return useInfiniteQuery<{ reviews: ReviewListCard[]; nextCursor?: number }, Error, [string, number]>({
+    queryKey: ["reviews", productId],
+    queryFn: ({ pageParam = 0 }) => fetchPosts(productId, (pageParam = 0)),
+    getNextPageParam: lastPage => lastPage.nextCursor,
+    initialPageParam: 0,
+  });
+}
 //=== 리뷰 리스트 & 정렬
-export async function getReviews(productId: number, order: string): Promise<ReviewListCard> {
+export async function getReviewsOrder(productId: number, order: string): Promise<ReviewListCard> {
   const response = await axiosInstance.get(`/products/${productId}/reviews?order=${order}`);
   return response.data;
 }
@@ -14,7 +54,7 @@ export function useGetReview(productId: number, order: string) {
   return useQuery({
     queryKey: ["reviews", productId, order],
     queryFn: () => getReviews(productId, order),
-    staleTime: 1000 * 10 * 5,
+    // staleTime: 1000 * 10 * 5,
   });
 }
 
@@ -66,7 +106,7 @@ export const useEditReview = () => {
 
   return {
     mutate: editReviewMutation.mutate,
-    isPending: editReviewMutation.isLoading,
+    isPending: editReviewMutation.isPending,
   };
 };
 
@@ -97,7 +137,7 @@ export const useImageUrlGet = () => {
     },
   });
 
-  return { mutate: useImageUrl.mutate };
+  return { mutate: useImageUrl.mutate, isPending: useImageUrl.isPending };
 };
 
 // 리뷰 삭제

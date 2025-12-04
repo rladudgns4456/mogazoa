@@ -60,10 +60,15 @@ export default function ReviewCard({ review, onLike, showActions = false, onEdit
   const [loadedImages, setLoadedImages] = useState(new Set<number>());
 
   // 본인 리뷰 여부 확인
-  const isOwnReview = authUser?.id === user.id;
+  const isOwnReview = authUser?.id && user ? authUser.id === user.id : false;
 
   // 날짜 포맷팅 (YYYY-MM-DD) - memoization
-  const formattedDate = useMemo(() => createdAt.split("T")[0], [createdAt]);
+  const formattedDate = useMemo(() => {
+    if (createdAt && typeof createdAt === "string") {
+      return createdAt.split("T")[0];
+    }
+    return "";
+  }, [createdAt]);
 
   // 좋아요 토글 핸들러
   const handleClickLike = async () => {
@@ -90,9 +95,9 @@ export default function ReviewCard({ review, onLike, showActions = false, onEdit
     <div className={cn("rounded-20 bg-white px-20 py-24 shadow md:px-40")}>
       {/* 헤더: 리뷰어 정보 + 날짜 */}
       <div className={cn("mb-12 flex items-start justify-between")}>
-        <Link href={`/user/${user.id}`} className={cn("flex items-center gap-12 hover:opacity-90")}>
+        <Link href={`/user/${user?.id}`} className={cn("flex items-center gap-12 hover:opacity-90")}>
           {/* 별점(닉네임포함) */}
-          <StarRating rating={rating} readonly nickname={user.nickname} />
+          <StarRating rating={rating} readonly nickname={user?.nickname} />
         </Link>
 
         <span className={cn("text-12-regular text-gray-700 md:text-14-regular")}>{formattedDate}</span>
@@ -100,7 +105,7 @@ export default function ReviewCard({ review, onLike, showActions = false, onEdit
 
       <p className={cn("mb-12 whitespace-pre-wrap text-16-regular text-gray-900")}>{content}</p>
 
-      {reviewImages.length > 0 && (
+      {reviewImages?.length > 0 && (
         <div className={cn("mb-12 flex gap-12")}>
           {reviewImages
             .filter(img => isValidImageUrl(img.source))

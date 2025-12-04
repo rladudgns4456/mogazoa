@@ -3,13 +3,13 @@ import { useRouter } from "next/router";
 import { useParams } from "next/navigation";
 import { useAuth } from "@/components/login/AuthContext";
 import { GetServerSidePropsContext, InferGetServerSidePropsType } from "next";
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 
 // 로그인 모달
 import LoginAlert from "@/components/modal/loginAlert";
 
 // api
-import { useDeleteReview, useGetReview, postLikeReview, deleteLikeReview, LikeReview } from "@/api/ReviewApi";
+import { useDeleteReview, useGetReview, postLikeReview, deleteLikeReview, getReviewsOrder, getReviews, useGetReviewList } from "@/api/ReviewApi";
 import {
   deleteProductFavorite,
   postProductFavorite,
@@ -19,7 +19,7 @@ import {
 } from "@/api/productsApi";
 import { deleteProduct } from "@/api/productsApi";
 // type
-import { Review, Like } from "@/types/review";
+import { ReviewEdit } from "@/types/review";
 
 import type { ProductSummary } from "@/utils/compareUtils";
 
@@ -44,7 +44,8 @@ import title1 from "@/assets/images/statistics.png";
 import title2 from "@/assets/images/review.png";
 
 // 한 페이지 목록
-const SHOW_MAX = 2;
+const SHOW_MAX = 7;
+const LOAD_MORE_COUNT = 2; // 한 번에 추가로 불러올 항목 수
 
 //비교상품 저장 로컬스토리 키
 const STORAGE_KEY = "mogazoa:compare-products";
@@ -78,8 +79,7 @@ export default function ProductDetailCard({ productId }: InferGetServerSideProps
   const { openToast } = useToast();
   const params = useParams();
 
-  // 유저 확인
-  //=====유저 확인
+  //=== 유저 확인
   const { user } = useAuth();
   const [userId, setIsUser] = useState<number | null>(null);
 
@@ -90,7 +90,7 @@ export default function ProductDetailCard({ productId }: InferGetServerSideProps
     }
   }, [user]);
 
-  // 상품 정보
+  //==== 상품 정보
   // const items: ProductDetail = productData;
   //=====상품 정보
   const { data: productData, isLoading: productLoading, isError: productError } = useProductItem(productId);
@@ -98,47 +98,10 @@ export default function ProductDetailCard({ productId }: InferGetServerSideProps
 
   //====리뷰 가져오기
   const [order, setOrder] = useState("recent");
-  const { data: reviewData, isLoading: reviewLoading, isError: reviewError } = useGetReview(productId, order);
+const { data: reviewData, isLoading: reviewLoading, isError:reviewError} = useGetReviewList(productId, order);
   const reviews = reviewData?.list;
 
-  console.log(reviews);
-
-  // 상품 삭제
-  // const deleteProduct = useMutation<string, Error, number>({
-  // 리스트 상태관리
-  const [reviewList, setReviewList] = useState<ReviewListType | null>(null);
-  const [lReviewList, setLReviewList] = useState<ReviewListType>([]);
-  const [isReviewId, setIsReviewId] = useState<number>(0);
-
-  const reviewLikeMutation = useMutation({
-    mutationFn: postLikeReview,
-    onMutate: async () => {
-      await queryClient.cancelQueries({ queryKey: ["reviews", isReviewId] });
-      const previousData = queryClient.getQueryData<Like>(["reviews", isReviewId]);
-      return { previousData };
-    },
-  });
-
-  const deleteLikeMutation = useMutation({
-    mutationFn: deleteLikeReview,
-    onMutate: async () => {
-      await queryClient.cancelQueries({ queryKey: ["reviews", isReviewId] });
-      const previousData = queryClient.getQueryData<Like>(["reviews", isReviewId]);
-      return { previousData };
-    },
-  });
-
-  useEffect(() => {
-    if (reviewData) {
-      setLReviewList([reviewData]);
-    }
-  }, [reviewData]);
-
-  // 좋아요 처리 함수
-  const onHandleLike = (reviewId: number) => {
-    reviewLikeMutation.mutate(reviewId);
-    setIsReviewId(reviewId);
-  };
+  const [isFavorite, setIsFavorite] = useState<boolean>(false); // 상품 찜
 
   //====상품 삭제
   const deleteProductMutation = useMutation({
@@ -293,43 +256,6 @@ export default function ProductDetailCard({ productId }: InferGetServerSideProps
     }
   };
 
-  // //====상품 비교
-  // const onLinkCompare = () => {
-  //   router.push("/compare");
-  // };
-
-  // const onCompareProduct = () => {
-  //   if (typeof window === "undefined") return;
-  //   const storageKey = "mogazoa:compare-products";
-  //   // 객체 불러오기
-  //   const myFavorite = localStorage.getItem(storageKey);
-  //   let existingData = myFavorite ? JSON.parse(myFavorite) : { leftId: null, rightId: null };
-
-  //   // 기존에 저장된 상품 ID 배열 생성
-  //   let productIds = [];
-  //   if (existingData.leftId) productIds.push(existingData.leftId);
-  //   if (existingData.rightId) productIds.push(existingData.rightId);
-
-  //   if (!productIds.includes(productId)) {
-  //     if (!existingData.leftId) {
-  //       existingData.leftId = productId;
-  //     } else if (!existingData.rightId) {
-  //       existingData.rightId = productId;
-  //     } else {
-  //       existingData.rightId = productId;
-  //     }
-
-  //     // 업데이트된 데이터를 로컬스토리지에 저장
-  //     localStorage.setItem(storageKey, JSON.stringify(existingData));
-
-  //     openToast(<Toast label="비교상품으로 추가 되었습니다." />);
-  //   }
-  //   const count = [existingData.leftId, existingData.rightId].filter(Boolean).length;
-  //   if (count > 1) {
-  //     openModal(<ConfigModal label={`상품을 비교할 수 있어요. \n 바로 비교 하시겠어요?`} onConfig={onLinkCompare} />);
-  //   }
-  // };
-
   //==== 리뷰 삭제 함수 호출
   const { deleteReview } = useDeleteReview();
   const onHandleDelete = (reviewId: number) => {
@@ -342,64 +268,9 @@ export default function ProductDetailCard({ productId }: InferGetServerSideProps
     setOrder(order);
   };
 
-  //====무한 스크롤
-  const [visibleItems, setVisibleItems] = useState<Review[]>([]);
-  const [currentIndex, setCurrentIndex] = useState(SHOW_MAX);
-  const loadRef = useRef<HTMLDivElement | null>(null);
-
-  useEffect(() => {
-    if (reviewData) {
-      setVisibleItems(reviewData.list.slice(0, SHOW_MAX));
-    }
-  }, [reviewData]);
-
-  useEffect(() => {
-    if (!reviews || currentIndex >= reviews.length) return;
-
-    const observer = new IntersectionObserver(
-      entries => {
-        if (entries[0].isIntersecting) {
-          const nextIndex = currentIndex + SHOW_MAX;
-          setVisibleItems(reviews.slice(0, nextIndex));
-          setCurrentIndex(nextIndex);
-        }
-      },
-      { threshold: 1.0 },
-    );
-
-    if (loadRef.current) {
-      observer.observe(loadRef.current);
-    }
-
-    return () => {
-      if (loadRef.current) {
-        observer.unobserve(loadRef.current);
-      }
-    };
-  }, [currentIndex, reviews]);
-
-  if (reviewLoading) return <div>로딩 중...</div>;
-  if (reviewError) return <div>오류 발생</div>;
-
-  // 리뷰 수정
+  //==== 리뷰 수정
   const onReviewEdit = (id: number) => {
     if (!reviews) return;
-
-    // const editReview = reviews.find(r => r.id === id);
-    // if (!editReview) return;
-
-    // openModal(
-    //   <EditReview
-    //     currentPath={String(productId)}
-    //     productId={productId}
-    //     id={id}
-    //     image={items.image}
-    //     name={items.name}
-    //     item={editReview}
-    //     content={items.description}
-    //     rating={editReview.rating}
-    //   />,
-    // );
     if (reviews) {
       const editReview = reviews.find(reviews => reviews.id === id);
       {
@@ -409,43 +280,37 @@ export default function ProductDetailCard({ productId }: InferGetServerSideProps
               id={id}
               image={items.image}
               name={items.name}
-              item={editReview}
-              content={items.description}
+              content={editReview.content}
               rating={editReview.rating}
+              reviewImages={editReview.reviewImages}
             />,
           );
       }
     }
   };
 
-  // 리뷰 좋아요 (TODO)
-  const onLikeClick = (reviewId: number) => {
-    LikeReview(reviewId);
-    setReviewLike(prev => !prev);
-  };
+  //=== 리뷰 좋아요 (TODO)
+  const onLikeClick = async (reviewId: number) => {
+    const review = reviews?.find(item => item.id === reviewId);
+    const targetId = review?.id;
 
-  // 찜 하기
-  const onHandleSave = async (targetProductId: number) => {
-    if (items.isFavorite) {
-      try {
-        await deleteProductFavorite(targetProductId);
-      } catch (error) {
-        openToast(<Toast errorMessage="이미 찜한 상품입니다." error />);
-      }
-    } else if (!items.isFavorite && items.favoriteCount === 1) {
-      await postProductFavorite(targetProductId);
-      //찜 하기
-      const onHandleSave = async (productId: number) => {
-        try {
-          await postProductFavorite(productId);
-        } catch (error) {
-          openToast(<Toast errorMessage="이미 찜한 상품입니다." error />);
-        }
-      };
+    if (review?.isLiked === false) {
+      await postLikeReview(Number(targetId));
+    } else {
+      await deleteLikeReview(Number(targetId));
     }
   };
 
-  // url 복사
+  //=== 상품 찜
+  const onHandleSave = async (productId: number) => {
+    if (items) {
+      await postProductFavorite(productId);
+    } else {
+      await deleteProductFavorite(productId);
+    }
+  };
+
+  //=== url 복사
   const id = params.id; // string | undefined
   const copyToClipboard = async (text: string) => {
     try {
@@ -463,6 +328,57 @@ export default function ProductDetailCard({ productId }: InferGetServerSideProps
 
   // 카카오 공유 (TODO)
   const onHandleShare = () => {};
+
+  
+
+  //====무한 스크롤
+
+  // const [visibleItems, setVisibleItems] = useState<Review[]>([]);
+  // const [currentIndex, setCurrentIndex] = useState(SHOW_MAX);
+  // const loadRef = useRef<HTMLDivElement | null>(null);
+
+  // const loadMoreItems = useCallback(() => {
+  //   // 다음 항목들을 계산
+  //   const nextIndex = currentIndex + LOAD_MORE_COUNT;
+  //   const newItems = reviews?.slice(currentIndex, nextIndex);
+
+  //   // 상태 업데이트: 기존 항목에 새 항목 추가
+  //   setVisibleItems(prevItems => [...prevItems, ...newItems]);
+  //   setCurrentIndex(nextIndex);
+  // }, [currentIndex]);
+
+  // useEffect(() => {
+  //   setVisibleItems(reviews?.slice(0, SHOW_MAX));
+  // }, [reviews]);
+
+  // useEffect(() => {
+  //   if (!reviews || currentIndex >= reviews.length) return;
+
+  //   const observer = new IntersectionObserver(
+  //     entries => {
+  //       if (entries[0].isIntersecting && currentIndex < reviews?.length) {
+  //         const nextIndex = currentIndex + SHOW_MAX;
+  //         setVisibleItems(reviews?.slice(0, nextIndex) as Review[]);
+  //         setCurrentIndex(nextIndex);
+  //         loadMoreItems();
+  //       }
+  //     },
+  //     { threshold: 1.0 },
+  //   );
+
+  //   if (loadRef.current) {
+  //     observer.observe(loadRef.current);
+  //   }
+
+  //   return () => {
+  //     if (loadRef.current) {
+  //       observer.unobserve(loadRef.current);
+  //     }
+  //   };
+  // }, [currentIndex, reviews]);
+
+  // if (reviewLoading) return <div>로딩 중...</div>;
+  // if (reviewError) return <div>오류 발생</div>;
 
   return (
     <>
@@ -494,7 +410,7 @@ export default function ProductDetailCard({ productId }: InferGetServerSideProps
           <div className="mx-auto max-w-1052 px-20 md:px-36">
             <div className="mb-20 w-full">
               <h2>
-                <Image className="w-auto" height={23} src={title1} alt="상품통계" />
+                <Image className="w-auto" width={128} height={23} src={title1} alt="상품통계" />
               </h2>
             </div>
             {items && (
@@ -512,7 +428,7 @@ export default function ProductDetailCard({ productId }: InferGetServerSideProps
           <div className="mx-auto max-w-1052 px-20 md:px-36">
             <div className="relative z-10 mb-20 flex w-full items-center justify-between">
               <h2>
-                <Image className="w-auto" height={23} src={title2} alt="상품리뷰" />
+                <Image className="w-auto" width={128} height={23} src={title2} alt="상품리뷰" />
               </h2>
               <SortingSelect placeHolder="최신순" onClick={onHandleSorting} />
             </div>
@@ -521,40 +437,27 @@ export default function ProductDetailCard({ productId }: InferGetServerSideProps
               <Skeleton />
             ) : reviews ? (
               <ul className="flex flex-col gap-y-16">
-                {/* {visibleItems.map((review, i) => (
+                {reviews?.map((review, i) => (
                   <li key={i}>
                     <ReviewCard
                       review={review}
                       onDelete={onHandleDelete}
                       onEdit={onReviewEdit}
                       onLike={onLikeClick}
-                      showActions={review.user.id === userId}
+                      showActions={review.userId === userId}
                     />
                   </li>
-                ))} */}
-                {reviews?.map((items, i) => {
-                  return (
-                    <li key={i}>
-                      <ReviewCard
-                        review={items}
-                        onDelete={onHandleDelete}
-                        onEdit={onReviewEdit}
-                        onLike={onHandleLike}
-                        showActions={items.user.id === userId}
-                      />
-                    </li>
-                  );
-                })}
+                ))}
               </ul>
             ) : (
               <EmptyReviewCard />
             )}
-
+            {/* 
             {currentIndex < (reviewData?.list?.length ?? 0) && (
               <div ref={loadRef} style={{ padding: "10px", textAlign: "center" }}>
                 데이터 로드 중...
               </div>
-            )}
+            )} */}
             {reviewError && (
               <p className="text-14-regular lg:text-16-regular">리뷰 리스트를 불러오는데 실패했습니다.</p>
             )}
