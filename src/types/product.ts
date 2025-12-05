@@ -38,9 +38,9 @@ export interface ProductListResponse {
 
 /**
  * DetailCard 컴포넌트의 props 타입
- * (컴포넌트 이름과 겹치지 않도록 Props 붙여줌)
  */
 export interface DetailCardProps {
+<<<<<<< HEAD
   currentPath?: string | string[]; // 필요하면 넘기고, 아니면 생략 가능하게
   productId: number;
   userId: number | null;
@@ -84,7 +84,7 @@ export interface Products {
   isFavorite: boolean;
 }
 
-//가져오기
+// 가져오기
 export interface ProductDetail extends NotSuccessful, Products {
   description: string;
   category?: {
@@ -98,7 +98,7 @@ export interface ProductDetail extends NotSuccessful, Products {
   };
 }
 
-//수정
+// 수정
 export interface ProductPatchProps {
   message: string;
   details: {
@@ -109,7 +109,7 @@ export interface ProductPatchProps {
   };
 }
 
-//해당 카테고리
+// 해당 카테고리
 export interface ProductCategory {
   category: {
     id: number;

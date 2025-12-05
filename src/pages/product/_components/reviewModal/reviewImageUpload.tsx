@@ -13,6 +13,7 @@ import "swiper/css";
 interface UploadImgProps {
   productId: number;
   onFilesChange?: (files: File[]) => void;
+
   editPreview?: (e: number) => void; //배열의 갯수가 달라질때
   reviewImages?: Array<{
     id?: number;
@@ -33,7 +34,7 @@ export default function ReviewImageUpLoad({ productId, onFilesChange, editPrevie
   //수정에서 넘어올때
   const prevPreviews = reviewImages?.map(image => image.source).filter(source => source !== undefined); //기존이미지 rul 배열
   //작성에서 넘어올때
-    const [previews, setPreviews] = useState<string[]>(prevPreviews||[]);
+  const [previews, setPreviews] = useState<string[]>(prevPreviews || []);
   const [files, setFiles] = useState<File[]>([]);
 
   //미리보기 초깃값
@@ -122,6 +123,13 @@ export default function ReviewImageUpLoad({ productId, onFilesChange, editPrevie
     }
   };
 
+  //이미지 배열 길이 체크 - 수정시 필요
+  useEffect(() => {
+    if (editPreview) {
+      editPreview(previews.length);
+    }
+  }, [previews]);
+
   // 부모로 전달
   useEffect(() => {
     onFilesChange?.(files);
@@ -189,7 +197,7 @@ export default function ReviewImageUpLoad({ productId, onFilesChange, editPrevie
             >
               <input
                 id={`image-${productId}-${i}`}
-                onChange={e => handleChange(e,i)}
+                onChange={e => handleChange(e, i)}
                 ref={fileChangeRef}
                 className="hidden"
                 name={`image-${productId}-${i}`}

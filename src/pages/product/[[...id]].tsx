@@ -9,7 +9,16 @@ import { useEffect, useState, useRef, useCallback } from "react";
 import LoginAlert from "@/components/modal/loginAlert";
 
 // api
-import { useDeleteReview, useGetReview, postLikeReview, deleteLikeReview, getReviewsOrder, getReviews, useGetReviewList } from "@/api/ReviewApi";
+
+import {
+  useDeleteReview,
+  useGetReview,
+  postLikeReview,
+  deleteLikeReview,
+  getReviewsOrder,
+  getReviews,
+  useGetReviewList,
+} from "@/api/ReviewApi";
 import {
   deleteProductFavorite,
   postProductFavorite,
@@ -98,7 +107,7 @@ export default function ProductDetailCard({ productId }: InferGetServerSideProps
 
   //====리뷰 가져오기
   const [order, setOrder] = useState("recent");
-const { data: reviewData, isLoading: reviewLoading, isError:reviewError} = useGetReviewList(productId, order);
+  const { data: reviewData, isLoading: reviewLoading, isError: reviewError } = useGetReviewList(productId, order);
   const reviews = reviewData?.list;
 
   const [isFavorite, setIsFavorite] = useState<boolean>(false); // 상품 찜
@@ -192,7 +201,8 @@ const { data: reviewData, isLoading: reviewLoading, isError:reviewError} = useGe
       return;
     }
 
-    if (filledCount === 2 && leftId && rightId) {
+    // 2개 꽉 차 있을 때 ReplaceModal
+    if (filledCount === 2 && leftId && rightId && items) {
       const leftSummary: ProductSummary = {
         id: leftId,
         name: "비교 상품 1",
@@ -223,11 +233,11 @@ const { data: reviewData, isLoading: reviewLoading, isError:reviewError} = useGe
       openModal(
         <ModalContainer
           styleClass="
-        w-[500px]
-        rounded-[20px]
-        border-[#EFF0F3]
-        shadow-[0_4px_30px_rgba(92,104,177,0.05)]
-      "
+            w-[500px]
+            rounded-[20px]
+            border-[#EFF0F3]
+            shadow-[0_4px_30px_rgba(92,104,177,0.05)]
+          "
         >
           <ReplaceModal
             triggerSide="right"
@@ -256,7 +266,6 @@ const { data: reviewData, isLoading: reviewLoading, isError:reviewError} = useGe
     }
   };
 
-  //==== 리뷰 삭제 함수 호출
   const { deleteReview } = useDeleteReview();
   const onHandleDelete = (reviewId: number) => {
     deleteReview(reviewId);
@@ -264,8 +273,8 @@ const { data: reviewData, isLoading: reviewLoading, isError:reviewError} = useGe
 
   //==== 리뷰 정렬
   const onHandleSorting = (value: string) => {
-    const order = sorting(value);
-    setOrder(order);
+    const sortedOrder = sorting(value);
+    setOrder(sortedOrder);
   };
 
   //==== 리뷰 수정
@@ -328,8 +337,6 @@ const { data: reviewData, isLoading: reviewLoading, isError:reviewError} = useGe
 
   // 카카오 공유 (TODO)
   const onHandleShare = () => {};
-
-  
 
   //====무한 스크롤
 
@@ -415,10 +422,10 @@ const { data: reviewData, isLoading: reviewLoading, isError:reviewError} = useGe
             </div>
             {items && (
               <Statistics
-                rating={items?.rating}
-                reviewCount={items?.reviewCount}
-                favoriteCount={items?.favoriteCount}
-                categoryMetric={items?.categoryMetric}
+                rating={items.rating}
+                reviewCount={items.reviewCount}
+                favoriteCount={items.favoriteCount}
+                categoryMetric={items.categoryMetric}
               />
             )}
           </div>
@@ -435,7 +442,7 @@ const { data: reviewData, isLoading: reviewLoading, isError:reviewError} = useGe
 
             {reviewLoading ? (
               <Skeleton />
-            ) : reviews ? (
+            ) : reviews && reviews.length > 0 ? (
               <ul className="flex flex-col gap-y-16">
                 {reviews?.map((review, i) => (
                   <li key={i}>

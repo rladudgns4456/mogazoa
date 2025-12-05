@@ -196,6 +196,7 @@ export default function EditReview({ id, image, name, content, rating, reviewIma
     //   .filter(Boolean);
 
     // 전송
+
     const newReview = {
       images: imageUrls,
       content: textValue,
@@ -203,6 +204,7 @@ export default function EditReview({ id, image, name, content, rating, reviewIma
     };
 
     // 수정 호출
+
     editReviewMutate({ reviewId: id ?? 0, updatedReview: newReview });
     closeModal();
   };
@@ -236,6 +238,7 @@ export default function EditReview({ id, image, name, content, rating, reviewIma
             ></TextArea>
             {isTextAlert.alert && <p className="pb-24 pt-5 text-12-regular text-error">{isTextAlert.content}</p>}
           </div>
+
           <ReviewImageUpLoad
             productId={Number(id)}
             onFilesChange={changeImage}

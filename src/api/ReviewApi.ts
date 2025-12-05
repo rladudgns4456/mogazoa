@@ -1,5 +1,4 @@
 //=== 리뷰 관련 API
-
 import axiosInstance from "./AxiosInstance";
 import { useQuery, useMutation, useQueryClient, useInfiniteQuery } from "@tanstack/react-query";
 import { ReviewListCard, ReviewForm, ReviewEdit, Like, ReviewDelete } from "../types/review";
@@ -54,7 +53,7 @@ export function useGetReview(productId: number, order: string) {
   return useQuery({
     queryKey: ["reviews", productId, order],
     queryFn: () => getReviews(productId, order),
-    // staleTime: 1000 * 10 * 5,
+    staleTime: 1000 * 10 * 5,
   });
 }
 

@@ -94,13 +94,14 @@ export default function DetailCard({
     }
 
     if (userId) {
-      openModal(<CreateReview productId={productId} id={id} image={image} name={name} category={category} />);
+      // dev 브랜치 쪽 시그니처 유지
+      openModal(<CreateReview productId={productId} id={id} image={image} name={name} category={modalCategory} />);
     } else {
       openModal(<LoginAlert />);
     }
   };
 
-  // // 등록 제품 삭제
+  // 등록 제품 삭제
   const onHandleDelete = () => {
     openModal(<ConfigModal label="정말 삭제 하시겠습니까?" onConfig={onDelete} />);
   };
@@ -175,7 +176,7 @@ export default function DetailCard({
             variant="onlyIcon"
             iconType="etc"
             type="button"
-            onClick={() => onFavorite(id)}
+            onClick={() => onFavorite(productId ?? id)}
             styleClass="p-0"
             aria-label="좋아요"
           >
@@ -214,7 +215,7 @@ export default function DetailCard({
                 openModal(<LoginAlert />);
                 return;
               }
-              onCompare(id);
+              onCompare && onCompare(id);
             }}
           >
             다른 상품과 비교하기
