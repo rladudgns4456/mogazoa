@@ -45,7 +45,7 @@ import { ConfigModal } from "@/components/modal";
 import ModalContainer from "@/components/modal/modalBase/ModalContainer";
 import ReplaceModal from "@/components/compare/ReplaceModal";
 import sorting from "@/utils/sorting";
-import EditReview from "./_components/reviewModal/editReview";
+import EditReview from "../../components/review/editReview";
 import { Toast, useToast } from "@/components/toast";
 
 // 이미지
@@ -110,8 +110,6 @@ export default function ProductDetailCard({ productId }: InferGetServerSideProps
   const { data: reviewData, isLoading: reviewLoading, isError: reviewError } = useGetReviewList(productId, order);
   const reviews = reviewData?.list;
 
-  const [isFavorite, setIsFavorite] = useState<boolean>(false); // 상품 찜
-
   //====상품 삭제
   const deleteProductMutation = useMutation({
     mutationFn: deleteProduct,
@@ -139,10 +137,13 @@ export default function ProductDetailCard({ productId }: InferGetServerSideProps
   // ================================
   const onCompareProduct = (targetProductId: number) => {
     // 1. 로그인 안 되어 있으면 로그인 모달
-    if (!userId) {
+    // if (!userId) {
+    //   openModal(<LoginAlert />);
+    //   return;
+    // }
+    useEffect(() => {
       openModal(<LoginAlert />);
-      return;
-    }
+    }, [userId]);
 
     if (typeof window === "undefined") return;
 

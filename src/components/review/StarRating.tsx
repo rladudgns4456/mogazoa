@@ -67,7 +67,7 @@ export default function StarRating({
   };
 
   const handleMouseEnter = (e: React.MouseEvent, star: number) => {
-    if (readonly || disabled) return;
+    if (readonly || disabled) return;   
     setHoveredStar(star);
   };
 

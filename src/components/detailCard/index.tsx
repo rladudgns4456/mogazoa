@@ -9,7 +9,7 @@ import { ModalContainer, useModal } from "../modal/modalBase";
 import Button from "../Button";
 import Image from "next/image";
 import { Skeleton } from "../skeleton";
-import { CreateReview } from "@/pages/product/_components/reviewModal";
+import { CreateReview } from "@/components/review";
 import LoginAlert from "../modal/loginAlert";
 import { useToast, Toast } from "@/components/toast";
 import type { DetailCardProps } from "@/types/product";
