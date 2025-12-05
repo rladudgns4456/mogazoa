@@ -4,7 +4,6 @@ import { useToast } from "@/components/toast";
 import { cn } from "@/utils/cn";
 import { Swiper, SwiperSlide } from "swiper/react";
 import { Toast } from "@/components/toast";
-import { Review } from "@/types/review";
 import IcAddImage from "@/assets/icons/ic_add_img.svg";
 import IcClose from "@/assets/svgr/ic_close.svg";
 import Image from "next/image";
@@ -14,31 +13,40 @@ import "swiper/css";
 interface UploadImgProps {
   productId: number;
   onFilesChange?: (files: File[]) => void;
-  editPreview?: (e: number) => void;
-  item?: Review;
+
+  editPreview?: (e: number) => void; //배열의 갯수가 달라질때
+  reviewImages?: Array<{
+    id?: number;
+    source?: string;
+  }>;
 }
 
 const MAX_UPLOAD = 3; //첨부 이미지 최대 갯수
-let remain = MAX_UPLOAD;
 
-export default function ReviewImageUpLoad({ productId, onFilesChange, item, editPreview }: UploadImgProps) {
-  const [isSwiperMounted, setIsSwiperMounted] = useState(false); //슬라이드
-  const fileRef = useRef<HTMLInputElement>(null); //업로드 이미지
-  const fileChangeRef = useRef<HTMLInputElement>(null); //교체 이미지
-
-  const imageIdArr: number[] = item?.reviewImages?.map(item => item.id) || [];
-  const prevPreviews: string[] = item?.reviewImages?.map(item => item.source) || []; //기존이미지 배열
-
-  const [imageId, setImageId] = useState<number[]>(imageIdArr);
-  const [previews, setPreviews] = useState<string[]>(prevPreviews);
-  const [files, setFiles] = useState<File[]>([]);
-  const [editReturn, setEditReturn] = useState<(string | number)[]>(imageIdArr);
-
+export default function ReviewImageUpLoad({ productId, onFilesChange, editPreview, reviewImages }: UploadImgProps) {
   const { openToast, closeToast } = useToast();
+
+  const [isSwiperMounted, setIsSwiperMounted] = useState(false); //슬라이드
+  const fileRef = useRef<HTMLInputElement | null>(null); //업로드 이미지
+  const fileChangeRef = useRef<HTMLInputElement>(null); //교체 이미지
+  const [remain, setRemain] = useState<number>(MAX_UPLOAD);
+
+  //수정에서 넘어올때
+  const prevPreviews = reviewImages?.map(image => image.source).filter(source => source !== undefined); //기존이미지 rul 배열
+  //작성에서 넘어올때
+  const [previews, setPreviews] = useState<string[]>(prevPreviews || []);
+  const [files, setFiles] = useState<File[]>([]);
+
+  //미리보기 초깃값
+  useEffect(() => {
+    if (prevPreviews) {
+      setPreviews(prevPreviews);
+    }
+  }, []);
 
   //남은 갯수 계산
   const handelRemain = () => {
-    remain = MAX_UPLOAD - previews.length;
+    setRemain(MAX_UPLOAD - previews.length);
   };
 
   //첨부 이미지
@@ -49,7 +57,6 @@ export default function ReviewImageUpLoad({ productId, onFilesChange, item, edit
 
     if (selectedImage) {
       if (selectedImage?.[0].size > 5 * 1024 * 1024) {
-        console.log("a");
         openToast(<Toast label="최대 용량은 5MB입니다." />);
         setFiles(prev => prev.slice(0, -files.length));
         return;
@@ -58,7 +65,7 @@ export default function ReviewImageUpLoad({ productId, onFilesChange, item, edit
     //첨부 파일 갯수 초과 토스트
     if (selectedFiles.length > remain) {
       openToast(<Toast label="이미지 첨부는 최대 3개 까지 가능합니다." closedTime={2000} />);
-      remain = MAX_UPLOAD - previews.length;
+      setRemain(MAX_UPLOAD - previews.length);
     } else {
       //첨부
       setFiles(prev => [...prev, ...selectedFiles]);
@@ -69,7 +76,7 @@ export default function ReviewImageUpLoad({ productId, onFilesChange, item, edit
   };
 
   // 첨부 이미지 교체
-  const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
+  const handleChange = (e: ChangeEvent<HTMLInputElement>, i: number) => {
     const selectedImage = e.target?.files;
     if (e.target.files) {
       const selectedFiles = e.target.files ? Array.from(e.target.files) : [];
@@ -81,10 +88,10 @@ export default function ReviewImageUpLoad({ productId, onFilesChange, item, edit
       const newPreviews = [...previews];
 
       //fileList 배열 교체
-      const newFiles = [...files];
+      const newFiles = [...files]; // input 값
 
       if (index !== undefined) {
-        newPreviews[Number(index)] = selectedFileUrl;
+        newPreviews[Number(index)] = selectedFileUrl; //URL삭제
       }
       setPreviews(newPreviews);
 
@@ -96,7 +103,6 @@ export default function ReviewImageUpLoad({ productId, onFilesChange, item, edit
     }
     if (selectedImage) {
       if (selectedImage?.[0].size > 5 * 1024 * 1024) {
-        console.log("a");
         openToast(<Toast label="최대 용량은 5MB입니다." />);
         setFiles(prev => prev.slice(0, -files.length));
         return;
@@ -112,6 +118,9 @@ export default function ReviewImageUpLoad({ productId, onFilesChange, item, edit
     setFiles(newFiles);
     setPreviews(newPreviews);
     onFilesChange?.(newFiles);
+    if (editPreview) {
+      editPreview(index);
+    }
   };
 
   //이미지 배열 길이 체크 - 수정시 필요
@@ -188,7 +197,7 @@ export default function ReviewImageUpLoad({ productId, onFilesChange, item, edit
             >
               <input
                 id={`image-${productId}-${i}`}
-                onChange={e => handleChange(e)}
+                onChange={e => handleChange(e, i)}
                 ref={fileChangeRef}
                 className="hidden"
                 name={`image-${productId}-${i}`}

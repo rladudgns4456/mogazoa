@@ -40,33 +40,28 @@ export interface ProductListResponse {
  * DetailCard 컴포넌트의 props 타입
  */
 export interface DetailCardProps {
-  // 상세 페이지 경로(리뷰 모달에서 사용)
-  currentPath?: string;
-
-  // 필수 식별자들
+<<<<<<< HEAD
+  currentPath?: string | string[]; // 필요하면 넘기고, 아니면 생략 가능하게
   productId: number;
   userId: number | null;
-  writerId: number | null;
+  writerId: number;
   id: number;
-
-  // 상품 정보
   image: string;
   name: string;
-  category?: { id?: number; name: string } | string;
-  categoryId?: number;
+  category?: {
+    id: number;
+    name: string;
+  };
+  categoryId: number|undefined;
   description: string;
-
-  // 상태
   isLoading: boolean;
   isError: boolean;
   isFavorite: boolean;
-
-  // 액션 콜백들
-  onShare?: () => void;
-  onUrlCopy?: () => void;
-  onSave?: (id: number) => Promise<void> | void;
-  onDelete?: (id: number) => Promise<void> | void;
-  onCompare?: (id: number) => void;
+  onSave: (id: number) => void;
+  onShare: () => void;
+  onUrlCopy: () => void;
+  onDelete: (config: string) => void;
+  onCompare: (id: number) => void;
 }
 
 export interface NotSuccessful {

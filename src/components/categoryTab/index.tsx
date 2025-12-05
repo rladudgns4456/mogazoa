@@ -73,6 +73,7 @@ export default function CategoryTab({ isHome, url, onHandleLoad }: TabPops) {
         modules={[Navigation]}
         navigation={true}
       >
+
         {combinedCategory?.map((item, index) => {
           const isActive = getIsActive(item.id);
 

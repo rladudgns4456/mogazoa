@@ -66,32 +66,32 @@ export interface ImageUrl {
 
 //좋아요
 export interface Like {
-  id: number;
-  rating: number;
-  content: string;
-  likeCount: number;
-  createdAt: string;
-  updatedAt: string;
-  userId: number;
-  productId: number;
   user: {
-    id: number;
-    nickname: string;
     image: string;
+    nickname: string;
+    id: number;
   };
   reviewImages: [
     {
-      id: number;
       source: string;
+      id: number;
     },
   ];
-  isLiked: boolean;
+  productId: number;
+  userId: number;
+  updatedAt: string;
+  createdAt: string;
+  isLiked: true;
+  likeCount: number;
+  content: string;
+  rating: number;
+  id: number;
 }
 
 // 다음 리뷰
 export interface ReviewListCard {
   list: Review[];
-  nextCursor: number;
+  nextCursor: null;
 }
 
 //리뷰 생성
@@ -127,40 +127,16 @@ export interface PrevImageUrl {
 }
 
 export interface ReviewEdit {
-  images: [
-    {
-      id:number;
-    },
-    {
-      source: string;
-    },
-  ];
+  image?: string;
   content: string;
-  rating:number;
+  rating: number;
+  reviewImages?: Array<{
+    id?: number;
+    source?: string;
+  }>;
+  id?: number;
+  name?: string;
 }
-
-// export interface ReviewEdit {
-//   user: {
-//     image: string;
-//     nickname: string;
-//     id: number;
-//   };
-//   reviewImages: [
-//     {
-//       source: string;
-//       id: number;
-//     },
-//   ];
-//   productId: number;
-//   userId: number;
-//   updatedAt: string;
-//   createdAt: string;
-//   isLiked: true;
-//   likeCount: number;
-//   content: string;
-//   rating: number;
-//   id: number;
-// }
 
 export interface ReviewDelete {
   id: number;
